@@ -22,7 +22,8 @@
     "middle_synergy": 3,
     "back_power": 3,
     "back_synergy": 1,
-    "on_enter1": "The Viper — Deal 2 damage to target enemy ignoring Shields OR 1 damage to two enemies in the same row.",
+    "on_enter1": "The Viper — Deal 2 damage to target enemy ignoring Shields",
+    "on_enter2": "The Viper — Deal 1 damage to two enemies in the same row.",
     "ultimate": "B.O.B. (3): Draw the B.O.B. Hero Card into your hand."
   },
   {
@@ -35,7 +36,8 @@
     "middle_synergy": 2,
     "back_power": 1,
     "back_synergy": 3,
-    "on_enter1": "Biotic Launcher — Deal 1 damage to up to three adjacent enemies in target row OR heal 1 health to up to three adjacent Allies in target row.",
+    "on_enter1": "Biotic Launcher — Deal 1 damage to up to three adjacent enemies in target row",
+    "on_enter2": "Biotic Launcher — Heal 1 health to up to three adjacent Allies in target row.",
     "ultimate": "Immortality Field (3): Baptiste and Heroes immediately to his left and right are immune to all damage until the start of your next turn."
   },
   {
@@ -48,8 +50,9 @@
     "middle_synergy": 2,
     "back_power": 3,
     "back_synergy": 1,
-    "on_enter1": "Sentinel — Deal 2 damage to target enemy, OR place Bastion Token next to an enemy row. Any enemy Heroes that move or deploy into this row take 2 damage.",
-    "ultimate": "Tank Mode (3): Bastion deals 2 damage to one enemy and 2 damage to up to 2 adjacent enemy heroes."
+    "on_enter1": "Sentinel — Deal 2 damage to target enemy",
+    "on_enter2": "Sentinel — Place Bastion Token next to an enemy row. Any enemy Heroes that move or deploy into this row take 2 damage.",
+    "ultimate": "Tank Mode (4): Bastion deals 2 damage to one enemy and 2 damage to up to 2 adjacent enemy heroes."
   },
   {
     "name": "B.O.B.",
@@ -166,7 +169,8 @@
     "middle_synergy": 3,
     "back_power": 2,
     "back_synergy": 2,
-    "on_enter1": "Crossfade — You may move any number of allies in Lúcio’s row to another adjacent row; OR place Lucio Token near target row and heal all Heroes in that row by 1 health at the start of each of your turns.",
+    "on_enter1": "Crossfade — You may move any number of allies in Lúcio’s row to another adjacent row",
+    "on_enter2": "Crossfade — Place Lucio Token near target row and heal all Heroes in that row by 1 health at the start of each of your turns.",
     "ultimate": "Sound Barrier (3): All Heroes in Lúcio’s row gain 2 shield tokens."
   },
   {
@@ -298,7 +302,8 @@
     "middle_synergy": 3,
     "back_power": 3,
     "back_synergy": 1,
-    "on_enter1": "Hellfire Shotguns — Deal 2 damage to one enemy, OR 1 damage to two adjacent enemies in a single row.",
+    "on_enter1": "Hellfire Shotguns — Deal 2 damage to one enemy",
+    "on_enter2": "Hellfire Shotguns — Deal 1 damage to two adjacent enemies in a single row.",
     "ultimate": "Death Blossom (3): Discard Reaper to deal 3 damage to all enemies in Reaper’s opposing row."
   },
   {
@@ -402,7 +407,8 @@
     "middle_synergy": 2,
     "back_power": 1,
     "back_synergy": 3,
-    "on_enter1": "Pulse Pistols — Deal 2 damage to target enemy OR 1 damage to two enemies anywhere on the board.",
+    "on_enter1": "Pulse Pistols — Deal 2 damage to target enemy",
+    "on_enter2": "Pulse Pistols — Deal 1 damage to two enemies anywhere on the board.",
     "ultimate": "Recall (2): Remove all counters currently on Tracer and return her to your hand. Can be played as an interrupt."
   },
   {
@@ -481,7 +487,8 @@
     "middle_synergy": 2,
     "back_power": 1,
     "back_synergy": 3,
-    "on_enter1": "Harmony/Discord — Place Zenyatta token on target Ally. That Ally is healed for 1 health now and at the start of each of your turns; OR place Zenyatta token on an enemy Hero. If that Hero takes damage they take +1 damage.",
+    "on_enter1": "Harmony — Place Zenyatta token on target Ally. That Ally is healed for 1 health now and at the start of each of your turns.",
+    "on_enter2": "Discord — Place Zenyatta token on an enemy Hero. If that Hero takes damage they take +1 damage.",
     "ultimate": "Transcendence (3): All Allies in Zenyatta’s row are healed by 2. Zenyatta is immune to damage for the remainder of the round."
   }
 ]

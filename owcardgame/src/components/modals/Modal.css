@@ -1,0 +1,203 @@
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10001; /* Higher than context menu */
+}
+
+.modal-container {
+    background-color: #2a2a2a;
+    border: 2px solid #555;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
+    max-width: 90vw;
+    max-height: 90vh;
+    overflow: auto;
+    min-width: 300px;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid #555;
+    background-color: #333;
+    border-radius: 6px 6px 0 0;
+}
+
+.modal-title {
+    margin: 0;
+    color: #eee;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: #aaa;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+}
+
+.modal-close:hover {
+    background-color: #555;
+    color: #fff;
+}
+
+.modal-content {
+    padding: 20px;
+}
+
+/* Modal types */
+.modal-choice {
+    min-width: 400px;
+}
+
+.modal-interrupt {
+    min-width: 350px;
+}
+
+.modal-choice .modal-content {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.modal-interrupt .modal-content {
+    text-align: center;
+}
+
+/* Choice buttons */
+.choice-button {
+    background-color: #444;
+    border: 2px solid #666;
+    border-radius: 6px;
+    color: #eee;
+    padding: 15px 20px;
+    cursor: pointer;
+    font-size: 14px;
+    text-align: left;
+    transition: all 0.2s ease;
+    min-height: 60px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.choice-button:hover {
+    background-color: #555;
+    border-color: #888;
+    transform: translateY(-1px);
+}
+
+.choice-button:active {
+    transform: translateY(0);
+}
+
+.choice-button.selected {
+    border-color: #4CAF50;
+    background-color: #2d4a2d;
+}
+
+.choice-title {
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #fff;
+}
+
+.choice-description {
+    color: #ccc;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+/* Interrupt buttons */
+.interrupt-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.interrupt-button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    min-width: 100px;
+}
+
+.interrupt-button.primary {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.interrupt-button.primary:hover {
+    background-color: #45a049;
+}
+
+.interrupt-button.secondary {
+    background-color: #666;
+    color: white;
+}
+
+.interrupt-button.secondary:hover {
+    background-color: #777;
+}
+
+/* Synergy cost display */
+.synergy-cost {
+    display: inline-block;
+    background-color: #4CAF50;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+    margin-left: 8px;
+}
+
+.synergy-cost.insufficient {
+    background-color: #f44336;
+}
+
+/* Row highlighting for targeting */
+.row-highlight {
+    position: relative;
+}
+
+.row-highlight::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    border: 3px solid #4CAF50;
+    border-radius: 8px;
+    pointer-events: none;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
+}

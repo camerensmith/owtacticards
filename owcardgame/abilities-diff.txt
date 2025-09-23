@@ -1,0 +1,221 @@
+Abilities Diff (code vs hero.json)
+=================================
+
+Legend: code = current implementation in src/components/cards/HeroAbilities.js; json = hero.json text/rules
+Focus: onEnter (enter), ultimate (ult), triggers, costs, targeting, special spawn/token
+
+Ana
+- enter (json): Grenade heal allies in target row by 1 and damage enemies opposite by 1
+- enter (code): Matches row click → heal allies 1, damage enemies 1 (OK) [CONFIRMED]
+- ult (json): Nano Boost token with X power scaling
+- ult (code): Stub/incomplete; token and scaling effect not implemented (DIFF) [CONFIRMED]
+
+Ashe
+- enter (json): 2 dmg ignoring shields OR 1 dmg to two enemies in same row (choice)
+- enter (code): 1 dmg single target; no ignore shields; no two-target choice (DIFF) [CONFIRMED]
+- ult (json): B.O.B. (draw Bob card)
+- ult (code): Creates Bob and adds to hand (OK) [CONFIRMED]
+
+Baptiste
+- enter (json): Deal 1 dmg to up to three adjacent enemies in a row OR heal 1 to up to three adjacent allies in a row
+- enter (code): Click a target enemy, also hits adjacent; heal path likely missing; up-to-three selection constraints incomplete (DIFF)
+- ult (json): Immortality field for Baptiste + adjacent allies until start of next turn
+- ult (code): Not implemented (DIFF)
+
+Bastion
+- enter (json): 2 dmg OR place token near enemy row causing 2 dmg on enter/move
+- enter (code): Not clearly implemented; likely minimal (DIFF)
+- ult (json): Tank Mode: 2 dmg to one + 2 dmg to up to 2 adjacent enemies
+- ult (code): Not implemented (DIFF)
+
+B.O.B.
+- special (json): Token effects; Smash (1) deals spread damage to 3 adjacent enemies
+- code: Bob exists; Smash details differ from json (DIFF) [CONFIRMED PARTIAL]
+
+Brigitte
+- enter (json): Heal 3; overheal → shields
+- enter (code): Heal present; overheal→shield not enforced (DIFF) [CONFIRMED PARTIAL]
+- ult (json): Shield Bash: +2 shields; disable enemy ultimate this round
+- ult (code): Not implemented (DIFF)
+
+Doomfist
+- enter (json): Rocket Punch: push back one row and deal 2
+- enter (code): Damage exists; forced movement back row behavior may be partial (DIFF)
+- ult (json): Meteor Strike: 3 to one, 1 to adjacents (this is targeted card, card immediately behind that one in column (if able), and in front (if able) and the cards to the left and right of the targeted card / not diagonal)
+- ult (code): Not implemented (DIFF)
+
+D.Va
+- enter (json): Call Mech → place D.Va+MEKA on top of deck
+- code: Creates MEKA; top-of-deck placement not enforced (DIFF) [CONFIRMED PARTIAL]
+
+D.Va+MEKA (special)
+- enter (json): Gains two shields
+- code: Gains shields present (OK) [CONFIRMED PARTIAL]
+- ult (json): Self-Destruct: 4 dmg to own + opposing row; replace with D.Va; remove MEKA from game
+- code: Partial; full replace/remove-from-game behavior likely missing (DIFF)
+
+Echo
+- enter (json): Focusing Beam: damage equals damage counters on target
+- enter (code): Implemented (OK) [CONFIRMED]
+- ult (json): Duplicate last ultimate
+- ult (code): Not implemented (DIFF)
+
+Genji
+- enter (json): 1 dmg to up to three enemies in target column
+- enter (code): Column targeting up to 3 (OK) [CONFIRMED]
+- ult (json): Dragon Blade: defeat one damaged enemy
+- ult (code): Defeat without checking damaged-only (DIFF) [CONFIRMED]
+
+Hanzo
+- enter (json): Sonic Arrow row token: enemy damage -1 in that row
+- enter (code): Adds row effect via ACTIONS.ADD_ROW_EFFECT (OK) [CONFIRMED]
+- ult (json): Dragonstrike: 3 dmg to all enemies in target column
+- ult (code): Implemented (column-wide damage) (OK) [CONFIRMED]
+
+Junkrat
+- onDeath (json): Total Mayhem triggers on defeat; 2 dmg to killer +1 to up to 2 more in row
+- code: No onDeath hook present; not wired (DIFF) [CONFIRMED]
+- ult (json): RIP-Tire: move and 2 dmg to all in opposing row
+- ult (code): Moves on row click; damage application appears partial (DIFF) [PARTIAL VERIFIED]
+
+Lúcio
+- enter (json): Move allies in row OR place token to heal 1 each start of turns
+- code: Movement present; periodic heal token unclear (DIFF) [PARTIAL]
+- ult (json): Sound Barrier: +2 shields to all allies in row
+- code: Shields applied to row allies (OK) [CONFIRMED PARTIAL]
+
+McCree
+- enter (json): Remove synergy points equal to enemies in row
+- enter (code): Row synergy deduction not implemented (DIFF) [CONFIRMED]
+- ult (json): Deadeye: 7 dmg spread evenly in a single row
+- code: Partial/missing (DIFF)
+
+Mei
+- enter (json): Place token doubling ultimate synergy cost in that enemy row
+- code: Row cost modifier not wired (DIFF) [CONFIRMED]
+- ult (json): Cryo Freeze (2): turn ANY hero sideways; immune to damage and cannot use/receive abilities for remainder of round; remove tokens
+- code: Missing (DIFF) [CONFIRMED]
+
+Mercy
+- enter (json): Token on ally: heal over time OR dmg boost+1 on dealing damage
+- enter (code): One path present; alternate path incomplete (DIFF) [CONFIRMED PARTIAL]
+- ult (json): Guardian Angel: rez one defeated hero in target row with full health
+- code: Partial/missing (DIFF)
+
+Moira
+- enter (json): Deal 2 ignoring shields to any enemy AND heal 2 to any ally
+- code: Damage+heal present; "ignore shields" not enforced (DIFF) [CONFIRMED]
+- ult (json): Coalescence: heal allies 2 in column + deal 2 to opposing column ignoring shields
+- code: Not implemented (DIFF) [CONFIRMED]
+
+Orisa
+- enter (json): Protective Barrier: reduce damage by 1 (min 1) for allies in row
+- code: Row modifier present; min-1 clamp missing (DIFF) [CONFIRMED]
+- ult (json): Supercharger: +1 power to allies in row, persists until defeated
+- code: Not implemented (DIFF) [CONFIRMED]
+
+Pharah
+- enter (json): Concussive Blast: push enemy back one row; remove 2 synergy from starting row
+- code: Push present; synergy removal missing (DIFF) [CONFIRMED]
+- ult (json): Barrage: 2 dmg to up to three enemies anywhere
+- code: Not implemented (DIFF) [CONFIRMED]
+
+Ramattra
+- enter (json): Void Barrier: place 1 shield token on Ramattra or ally in row
+- code: Likely implemented (VERIFY)
+- ult (json): Ravenous Vortex (2): shuffle positions of heroes in opposite row; 1 dmg to hero opposite Ramattra
+- code: Partial/missing (DIFF)
+
+Ramattra (Nemesis) [special]
+- enter (json): Void Shift: discard Ramattra and move Nemesis to any open space
+- ult (json): Annihilation (4): ongoing 1 dmg at start of your turns to opposite row & column until nemesis defeated
+- code: Transform context menu exists; full ongoing damage likely missing (DIFF)
+
+Reaper
+- enter (json): 2 dmg to one OR 1 dmg to two adjacent in row
+- code: Likely single-target 2 or 1? Needs two-target branch (DIFF)
+- ult (json): Death Blossom (3): discard and 3 dmg to all in opposing row
+- code: Partial/missing (DIFF)
+
+Reinhardt
+- enter (json): Barrier Field: +3 shields and can absorb column damage with shield tokens
+- code: +shields present; absorb-for-column not implemented (DIFF) [CONFIRMED]
+- ult (json): Earthshatter (3): 2 dmg + 1 synergy dmg to all in target column
+- code: Not implemented (DIFF) [CONFIRMED]
+
+Roadhog
+- enter (json): Hook: pull to front row and deal 2
+- enter (code): Pull + damage present (OK) [CONFIRMED PARTIAL]
+- ult (json): Whole Hog (3): (+1 per enemy) damage spread evenly among all enemies
+- code: Mismatch to old names; exact spread logic likely missing (DIFF)
+
+Sigma
+- enter (json): Token as row shield pool (3 shields) for any hero in row
+- code: Pooled row shields behavior incomplete (DIFF) [CONFIRMED]
+- ult (json): Gravitic Flux (3): 1 dmg to every enemy in target row and remove all synergy in that row
+- code: Damage present? synergy removal missing (DIFF) [CONFIRMED]
+
+Soldier: 76
+- enter (json): Heal all allies in his row by 1
+- enter (code): Heal present (OK) [CONFIRMED]
+- ult (json): Tactical Visor (3): 3/2/1 dmg to three targets anywhere
+- code: Partial/missing (DIFF)
+
+Sombra
+- enter (json): Remove all shield + hero tokens from target; Turrets destroyed
+- enter (code): Shield tokens removed; hero tokens/turret handling incomplete (DIFF) [CONFIRMED PARTIAL]
+- ult (json): EMP (3): Remove all hero+shield tokens from both sides; destroy turrets
+- code: Partial/missing (DIFF)
+
+Symmetra
+- enter (json): Teleporter: return one undefeated ally to hand; remove tokens
+- enter (code): Teleport present; token cleanup not enforced (DIFF) [CONFIRMED PARTIAL]
+- ult (json): Shield Generator (3): all deployed allies gain 1 shield token
+- code: Implemented (OK) [CONFIRMED]
+
+Torbjörn
+- enter (json): Build Turret adjacent; turret behavior
+- enter (code): Summons turret; adjacency/behavior differ (DIFF) [CONFIRMED PARTIAL]
+- ult (json): Forge Hammer (3): turret does 2 dmg to two heroes
+- code: Partial/missing (DIFF)
+
+Tracer
+- enter (json): 2 dmg to one OR 1 dmg to two anywhere
+- code: Single-target path; two-target path missing (DIFF) [CONFIRMED]
+- interrupt (json): Recall (2) pre-damage, return to hand, cancel that damage instance
+- code: Interrupt modal scaffold only; no pre-damage pipeline (DIFF) [CONFIRMED]
+
+Widowmaker
+- enter (json): Infra-Sight: place token on enemy row; enemies in that row take +1 damage
+- code: Row token/+1 taken not implemented (DIFF) [CONFIRMED]
+- ult (json): Widow’s Kiss (3): defeat target enemy in opposing row
+- code: Opposing-row restriction + defeat not implemented (DIFF) [CONFIRMED]
+
+Winston
+- enter (json): Barrier Protector: +3 shields; can absorb row damage with Winston’s shields
+- enter (code): Shields present; absorb-for-row not implemented (DIFF) [CONFIRMED]
+- ult (json): Primal Rage (3): move to any row; 2 dmg to all enemies in opposing row
+- code: Not implemented (DIFF) [CONFIRMED]
+
+Wrecking Ball
+- enter (json): Adaptive Shield: shields = enemies in opposing row +1
+- enter (code): Implemented (OK) [CONFIRMED]
+- ult (json): Minefield (X): place X tokens on target row; trigger 2 dmg upon enemy ability use and consume a token
+- code: Partial/missing (DIFF)
+
+Zarya
+- enter (json): 3 Zarya tokens to any hero; behave like shield tokens
+- enter (code): Shields applied; specific Zarya-token semantics not enforced (DIFF) [CONFIRMED PARTIAL]
+- ult (json): Particle Cannon (3): 4 dmg to up to three opponents, -1 per remaining Zarya token on your side
+- code: Token-scaling damage not implemented (DIFF)
+
+Zenyatta
+- enter (json): Harmony/Discord token on ally/enemy; periodic heal or +1 damage taken
+- enter (code): Partial; periodic heal/discord +1 not fully enforced (DIFF) [CONFIRMED PARTIAL]
+- ult (json): Transcendence (3): All allies in row heal 2; Zenyatta immune rest of round
+- code: Partial/missing (DIFF)
+
+Notes
+- Many json options specify OR/choice; code often implements only one branch
+- Row/column modifiers, tokens, and ongoing effects need unified token/modifier system
+- Ultimate synergy costs should be enforced and deducted (now scaffolded)

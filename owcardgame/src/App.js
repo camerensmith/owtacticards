@@ -15,6 +15,10 @@ import { getAudioFile } from './assets/imageImports';
 import _ from 'lodash';
 import Tutorial from 'components/tutorial/Tutorial';
 import CenterSection from 'components/layout/CenterSection';
+import { showOnEnterChoice, subscribeToModal, closeModal } from './abilities/engine/modalController';
+import ChoiceModal from './components/modals/ChoiceModal';
+import InterruptModal from './components/modals/InterruptModal';
+import { subscribe as subscribeToActions, Actions } from './abilities/engine/actionsBus';
 
 export const ACTIONS = {
     ADD_CARD_EFFECT: 'add-card-effect',
@@ -34,6 +38,7 @@ export const ACTIONS = {
     UPDATE_POWER: 'update-power',
     UPDATE_ROW: 'update-row',
     UPDATE_SYNERGY: 'update-synergy',
+    DEDUCT_SYNERGY: 'deduct-synergy',
 };
 
 function reducer(gameState, action) {
@@ -349,9 +354,48 @@ function reducer(gameState, action) {
             });
         }
 
+        // Deduct synergy for ultimate abilities
+        case ACTIONS.DEDUCT_SYNERGY: {
+            const rowId = action.payload.rowId;
+            const synergyCost = action.payload.synergyCost;
+
+            return produce(gameState, (draft) => {
+                draft.rows[rowId].synergy = Math.max(0, draft.rows[rowId].synergy - synergyCost);
+            });
+        }
+
         default:
             return gameState;
     }
+}
+
+// Check for onEnter abilities when a hero is deployed
+function checkOnEnterAbilities(playerHeroId, rowId, playerNum) {
+    const heroId = playerHeroId.slice(1);
+    const heroData = data.heroes[heroId];
+    
+    if (!heroData) return;
+    
+    // Check if hero has onEnter abilities from hero.json
+    // This would need to be integrated with the hero.json data
+    // For now, we'll use a simple example structure
+    const onEnter1 = heroData.onEnter1;
+    const onEnter2 = heroData.onEnter2;
+    
+    if (onEnter1 && onEnter2) {
+        // Show choice modal
+        showOnEnterChoice(heroData.name, onEnter1, onEnter2);
+    } else if (onEnter1) {
+        // Auto-execute onEnter1
+        executeOnEnterAbility(onEnter1, playerHeroId, rowId, playerNum);
+    }
+}
+
+// Execute an onEnter ability
+function executeOnEnterAbility(ability, playerHeroId, rowId, playerNum) {
+    // This would integrate with the existing ability system
+    console.log(`Executing onEnter ability: ${ability} for ${playerHeroId} in ${rowId}`);
+    // TODO: Implement actual ability execution
 }
 
 export default function App() {
@@ -374,9 +418,54 @@ export default function App() {
         player2: null,
     });
     const [playAudio, setPlayAudio] = useState(false);
+    const [modalState, setModalState] = useState({ isOpen: false, type: null, data: null });
 
     // References for setting state inside useEffects
     let matchRef = useRef(null);
+
+    // Subscribe to modal state changes
+    useEffect(() => {
+        const unsubscribe = subscribeToModal((newModalState) => {
+            setModalState(newModalState);
+        });
+        return unsubscribe;
+    }, []);
+
+    // Subscribe to action requests
+    useEffect(() => {
+        const unsubscribe = subscribeToActions((action) => {
+            if (action.type === 'request:ultimate') {
+                const { playerHeroId, rowId, cost } = action.payload;
+                const currentSynergy = gameState.rows[rowId]?.synergy || 0;
+                const playerNum = parseInt(playerHeroId[0]);
+                const enteredTurn = gameState.playerCards[`player${playerNum}cards`]?.cards?.[playerHeroId]?.enteredTurn;
+
+                // Block ultimates on the same turn a hero entered play
+                if (enteredTurn === turnState.turnCount) {
+                    console.log('Ultimate blocked: hero entered play this turn.');
+                    return;
+                }
+
+                if (currentSynergy >= cost) {
+                    // Deduct synergy and execute ultimate
+                    dispatch({
+                        type: ACTIONS.DEDUCT_SYNERGY,
+                        payload: { rowId, synergyCost: cost }
+                    });
+                    
+                    // Execute ultimate ability (placeholder)
+                    console.log(`Executing ultimate for ${playerHeroId} in ${rowId} (cost: ${cost})`);
+                } else {
+                    console.log(`Insufficient synergy for ultimate. Need ${cost}, have ${currentSynergy}`);
+                }
+            } else if (action.type === 'request:transform') {
+                const { playerHeroId } = action.payload;
+                console.log(`Transform requested for ${playerHeroId}`);
+                // TODO: Implement transform logic
+            }
+        });
+        return unsubscribe;
+    }, [gameState.rows]);
 
     // End the round and update match scores when both players have passed their turn
     useEffect(() => {
@@ -616,14 +705,14 @@ export default function App() {
                 },
             });
 
-            // Set card as played and reduce synergy to 0 (so future moves dont also add synergy)
+            // Set card as played, stamp enteredTurn, and reduce synergy to 0 (so future moves dont also add synergy)
             dispatch({
                 type: ACTIONS.EDIT_CARD,
                 payload: {
                     playerNum: playerNum,
                     targetCardId: draggableId,
-                    editKeys: ['isPlayed', 'synergy'],
-                    editValues: [true, { f: 0, m: 0, b: 0 }],
+                    editKeys: ['isPlayed', 'enteredTurn', 'synergy'],
+                    editValues: [true, turnState.turnCount, { f: 0, m: 0, b: 0 }],
                 },
             });
 
@@ -636,6 +725,9 @@ export default function App() {
                     updateValues: [1],
                 },
             });
+
+            // Check for onEnter abilities after deployment
+            checkOnEnterAbilities(draggableId, finishRowId, playerNum);
         }
         document.getElementById(`${result.source.droppableId}-list`).classList.toggle('is-drag-origin');
 
@@ -690,6 +782,36 @@ export default function App() {
             </div>
             <Tutorial />
             <Footer />
+            
+            {/* Modal Components */}
+            {modalState.type === 'choice' && (
+                <ChoiceModal
+                    isOpen={modalState.isOpen}
+                    onClose={closeModal}
+                    title="Choose Ability"
+                    choices={modalState.data?.choices || []}
+                    onSelect={(choiceIndex) => {
+                        console.log('Selected choice:', choiceIndex);
+                        closeModal();
+                    }}
+                    heroName={modalState.data?.heroName || ''}
+                />
+            )}
+            
+            {modalState.type === 'interrupt' && (
+                <InterruptModal
+                    isOpen={modalState.isOpen}
+                    onClose={closeModal}
+                    heroName={modalState.data?.heroName || ''}
+                    abilityName={modalState.data?.abilityName || ''}
+                    cost={modalState.data?.cost || 0}
+                    currentSynergy={modalState.data?.currentSynergy || 0}
+                    onActivate={() => {
+                        console.log('Activated interrupt ability');
+                        closeModal();
+                    }}
+                />
+            )}
         </div>
     );
 }

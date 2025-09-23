@@ -6,6 +6,8 @@ import CardEffects from 'components/cards/CardEffects';
 import HealthCounter from 'components/counters/HealthCounter';
 import ShieldCounter from 'components/counters/ShieldCounter';
 import { heroCardImages } from '../../assets/imageImports';
+import ContextMenu from './ContextMenu';
+import actionsBus, { Actions } from '../../abilities/engine/actionsBus';
 
 export default function Card(props) {
     // Context
@@ -43,6 +45,36 @@ export default function Card(props) {
         };
     }
 
+    const [menu, setMenu] = useState(null);
+
+    function buildContextMenu(e) {
+        e.preventDefault();
+        if (turnState.playerTurn !== playerNum) return;
+        const items = [];
+        items.push({
+            label: 'Ultimate',
+            onClick: () => {
+                // Get current row synergy and ultimate cost
+                const currentRow = gameState.rows[rowId];
+                const currentSynergy = currentRow ? currentRow.synergy : 0;
+                const ultimateCost = 3; // Default cost, could be made dynamic based on hero
+                
+                actionsBus.publish(Actions.requestUltimate(playerHeroId, rowId, ultimateCost));
+                setMenu(null);
+            },
+        });
+        if (id === 'ramattra') {
+            items.push({
+                label: 'Transform',
+                onClick: () => {
+                    actionsBus.publish(Actions.requestTransform(playerHeroId));
+                    setMenu(null);
+                },
+            });
+        }
+        setMenu({ x: e.clientX, y: e.clientY, items });
+    }
+
     return isDiscarded ? null : (
         <Draggable
             draggableId={playerHeroId}
@@ -62,6 +94,7 @@ export default function Card(props) {
                             provided.draggableProps.style,
                             snapshot
                         )}
+                        onContextMenu={buildContextMenu}
                     >
                         {playerNum === 2 ? (
                             <CardEffects
@@ -123,6 +156,14 @@ export default function Card(props) {
                                 alt={`${name} Card`}
                             />
                         </div>
+                        {menu && (
+                            <ContextMenu
+                                x={menu.x}
+                                y={menu.y}
+                                items={menu.items}
+                                onClose={() => setMenu(null)}
+                            />
+                        )}
                         {playerNum === 2 ? (
                             <CardEffects
                                 type='ally'
