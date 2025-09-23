@@ -1,0 +1,119 @@
+.card {
+    position: relative;
+    display: flex;
+    margin: 6px;
+    z-index: 20;
+}
+
+.cardcontainer {
+    position: relative;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: clamp(16px, 1vw, 2rem);
+}
+
+.show-card {
+}
+
+.hide-card {
+    border: 2px solid #dddbe0;
+}
+
+.dead {
+    filter: grayscale(1);
+}
+
+.cardimg {
+    max-height: 100%;
+    max-width: 100%;
+    border-radius: 10%;
+}
+
+#cardfocuscontainer {
+    display: flex;
+    justify-content: center;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+}
+
+.cardfocus {
+    position: fixed;
+    display: flex;
+    top: 20vh;
+    height: 60vh;
+    min-height: 400px;
+    z-index: 50;
+    pointer-events: initial;
+}
+
+.cardfocus .ability {
+    position: absolute;
+    left: 10%;
+    width: 80%;
+    z-index: 60;
+    cursor: pointer;
+    /*border: 1px solid black;*/
+}
+
+.cardfocus .ability1 {
+    bottom: 16%;
+    height: 15%;
+}
+
+.cardfocus .ability2 {
+    bottom: 0%;
+    height: 15%;
+}
+
+.carddisplay-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    padding: 4px;
+}
+
+ul.cardlist {
+    list-style: none;
+}
+
+ul.cardlist.vertical {
+    overflow-x: hidden;
+}
+
+ul.cardlist.horizontal {
+}
+
+ul.cardlist.overflown {
+    justify-content: flex-start;
+}
+
+.cardlist {
+    min-height: 50px;
+}
+
+.handlist {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+    max-height: 100%;
+    min-height: 150px;
+    padding: 0;
+    margin: 0;
+}
+
+.handlist .not-dragging {
+    transform: none !important;
+}
+
+.handlist.dragging-over {
+}
+
+.handlist .cardcontainer {
+}

@@ -1,0 +1,49 @@
+button {
+    width: 60px;
+    height: 60px;
+    margin: 10px;
+    font-family: inherit;
+    font-size: 1.5rem;
+    border: 3px solid #333333;
+    border-radius: 10%;
+    background-color: #333333;
+    color: white;
+}
+
+.playerbuttons {
+    display: flex;
+    flex-direction: row;
+}
+
+.playerbuttons button {
+    cursor: pointer;
+}
+
+.playerbuttons button:hover {
+    background-color: #fa9c1e;
+}
+
+.playerbuttons button:disabled {
+    background-color: transparent;
+    color: #333333;
+}
+
+.passbutton {
+    background-color: #fa9c1e;
+    color: #333333;
+}
+
+.passbutton:active {
+    background-color: #333333;
+    color: white;
+}
+
+.drawbutton {
+}
+
+.endturnbutton {
+}
+
+.common-buttons {
+    display: flex;
+}

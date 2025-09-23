@@ -1,0 +1,195 @@
+@media (max-width: 1300px) {
+    #root {
+        width: 100vw;
+    }
+    #landscape-wrapper,
+    .playerhalf,
+    .board {
+        flex-direction: column;
+        width: 100%;
+    }
+    #landscape-wrapper {
+        align-items: center;
+    }
+    .boardrow {
+        min-height: 150px;
+        overflow: hidden;
+    }
+
+    .carddisplay-container {
+        overflow: auto;
+    }
+
+    .rowlist {
+        flex-direction: row;
+    }
+    .rowcountercontainer {
+        flex-direction: row;
+        min-width: 80px;
+        align-items: center;
+        justify-content: center;
+    }
+    .rowcountercontainer2 {
+        flex-direction: column;
+    }
+    .counterarea {
+        flex-direction: column;
+    }
+    .handlist {
+        max-width: calc(100vw - 40px);
+        flex-wrap: nowrap;
+        padding-left: 2%;
+    }
+    .cardcontainer {
+        flex-basis: 12%;
+        min-width: 120px;
+    }
+
+    #player1board .effectscontainer.allyeffects,
+    #player2board .effectscontainer.enemyeffects {
+        top: 10px;
+    }
+    #player1board .effectscontainer.enemeyeffects,
+    #player2board .effectscontainer.allyeffects {
+        bottom: 10px;
+    }
+    #player1board .rowarea {
+        flex-direction: column;
+        margin: 4px 0px;
+    }
+    #player2board .rowarea {
+        flex-direction: column-reverse;
+        margin: 4px 0px;
+    }
+    #center-section {
+        flex-direction: column;
+        justify-content: center;
+        margin-top: 0;
+        flex-direction: row;
+    }
+    #match-counters {
+        margin: 0 10px;
+    }
+    #centerlogo {
+        height: 60px;
+    }
+
+    .open #tutorial {
+        width: 70vw;
+    }
+    .credit {
+        font-size: 2vw;
+    }
+}
+
+@media (min-width: 1301px) {
+    #landscape-wrapper {
+        max-height: 80vh;
+    }
+
+    #page-wrapper {
+        max-height: 100vh;
+    }
+
+    .cardcontainer {
+        font-size: clamp(16px, 1vw, 2rem);
+    }
+
+    .handlist .cardcontainer {
+        /*max-height: 15vh;   allows cards to overlap */
+        align-items: flex-start;
+        flex-basis: 50%;
+        font-size: clamp(20px, 1.5vw, 2rem);
+    }
+    .board {
+        justify-content: center;
+    }
+    .boardrow {
+        max-height: calc(100% - 100px);
+    }
+
+    .rowlist {
+        min-height: 50vh;
+    }
+
+    .rowarea {
+        max-width: 32%;
+    }
+
+    .rowcountercontainer {
+        flex-direction: column;
+        min-height: 100px;
+        align-items: center;
+        justify-content: center;
+    }
+    .counterarea {
+        flex-direction: row;
+    }
+
+    #player1board .effectscontainer.allyeffects,
+    #player2board .effectscontainer.enemyeffects {
+        left: 10px;
+    }
+    #player1board .effectscontainer.enemeyeffects,
+    #player2board .effectscontainer.allyeffects {
+        right: 10px;
+    }
+}
+
+
+@media (max-width: 800px) {
+    .title-corners {
+        font-size: 1rem;
+    }
+
+    .rowcountercontainer {
+        flex-direction: row;
+        min-width: 0px;
+    }
+
+    .rowlist {
+        overflow: auto;
+    }
+
+    .playercards-row {
+        overflow: auto;
+    }
+
+    .carddisplay-container {
+        overflow: initial;
+    }
+    .cardfocus {
+        height: 80vw;
+    }
+
+    .open #tutorial {
+        width: 80vw;
+        padding: 4px;
+        height: 80vh;
+    }
+
+    .tutorial-tab {
+        flex-basis: 33% !important;
+    }
+
+    #card-info-container {
+        flex-direction: column;
+    }
+
+    #card-info-left {
+        text-align: left !important;
+        align-items: flex-start !important;
+    }
+
+    #card-info-class {
+        align-items: flex-start !important;
+    }
+
+    .tutorial-content #card-info-center {
+        order: -1;
+    }
+
+    #hero-name-section {
+        display: none;
+    }
+}
