@@ -1,0 +1,24 @@
+﻿# Node
+owcardgame/node_modules/
+owcardgame/build/
+owcardgame/.pnp.cjs
+owcardgame/.pnp.loader.mjs
+owcardgame/.cache/
+
+# Logs
+**/npm-debug.log*
+**/yarn-debug.log*
+**/yarn-error.log*
+**/pnpm-debug.log*
+
+# Env
+**/.env*
+
+# OS/Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Misc
+**/*.local
