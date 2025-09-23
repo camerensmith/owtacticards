@@ -20,6 +20,7 @@
     max-height: 90vh;
     overflow: auto;
     min-width: 300px;
+    color: #eee;
 }
 
 .modal-header {
@@ -65,7 +66,7 @@
 
 /* Modal types */
 .modal-choice {
-    min-width: 400px;
+    min-width: 520px;
 }
 
 .modal-interrupt {
@@ -82,21 +83,33 @@
     text-align: center;
 }
 
+.choice-prompt p {
+    margin: 0 0 8px 0;
+}
+
+.choices {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
 /* Choice buttons */
 .choice-button {
     background-color: #444;
     border: 2px solid #666;
     border-radius: 6px;
     color: #eee;
-    padding: 15px 20px;
+    padding: 16px 18px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 15px;
     text-align: left;
     transition: all 0.2s ease;
-    min-height: 60px;
+    min-height: 64px;
     display: flex;
     flex-direction: column;
     justify-content: center;
+    align-items: flex-start;
+    width: 100%;
 }
 
 .choice-button:hover {
@@ -118,12 +131,20 @@
     font-weight: bold;
     margin-bottom: 5px;
     color: #fff;
+    font-size: 16px;
 }
 
 .choice-description {
     color: #ccc;
-    font-size: 12px;
+    font-size: 13px;
     line-height: 1.4;
+}
+
+.choice-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 8px;
 }
 
 /* Interrupt buttons */
@@ -200,4 +221,9 @@
     0% { opacity: 0.6; }
     50% { opacity: 1; }
     100% { opacity: 0.6; }
+}
+
+/* Prevent background scroll when modal is open */
+body.modal-open {
+    overflow: hidden;
 }

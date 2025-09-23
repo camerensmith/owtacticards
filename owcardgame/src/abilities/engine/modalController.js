@@ -24,16 +24,18 @@ const notifyModalListeners = () => {
     modalListeners.forEach(listener => listener(modalState));
 };
 
-export const showChoiceModal = (heroName, choices) => {
+export const showChoiceModal = (heroName, choices, onSelect) => {
+    try { document.body.classList.add('modal-open'); } catch (e) {}
     modalState = {
         isOpen: true,
         type: ModalTypes.CHOICE,
-        data: { heroName, choices }
+        data: { heroName, choices, onSelect }
     };
     notifyModalListeners();
 };
 
 export const showInterruptModal = (heroName, abilityName, cost, currentSynergy) => {
+    try { document.body.classList.add('modal-open'); } catch (e) {}
     modalState = {
         isOpen: true,
         type: ModalTypes.INTERRUPT,
@@ -43,6 +45,7 @@ export const showInterruptModal = (heroName, abilityName, cost, currentSynergy) 
 };
 
 export const showTargetingModal = (heroName, abilityName, targetType, validTargets) => {
+    try { document.body.classList.add('modal-open'); } catch (e) {}
     modalState = {
         isOpen: true,
         type: ModalTypes.TARGETING,
@@ -58,12 +61,13 @@ export const closeModal = () => {
         data: null
     };
     notifyModalListeners();
+    try { document.body.classList.remove('modal-open'); } catch (e) {}
 };
 
 export const getModalState = () => modalState;
 
 // Helper functions for common modal scenarios
-export const showOnEnterChoice = (heroName, onEnter1, onEnter2) => {
+export const showOnEnterChoice = (heroName, onEnter1, onEnter2, onSelect) => {
     const choices = [
         {
             title: onEnter1.name || 'Primary Ability',
@@ -74,7 +78,7 @@ export const showOnEnterChoice = (heroName, onEnter1, onEnter2) => {
             description: onEnter2.description || onEnter2
         }
     ];
-    showChoiceModal(heroName, choices);
+    showChoiceModal(heroName, choices, onSelect);
 };
 
 export const showInterruptPrompt = (heroName, abilityName, cost, currentSynergy) => {

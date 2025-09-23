@@ -52,6 +52,56 @@ export default function HeroAbilities(props) {
         targetRow,
         ignoreShields = false
     ) {
+        // Interrupt window: allow certain heroes (e.g., Tracer) to Recall before damage is applied
+        try {
+            const targetPlayerNumInterrupt = parseInt(targetCardId[0]);
+            const targetHeroIdInterrupt = targetCardId.slice(1);
+            // Only offer interrupt to the owner of the target card on their own hero with an interrupt
+            if (targetHeroIdInterrupt === 'tracer') {
+                const currentRowSynergy = gameState.rows[targetRow]?.synergy ?? 0;
+                const interruptCost = 2; // Tracer Recall cost
+                if (currentRowSynergy >= interruptCost) {
+                    const wantInterrupt = window.confirm('Tracer can Recall (2 synergy) to avoid this damage. Activate?');
+                    if (wantInterrupt) {
+                        // Deduct synergy from the target row
+                        dispatch({
+                            type: ACTIONS.DEDUCT_SYNERGY,
+                            payload: { rowId: targetRow, synergyCost: interruptCost },
+                        });
+
+                        // Clear counters/effects and set not played
+                        dispatch({
+                            type: ACTIONS.EDIT_CARD,
+                            payload: {
+                                playerNum: targetPlayerNumInterrupt,
+                                targetCardId: targetCardId,
+                                editKeys: ['allyEffects', 'enemyEffects', 'shield', 'isPlayed'],
+                                editValues: [[], [], 0, false],
+                            },
+                        });
+
+                        // Move the card back to owner's hand
+                        const targetCardIndex = $(`#${targetCardId}`).closest('li').index();
+                        dispatch({
+                            type: ACTIONS.MOVE_CARD,
+                            payload: {
+                                targetCardId: targetCardId,
+                                startRowId: targetRow,
+                                startIndex: targetCardIndex,
+                                finishRowId: `player${targetPlayerNumInterrupt}hand`,
+                                finishIndex: 0,
+                            },
+                        });
+
+                        // Skip applying this instance of damage
+                        return { targetShield: 0, targetHealth: gameState.playerCards[`player${targetPlayerNumInterrupt}cards`].cards[targetCardId].health };
+                    }
+                }
+            }
+        } catch (e) {
+            // Fail-safe: do nothing special if interrupt flow errors
+        }
+
         // Identify target player
         const targetPlayerNum = parseInt(targetCardId[0]);
         const targetPlayerCards =

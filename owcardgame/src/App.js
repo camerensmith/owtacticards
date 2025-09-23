@@ -19,6 +19,7 @@ import { showOnEnterChoice, subscribeToModal, closeModal } from './abilities/eng
 import ChoiceModal from './components/modals/ChoiceModal';
 import InterruptModal from './components/modals/InterruptModal';
 import { subscribe as subscribeToActions, Actions } from './abilities/engine/actionsBus';
+import $ from 'jquery';
 
 export const ACTIONS = {
     ADD_CARD_EFFECT: 'add-card-effect',
@@ -374,6 +375,42 @@ function checkOnEnterAbilities(playerHeroId, rowId, playerNum) {
     const heroId = playerHeroId.slice(1);
     const heroData = data.heroes[heroId];
     
+    // Special-case: Ashe onEnter choice (since data.js doesn't carry onEnter1/2)
+    if (heroId === 'ashe') {
+        const onEnter1 = { name: 'The Viper', description: 'Deal 2 damage to one enemy ignoring shields.' };
+        const onEnter2 = { name: 'The Viper (Split Fire)', description: 'Deal 1 damage to two enemies in the same row ignoring shields.' };
+        showOnEnterChoice('Ashe', onEnter1, onEnter2, (choiceIndex) => {
+            if (choiceIndex === 0) {
+                // 2 damage ignoring shields to one enemy
+                $('.card').one('click', (e) => {
+                    const targetCardId = $(e.target).closest('.card').attr('id');
+                    const targetRow = $(e.target).closest('.row').attr('id');
+                    if (targetRow[0] === 'p' || parseInt(targetRow[0]) === playerNum) return;
+                    applyAsheDamage(targetCardId, targetRow, 2, true);
+                });
+            } else if (choiceIndex === 1) {
+                // 1 damage ignoring shields to two enemies in the same row
+                let selected = [];
+                const handler = (e) => {
+                    const targetCardId = $(e.target).closest('.card').attr('id');
+                    const targetRow = $(e.target).closest('.row').attr('id');
+                    if (targetRow[0] === 'p' || parseInt(targetRow[0]) === playerNum) return;
+                    if (selected.length === 0) {
+                        selected.push({ targetCardId, targetRow });
+                    } else if (selected.length === 1) {
+                        if (selected[0].targetRow !== targetRow) return;
+                        selected.push({ targetCardId, targetRow });
+                        $('.card').off('click', handler);
+                        applyAsheDamage(selected[0].targetCardId, selected[0].targetRow, 1, true);
+                        applyAsheDamage(selected[1].targetCardId, selected[1].targetRow, 1, true);
+                    }
+                };
+                $('.card').on('click', handler);
+            }
+        });
+        return;
+    }
+
     if (!heroData) return;
     
     // Check if hero has onEnter abilities from hero.json
@@ -383,8 +420,45 @@ function checkOnEnterAbilities(playerHeroId, rowId, playerNum) {
     const onEnter2 = heroData.onEnter2;
     
     if (onEnter1 && onEnter2) {
-        // Show choice modal
-        showOnEnterChoice(heroData.name, onEnter1, onEnter2);
+        // Show choice modal and execute selected branch
+        showOnEnterChoice(heroData.name, onEnter1, onEnter2, (choiceIndex) => {
+            if (heroId === 'ashe') {
+                // Modularized Ashe onEnter choice
+                if (choiceIndex === 0) {
+                    // 2 damage ignoring shields to one enemy in chosen row
+                    // Let user click an enemy card in any row, but require same row constraint below
+                    $('.card').one('click', (e) => {
+                        const targetCardId = $(e.target).closest('.card').attr('id');
+                        const targetRow = $(e.target).closest('.row').attr('id');
+                        if (targetRow[0] === 'p' || parseInt(targetRow[0]) === playerNum) return;
+                        applyAsheDamage(targetCardId, targetRow, 2, true);
+                    });
+                } else if (choiceIndex === 1) {
+                    // 1 damage ignoring shields to two enemies in the same row
+                    let selected = [];
+                    const handler = (e) => {
+                        const targetCardId = $(e.target).closest('.card').attr('id');
+                        const targetRow = $(e.target).closest('.row').attr('id');
+                        if (targetRow[0] === 'p' || parseInt(targetRow[0]) === playerNum) return;
+                        if (selected.length === 0) {
+                            selected.push({ targetCardId, targetRow });
+                        } else if (selected.length === 1) {
+                            // enforce same row
+                            if (selected[0].targetRow !== targetRow) return;
+                            selected.push({ targetCardId, targetRow });
+                            $('.card').off('click', handler);
+                            // apply to both
+                            applyAsheDamage(selected[0].targetCardId, selected[0].targetRow, 1, true);
+                            applyAsheDamage(selected[1].targetCardId, selected[1].targetRow, 1, true);
+                        }
+                    };
+                    $('.card').on('click', handler);
+                }
+            } else {
+                // Generic execution fallback
+                executeOnEnterAbility(choiceIndex === 0 ? onEnter1 : onEnter2, `${playerNum}${heroId}`, rowId, playerNum);
+            }
+        });
     } else if (onEnter1) {
         // Auto-execute onEnter1
         executeOnEnterAbility(onEnter1, playerHeroId, rowId, playerNum);
@@ -396,6 +470,20 @@ function executeOnEnterAbility(ability, playerHeroId, rowId, playerNum) {
     // This would integrate with the existing ability system
     console.log(`Executing onEnter ability: ${ability} for ${playerHeroId} in ${rowId}`);
     // TODO: Implement actual ability execution
+}
+
+// Helper for Ashe onEnter damage
+function applyAsheDamage(targetCardId, targetRow, dmg, ignoreShields) {
+    try {
+        // Route through HeroAbilities applyDamage by dispatching a synthetic event would be ideal;
+        // for now, access via a minimal duplication using actions is non-trivial.
+        // As a pragmatic step, we publish an action that HeroAbilities already listens for via abilities.
+        // Fallback: directly call window-level helper not available; use minimal jQuery event to trigger ability1 pattern if present.
+        // Interim solution: log intent. Replace with centralized damage bus later.
+        console.log('Ashe onEnter damage', { targetCardId, targetRow, dmg, ignoreShields });
+        // Note: actual damage application currently lives in HeroAbilities.applyDamage.
+        // Proper integration will move this into the ability engine.
+    } catch (e) {}
 }
 
 export default function App() {
@@ -791,7 +879,8 @@ export default function App() {
                     title="Choose Ability"
                     choices={modalState.data?.choices || []}
                     onSelect={(choiceIndex) => {
-                        console.log('Selected choice:', choiceIndex);
+                        const cb = modalState.data?.onSelect;
+                        if (typeof cb === 'function') cb(choiceIndex);
                         closeModal();
                     }}
                     heroName={modalState.data?.heroName || ''}
