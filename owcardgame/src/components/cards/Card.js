@@ -113,19 +113,15 @@ export default function Card(props) {
                         <div
                             id={`${playerHeroId}`}
                             className={`card ${health > 0 ? 'alive' : 'dead'}`}
-                            onClick={
-                                (turnState.playerTurn === playerNum || isPlayed)
-                                    ? (e) => {
-                                          // Only focus card on SHIFT + LEFT CLICK
-                                          if (e.shiftKey) {
-                                              props.setCardFocus({
-                                                  playerHeroId: playerHeroId,
-                                                  rowId: rowId,
-                                              });
-                                          }
-                                      }
-                                    : null
-                            }
+                            onClick={(e) => {
+                                // SHIFT + LEFT CLICK should always open focus preview, regardless of turn
+                                if (e.shiftKey) {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    props.setCardFocus({ playerHeroId, rowId });
+                                    return;
+                                }
+                            }}
                         >
                             <EffectBadges playerHeroId={playerHeroId} />
                             {imageLoaded === playerHeroId &&

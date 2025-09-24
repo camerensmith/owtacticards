@@ -22,12 +22,12 @@ export default function CounterArea(props) {
     return (
         <div className={`${type}-counterarea counterarea`}>
             {effects &&
-                effects.map((effect) => {
+                effects.map((effect, idx) => {
                     return (
                         <HeroCounter
                             playerHeroId={effect.playerHeroId}
                             heroId={effect.hero}
-                            key={effect.playerHeroId}
+                            key={`${effect.hero}-${effect.id || 'row'}-${idx}`}
                             setCardFocus={props.setCardFocus}
                             playerNum={props.playerNum}
                             rowId={rowId}

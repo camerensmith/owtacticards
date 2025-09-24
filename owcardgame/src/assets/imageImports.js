@@ -123,6 +123,11 @@ import bobAbility from './audio/bob-ability.mp3';
 import asheEnter from './audio/ashe-enter.mp3';
 import asheIntro from './audio/ashe-intro.mp3';
 import baptisteImmortality from './audio/baptiste-immortality.mp3';
+import baptisteUltimate from './audio/baptiste-ultimate.mp3';
+import baptisteIntro from './audio/baptiste-intro.mp3';
+import baptisteEnter from './audio/baptiste-enter.mp3';
+import baptisteAbility1 from './audio/baptiste-ability1.mp3';
+import baptisteAbility2 from './audio/baptiste-ability2.mp3';
 import bastionUlt from './audio/bastion-ult.mp3';
 import genjiCutting from './audio/genji-cutting.mp3';
 import genjiUlt from './audio/genji-ult.mp3';
@@ -221,7 +226,12 @@ export const abilityAudioFiles = {
     'bob-ability': bobAbility,
     'ashe-enter': asheEnter,
     'ashe-intro': asheIntro,
+    'baptiste-intro': baptisteIntro,
+    'baptiste-enter': baptisteEnter,
+    'baptiste-ability1': baptisteAbility1,
+    'baptiste-ability2': baptisteAbility2,
     'baptiste-immortality': baptisteImmortality,
+    'baptiste-ultimate': baptisteUltimate,
     'bastion-ult': bastionUlt,
     'genji-cutting': genjiCutting,
     'genji-ult': genjiUlt,

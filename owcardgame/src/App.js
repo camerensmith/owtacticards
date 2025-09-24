@@ -6,7 +6,9 @@ import './App.css';
 import PlayerHalf from 'components/layout/PlayerHalf';
 import TitleCard from 'components/layout/TitleCard';
 import Footer from 'components/layout/Footer';
-import CardFocus from 'components/cards/CardFocus';
+// Removed CardFocus; migrate turn effects to independent runner
+import TurnEffectsRunner from './abilities/engine/TurnEffectsRunner';
+import CardFocusLite from 'components/cards/CardFocusLite';
 import MatchCounter from 'components/counters/MatchCounter';
 import data from 'data';
 import getRandInt, { PlayerCard } from 'helper';
@@ -44,6 +46,9 @@ export const ACTIONS = {
     UPDATE_ROW: 'update-row',
     UPDATE_SYNERGY: 'update-synergy',
     DEDUCT_SYNERGY: 'deduct-synergy',
+    SET_INVULNERABLE_SLOTS: 'set-invulnerable-slots',
+    CLEAR_INVULNERABLE_SLOTS: 'clear-invulnerable-slots',
+    REMOVE_ROW_EFFECT: 'remove-row-effect',
 };
 
 function reducer(gameState, action) {
@@ -378,6 +383,51 @@ function reducer(gameState, action) {
             });
         }
 
+        // Set invulnerable slots for Immortality Field
+        case ACTIONS.SET_INVULNERABLE_SLOTS: {
+            const { rowId, sourceCardId, sourceRowId } = action.payload;
+            
+            return produce(gameState, (draft) => {
+                // Find Baptiste's position in the row
+                const cardIds = draft.rows[sourceRowId].cardIds;
+                const centerIndex = cardIds.indexOf(sourceCardId);
+                if (centerIndex === -1) return;
+
+                const leftIndex = centerIndex - 1;
+                const rightIndex = centerIndex + 1;
+
+                if (!draft.invulnerableSlots) draft.invulnerableSlots = {};
+                if (!draft.invulnerableSlots[sourceRowId]) draft.invulnerableSlots[sourceRowId] = {};
+
+                // Store per-source so multiple fields can overlap
+                draft.invulnerableSlots[sourceRowId][sourceCardId] = [centerIndex, leftIndex, rightIndex]
+                    .filter(i => i >= 0 && i < cardIds.length);
+            });
+        }
+
+        // Clear invulnerable slots
+        case ACTIONS.CLEAR_INVULNERABLE_SLOTS: {
+            const { rowId } = action.payload;
+            
+            return produce(gameState, (draft) => {
+                if (draft.invulnerableSlots && draft.invulnerableSlots[rowId]) {
+                    delete draft.invulnerableSlots[rowId];
+                }
+            });
+        }
+
+        // Remove row effect
+        case ACTIONS.REMOVE_ROW_EFFECT: {
+            const { rowId, effectType, effectId } = action.payload;
+            return produce(gameState, (draft) => {
+                if (draft.rows[rowId] && draft.rows[rowId][effectType]) {
+                    draft.rows[rowId][effectType] = draft.rows[rowId][effectType].filter(
+                        effect => effect.id !== effectId
+                    );
+                }
+            });
+        }
+
         default:
             return gameState;
     }
@@ -408,6 +458,11 @@ function checkOnEnterAbilities(playerHeroId, rowId, playerNum) {
         abilitiesIndex.ana.onEnter({ playerNum, rowId });
         // Trigger onEnter ability 1 targeting/heal/damage
         if (abilitiesIndex.ana.onEnterAbility1) abilitiesIndex.ana.onEnterAbility1({ playerNum, playerHeroId });
+        return;
+    }
+
+    if (heroId === 'baptiste' && abilitiesIndex?.baptiste?.onEnter) {
+        abilitiesIndex.baptiste.onEnter({ playerNum, rowId });
         return;
     }
 
@@ -555,7 +610,50 @@ export default function App() {
         window.__ow_setRowPower = (playerNum, rowPosition, powerValue) => {
             dispatch({ type: ACTIONS.SET_POWER, payload: { playerNum, rowPosition, powerValue } });
         };
-        return () => { window.__ow_appendRowEffect = null; window.__ow_getRow = null; window.__ow_setRowArray = null; window.__ow_updateSynergy = null; window.__ow_getCard = null; window.__ow_getMaxHealth = null; window.__ow_setCardHealth = null; window.__ow_isSpecial = null; window.__ow_setRowPower = null; };
+        window.__ow_setInvulnerableSlots = (rowId, sourceCardId, sourceRowId) => {
+            dispatch({
+                type: ACTIONS.SET_INVULNERABLE_SLOTS,
+                payload: { rowId, sourceCardId, sourceRowId }
+            });
+        };
+        window.__ow_clearInvulnerableSlots = (rowId) => {
+            dispatch({
+                type: ACTIONS.CLEAR_INVULNERABLE_SLOTS,
+                payload: { rowId }
+            });
+        };
+        window.__ow_isSlotInvulnerable = (rowId, slotIndex) => {
+            const invulnMap = gameState.invulnerableSlots?.[rowId];
+            if (!invulnMap) return false;
+            // Check if any active field protects this slot
+            const isInvuln = Object.values(invulnMap).some(slotArray => 
+                Array.isArray(slotArray) && slotArray.includes(slotIndex)
+            );
+            if (isInvuln) {
+                console.log(`Slot ${slotIndex} in row ${rowId} is invulnerable`, invulnMap);
+            }
+            return isInvuln;
+        };
+        window.__ow_removeRowEffect = (rowId, effectType, effectId) => {
+            dispatch({
+                type: ACTIONS.REMOVE_ROW_EFFECT,
+                payload: { rowId, effectType, effectId }
+            });
+        };
+        window.__ow_cleanupImmortalityField = (rowId) => {
+            // Clear invulnerable slots
+            dispatch({
+                type: ACTIONS.CLEAR_INVULNERABLE_SLOTS,
+                payload: { rowId }
+            });
+            // Remove the effect from the row
+            dispatch({
+                type: ACTIONS.REMOVE_ROW_EFFECT,
+                payload: { rowId, effectType: 'allyEffects', effectId: 'immortality-field' }
+            });
+            console.log(`Manual cleanup: Immortality Field cleared for row ${rowId}`);
+        };
+        return () => { window.__ow_appendRowEffect = null; window.__ow_getRow = null; window.__ow_setRowArray = null; window.__ow_updateSynergy = null; window.__ow_getCard = null; window.__ow_getMaxHealth = null; window.__ow_setCardHealth = null; window.__ow_isSpecial = null; window.__ow_setRowPower = null; window.__ow_setInvulnerableSlots = null; window.__ow_clearInvulnerableSlots = null; window.__ow_isSlotInvulnerable = null; window.__ow_removeRowEffect = null; window.__ow_cleanupImmortalityField = null; };
     }, [gameState]);
     // Game logic state
     const [gameLogic, setGameLogic] = useState({
@@ -887,6 +985,12 @@ export default function App() {
                             abilitiesIndex.ana.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
                         } catch (e) {
                             console.log('Error executing ANA ultimate:', e);
+                        }
+                    } else if (heroId === 'baptiste' && abilitiesIndex?.baptiste?.onUltimate) {
+                        try {
+                            abilitiesIndex.baptiste.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
+                        } catch (e) {
+                            console.log('Error executing BAPTISTE ultimate:', e);
                         }
                     } else {
                         console.log(`Executing ultimate for ${playerHeroId} in ${rowId} (cost: ${adjustedCost})`);
@@ -1255,6 +1359,7 @@ export default function App() {
                             <PlayerHalf
                                 playerNum={1}
                                 setCardFocus={setCardFocus}
+                                cardFocus={cardFocus}
                                 nextCardDraw={nextCardDraw}
                                 setNextCardDraw={setNextCardDraw}
                                 gameLogic={gameLogic}
@@ -1268,22 +1373,14 @@ export default function App() {
                             <PlayerHalf
                                 playerNum={2}
                                 setCardFocus={setCardFocus}
+                                cardFocus={cardFocus}
                                 nextCardDraw={nextCardDraw}
                                 setNextCardDraw={setNextCardDraw}
                                 gameLogic={gameLogic}
                                 trackDrawnHero={trackDrawnHero}
                             />
                         </DragDropContext>
-                        <CardFocus
-                            setCardFocus={setCardFocus}
-                            unsetCardFocus={() => {
-                                setCardFocus('invisible');
-                            }}
-                            cardFocus={cardFocus || 'invisible'}
-                            setNextCardDraw={setNextCardDraw}
-                            playAudio={playAudio}
-                            style={targetingMessage ? { display: 'none' } : undefined}
-                        />
+                        <TurnEffectsRunner />
                     </gameContext.Provider>
                 </turnContext.Provider>
             </div>

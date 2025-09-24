@@ -4,6 +4,8 @@ import SynergyCounter from 'components/counters/SynergyCounter';
 import ShieldCounter from 'components/counters/ShieldCounter';
 import CounterArea from 'components/layout/CounterArea';
 import CardDisplay from 'components/layout/CardDisplay';
+import ImmortalityFieldOverlay from 'components/effects/ImmortalityFieldOverlay';
+import CardFocusLite from 'components/cards/CardFocusLite';
 import { ACTIONS } from 'App';
 import { isOverflown } from 'helper';
 
@@ -95,13 +97,30 @@ export default function BoardRow(props) {
                     <span>{props.label}</span>
                     <span>Row</span>
                 </div>
-                <CardDisplay
-                    playerNum={props.playerNum}
-                    droppableId={props.rowId}
-                    listClass='rowlist'
-                    rowId={props.rowId}
-                    setCardFocus={props.setCardFocus}
-                />
+                <div style={{ position: 'relative', zIndex: 0 }} data-row-id={rowId}>
+                    <CardDisplay
+                        playerNum={props.playerNum}
+                        droppableId={props.rowId}
+                        listClass='rowlist'
+                        rowId={props.rowId}
+                        setCardFocus={props.setCardFocus}
+                    />
+                    {/* Render Immortality Field overlays for each Baptiste in this row */}
+                    {gameState.rows[rowId].cardIds.map(cardId => {
+                        const card = gameState.playerCards[`player${playerNum}cards`]?.cards?.[cardId];
+                        if (card && card.id === 'baptiste') {
+                            return (
+                                <ImmortalityFieldOverlay
+                                    key={`immortality-${cardId}`}
+                                    playerHeroId={cardId}
+                                    rowId={rowId}
+                                />
+                            );
+                        }
+                        return null;
+                    })}
+                </div>
+                <CardFocusLite focus={props.cardFocus && props.cardFocus.playerHeroId ? props.cardFocus : null} onClose={() => props.setCardFocus('invisible')} />
             </div>
         </div>
     );

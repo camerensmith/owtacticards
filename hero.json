@@ -36,8 +36,8 @@
     "middle_synergy": 2,
     "back_power": 1,
     "back_synergy": 3,
-    "on_enter1": "Biotic Launcher — Deal 1 damage to up to three adjacent enemies in target row",
-    "on_enter2": "Biotic Launcher — Heal 1 health to up to three adjacent Allies in target row.",
+    "on_enter1": "Biotic Launcher — Deal 1 damage to up to three adjacent enemies in target column.",
+    "on_enter2": "Biotic Launcher — Heal 1 health to up to three adjacent Allies in target column.",
     "ultimate": "Immortality Field (3): Baptiste and Heroes immediately to his left and right are immune to all damage until the start of your next turn."
   },
   {

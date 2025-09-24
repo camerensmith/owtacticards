@@ -3386,7 +3386,14 @@ export default function HeroAbilities(props) {
                 // Run ally row effects
                 for (let effect of allyRowEffects) {
                     if (effect.on === 'turnstart') {
-                        abilities[effect.hero][effect.id].run(rowId);
+                        // Special handling for immortality field cleanup
+                        if (effect.id === 'immortality-field' && effect.hero === 'baptiste') {
+                            if (abilities[effect.hero]?.cleanupImmortalityField) {
+                                abilities[effect.hero].cleanupImmortalityField(rowId);
+                            }
+                        } else {
+                            abilities[effect.hero][effect.id].run(rowId);
+                        }
                         console.log(`running ${effect.id} on ${rowId}`);
                     }
                 }

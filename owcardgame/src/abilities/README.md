@@ -4,9 +4,11 @@ Modular Ability System Architecture
 ## Core Engine Modules
 
 ### engine/damageBus.js
-Centralized damage application system.
+Centralized damage application system with invulnerability support.
 - `dealDamage(cardId, rowId, amount, ignoreShields=false)` - Apply damage to a card
 - `subscribe(listener)` - Listen for damage events (used by HeroAbilities)
+- **Invulnerability Check**: Automatically blocks damage to invulnerable slots
+- **Debug Logging**: Shows invulnerability checks and damage blocking
 
 ### engine/targetingBus.js
 Manages targeting UI state and interactions.
@@ -46,6 +48,13 @@ DOM/jQuery targeting logic abstraction.
 - `selectCardTarget()` - Returns Promise<{cardId, rowId}> for card selection
 - `selectRowTarget()` - Returns Promise<{rowId}> for row selection
 - `selectRowTargetWithSound(heroId, cardId, eventName)` - Row selection with audio
+
+### engine/TurnEffectsRunner.js
+Handles turn-start effects and cleanup for all heroes.
+- **Turn Change Detection**: Automatically detects when turns change
+- **Effect Processing**: Runs `on: 'turnstart'` effects for all heroes
+- **Cleanup Management**: Calls cleanup functions when effects expire
+- **Debug Logging**: Shows turn changes and effect processing
 
 ### engine/aimLineBus.js (Visual Source→Target Indicator)
 Lightweight bus to show a line/arrow from a source element (e.g., a card) to the cursor while targeting.
@@ -199,6 +208,25 @@ export default { onEnter };
 ### onEnter Variants
 - **onEnter1 only**: Auto-executes the ability
 - **onEnter1 + onEnter2**: Show a choice modal; execute selected ability once
+
+When a hero defines two on-enter options, always present a modal to the player to choose which one to run. Use the shared choice modal helper:
+
+```javascript
+import { showOnEnterChoice } from '../engine/modalController';
+
+const opt1 = { name: 'Ability 1', description: 'Describe option 1' };
+const opt2 = { name: 'Ability 2', description: 'Describe option 2' };
+
+showOnEnterChoice('HeroName', opt1, opt2, (choiceIndex) => {
+  if (choiceIndex === 0) {
+    // resolve option 1
+  } else {
+    // resolve option 2
+  }
+});
+```
+
+This matches the pattern used by Ashe and Baptiste: modal → targeting prompt(s) with an aim line → resolve with overlays and sounds.
 
 ### Synergy Rules
 - Ultimates require row synergy ≥ cost to activate
@@ -417,6 +445,36 @@ soundController.autoRegisterAllHeroSounds();
 - Subscribe to modal state changes for UI updates
 - Always clean up targeting state when modals close
 
+## Card Focus System
+
+### CardFocusLite Component
+A lightweight card preview system for SHIFT+Click interactions.
+
+**Features:**
+- **SHIFT+Left Click** on any card to show a large preview
+- **Non-interactive** - No ability activation from focused view
+- **Transparent background** - Keeps battlefield visible
+- **Auto-close** - Click anywhere to close
+
+**Implementation:**
+```javascript
+// In Card.js - handle SHIFT+Click
+onClick={(e) => {
+    if (e.shiftKey && e.button === 0) { // SHIFT+Left Click
+        props.setCardFocus({
+            playerHeroId: props.playerHeroId,
+            rowId: props.rowId
+        });
+    }
+}}
+
+// In BoardRow.js - render CardFocusLite
+<CardFocusLite 
+    focus={props.cardFocus && props.cardFocus.playerHeroId ? props.cardFocus : null} 
+    onClose={() => props.setCardFocus('invisible')} 
+/>
+```
+
 ## Development Workflow
 
 1. **Create hero module** in `src/abilities/heroes/<heroId>.js`
@@ -425,6 +483,68 @@ soundController.autoRegisterAllHeroSounds();
 4. **Add to index.js** to register the hero
 5. **Test integration** with existing UI components
 6. **Update documentation** with new patterns
+
+## Special Effects System
+
+### Invulnerability System
+The game supports slot-based invulnerability through the damage bus and game state.
+
+**Implementation:**
+- `gameState.invulnerableSlots[rowId][sourceCardId] = [slotIndices]` - Stores protected slots
+- `window.__ow_isSlotInvulnerable(rowId, slotIndex)` - Checks if a slot is protected
+- `window.__ow_setInvulnerableSlots(rowId, sourceCardId, sourceRowId)` - Sets protected slots
+- `window.__ow_clearInvulnerableSlots(rowId)` - Clears protected slots
+
+**Example - Baptiste Immortality Field:**
+```javascript
+// Set invulnerable slots (Baptiste + adjacent)
+window.__ow_setInvulnerableSlots(rowId, playerHeroId, rowId);
+
+// Add effect for cleanup
+const immortalityEffect = {
+    id: 'immortality-field',
+    hero: 'baptiste',
+    type: 'invulnerability',
+    sourceCardId: playerHeroId,
+    sourceRowId: rowId,
+    on: 'turnstart',
+    tooltip: 'Immortality Field: Adjacent slots are invulnerable to damage'
+};
+window.__ow_appendRowEffect(rowId, 'allyEffects', immortalityEffect);
+
+// Cleanup function
+export function cleanupImmortalityField(rowId) {
+    window.__ow_clearInvulnerableSlots(rowId);
+    window.__ow_removeRowEffect(rowId, 'allyEffects', 'immortality-field');
+}
+```
+
+### Visual Overlays
+Custom React components for visual effects that follow heroes.
+
+**Example - ImmortalityFieldOverlay:**
+- Renders as a child of BoardRow with `position: absolute`
+- Automatically follows the hero when they move
+- Uses CSS transforms for smooth positioning
+- Cleans up when the effect expires
+
+**Implementation Pattern:**
+```javascript
+// In BoardRow.js - render overlay for each hero with active effects
+{gameState.rows[rowId].cardIds.map(cardId => {
+    const card = gameState.playerCards[`player${playerNum}cards`]?.cards?.[cardId];
+    if (card && card.id === 'baptiste') {
+        return (
+            <ImmortalityFieldOverlay
+                key={`immortality-${cardId}`}
+                playerHeroId={cardId}
+                rowId={rowId}
+            />
+        );
+    }
+    return null;
+})}
+```
 
 ## Example: Complete Hero Implementation
 
