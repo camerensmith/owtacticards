@@ -216,6 +216,15 @@ function reducer(gameState, action) {
             });
         }
 
+        case 'external-set-card-health': {
+            const { targetCardId, newHealth } = action.payload || {};
+            const playerNum = parseInt(targetCardId[0]);
+            return produce(gameState, (draft) => {
+                const card = draft.playerCards[`player${playerNum}cards`].cards[targetCardId];
+                if (card) card.health = newHealth;
+            });
+        }
+
         // Replaces existing values with new values
         case ACTIONS.EDIT_ROW: {
             const targetRow = action.payload.targetRow;
@@ -394,6 +403,14 @@ function checkOnEnterAbilities(playerHeroId, rowId, playerNum) {
         return;
     }
 
+    if (heroId === 'ana' && abilitiesIndex?.ana?.onEnter) {
+        // Play placement via module
+        abilitiesIndex.ana.onEnter({ playerNum, rowId });
+        // Trigger onEnter ability 1 targeting/heal/damage
+        if (abilitiesIndex.ana.onEnterAbility1) abilitiesIndex.ana.onEnterAbility1({ playerNum, playerHeroId });
+        return;
+    }
+
     if (!heroData) return;
     
     // Check if hero has onEnter abilities from hero.json
@@ -520,7 +537,25 @@ export default function App() {
                 payload: { rowId, synergyCost: delta }
             });
         };
-        return () => { window.__ow_appendRowEffect = null; window.__ow_getRow = null; window.__ow_setRowArray = null; window.__ow_updateSynergy = null; };
+        window.__ow_getCard = (playerHeroId) => {
+            const pn = parseInt(playerHeroId[0]);
+            return gameState.playerCards[`player${pn}cards`].cards[playerHeroId];
+        };
+        window.__ow_getMaxHealth = (playerHeroId) => {
+            // Lookup from data.js heroes
+            const heroId = playerHeroId.slice(1);
+            return data.heroes[heroId]?.health ?? undefined;
+        };
+        window.__ow_setCardHealth = (playerHeroId, newHealth) => {
+            dispatch({ type: 'external-set-card-health', payload: { targetCardId: playerHeroId, newHealth } });
+        };
+        window.__ow_isSpecial = (heroId) => {
+            return !!data.heroes[heroId]?.special;
+        };
+        window.__ow_setRowPower = (playerNum, rowPosition, powerValue) => {
+            dispatch({ type: ACTIONS.SET_POWER, payload: { playerNum, rowPosition, powerValue } });
+        };
+        return () => { window.__ow_appendRowEffect = null; window.__ow_getRow = null; window.__ow_setRowArray = null; window.__ow_updateSynergy = null; window.__ow_getCard = null; window.__ow_getMaxHealth = null; window.__ow_setCardHealth = null; window.__ow_isSpecial = null; window.__ow_setRowPower = null; };
     }, [gameState]);
     // Game logic state
     const [gameLogic, setGameLogic] = useState({
@@ -846,6 +881,12 @@ export default function App() {
                             abilitiesIndex.bob.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
                         } catch (e) {
                             console.log('Error executing BOB ultimate:', e);
+                        }
+                    } else if (heroId === 'ana' && abilitiesIndex?.ana?.onUltimate) {
+                        try {
+                            abilitiesIndex.ana.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
+                        } catch (e) {
+                            console.log('Error executing ANA ultimate:', e);
                         }
                     } else {
                         console.log(`Executing ultimate for ${playerHeroId} in ${rowId} (cost: ${adjustedCost})`);

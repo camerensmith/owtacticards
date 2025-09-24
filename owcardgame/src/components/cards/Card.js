@@ -8,6 +8,7 @@ import ShieldCounter from 'components/counters/ShieldCounter';
 import { heroCardImages } from '../../assets/imageImports';
 import ContextMenu from './ContextMenu';
 import actionsBus, { Actions } from '../../abilities/engine/actionsBus';
+import effectsBus, { Effects } from '../../abilities/engine/effectsBus';
 
 export default function Card(props) {
     // Context
@@ -126,6 +127,7 @@ export default function Card(props) {
                                     : null
                             }
                         >
+                            <EffectBadges playerHeroId={playerHeroId} />
                             {imageLoaded === playerHeroId &&
                                 (turnState.playerTurn === playerNum ||
                                 isPlayed ? (
@@ -185,4 +187,36 @@ export default function Card(props) {
             )}
         </Draggable>
     );
+}
+
+function EffectBadges({ playerHeroId }) {
+    const [badge, setBadge] = React.useState(null);
+    React.useEffect(() => {
+        const unsub = effectsBus.subscribe((event) => {
+            if (!event || !event.type) return;
+            if (event.type === 'overlay:heal' && event.payload.cardId === playerHeroId) {
+                setBadge({ text: `+${event.payload.amount || 1}`, color: '#2ecc71' });
+                setTimeout(() => setBadge(null), 900);
+            }
+            if (event.type === 'overlay:damage' && event.payload.cardId === playerHeroId) {
+                setBadge({ text: `-${event.payload.amount || 1}`, color: '#e74c3c' });
+                setTimeout(() => setBadge(null), 900);
+            }
+        });
+        return unsub;
+    }, [playerHeroId]);
+
+    if (!badge) return null;
+    const style = {
+        position: 'absolute',
+        top: '-10px',
+        right: '-10px',
+        fontWeight: '800',
+        fontSize: '24px',
+        color: badge.color,
+        textShadow: '0 0 4px rgba(0,0,0,0.7)',
+        zIndex: 3,
+        pointerEvents: 'none',
+    };
+    return <div style={style}>{badge.text}</div>;
 }

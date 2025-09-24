@@ -108,8 +108,10 @@ import endturn from './audio/endturn.mp3';
 // (moved exports below all imports to satisfy import/first rule)
 
 // Static audio imports for ability sounds
-import anaGrenade from './audio/ana-grenade.mp3';
+import anaAbility1 from './audio/ana-ability1.mp3';
 import anaUlt from './audio/ana-ult.mp3';
+import anaIntro from './audio/ana-intro.mp3';
+import anaPlacement from './audio/ana-placement.mp3';
 import asheAbility1 from './audio/ashe-ability1.mp3';
 import asheAbility2 from './audio/ashe-ability2.mp3';
 import asheUltimate from './audio/ashe-ultimate.mp3';
@@ -205,8 +207,10 @@ export const audioFiles = {
 
 // Create audio mapping object
 export const abilityAudioFiles = {
-    'ana-grenade': anaGrenade,
+    'ana-ability1': anaAbility1,
     'ana-ult': anaUlt,
+    'ana-intro': anaIntro,
+    'ana-enter': anaPlacement,
     'ashe-ability1': asheAbility1,
     'ashe-ability2': asheAbility2,
     'ashe-shoot1': asheShoot1,
@@ -266,6 +270,22 @@ export const abilityAudioFiles = {
     'zenyatta-discord': zenyattaDiscord,
     'zenyatta-ult': zenyattaUlt,
 };
+
+// Simple per-key debounce for audio playback to avoid accidental double-plays
+const __audioLastPlayedAt = {};
+export function playAudioByKey(audioKey, options = {}) {
+    const { debounceMs = 200 } = options;
+    try {
+        const now = Date.now();
+        const last = __audioLastPlayedAt[audioKey] || 0;
+        if (now - last < debounceMs) return;
+        __audioLastPlayedAt[audioKey] = now;
+        const src = getAudioFile(audioKey);
+        if (!src) return;
+        const a = new Audio(src);
+        a.play().catch(() => {});
+    } catch {}
+}
 
 // Function to get audio file by audio file name
 export const getAudioFile = (audioFileName) => {

@@ -236,6 +236,72 @@ Definitions used across abilities and effects:
 
 These conventions ensure consistent behavior for column-based abilities (e.g., effects that hit “this column” across multiple rows).
 
+## Hero Implementation Checklist
+
+Use this checklist when adding a new hero module in `src/abilities/heroes/<hero>.js`:
+
+- Sounds
+  - Draw sound: `<hero>-intro.mp3` (play in `onDraw()`)
+  - Placement sound: `<hero>-enter.mp3` (play in `onEnter()`)
+  - Ability/Ultimate voice lines and SFX: map new files in `imageImports.js` and play on resolution (e.g., voice + gun SFX)
+
+- Targeting & UI
+  - Use `selectRowTarget()` / `selectCardTarget()` for interactions
+  - Show prompts with `targetingBus.showMessage(...)` and clear with `clearMessage()`
+  - Draw a source→cursor line while targeting using `aimLineBus.setArrowSource(playerHeroId)` and clear with `clearArrow()` when done
+  - Right-click (contextmenu) can cancel flows early; ensure you clear arrow/toast and apply partial selections if required
+
+- Effects/Overlays
+  - Publish ephemeral visuals with `effectsBus`:
+    - `Effects.showHeal(cardId, amount)` → green “+amount”
+    - `Effects.showDamage(cardId, amount)` → red “-amount”
+
+- Rows & Columns
+  - Rows: `1f/1m/1b` (P1) and `2f/2m/2b` (P2)
+  - Columns: same index across a side’s rows; missing slots are empty
+  - Opposing row for a position is the same `f/m/b` on the other side
+
+- Ultimate Cost Modifiers
+  - Row-wide modifiers (e.g., BOB token) append objects to a row’s effects array
+    - Example: `{ id:'bob-token', hero:'bob', type:'ultCost', value:2, tooltip:'+2 to Synergy Costs' }` in `row.enemyEffects`
+  - Ultimate resolver adds `value` to the base cost and deducts the adjusted amount
+
+- State Bridges (temporary helpers for modules)
+  - `__ow_getRow(rowId)` → current row object
+  - `__ow_getCard(playerHeroId)` → card object (health, shields, etc.)
+  - `__ow_getMaxHealth(playerHeroId)` → card’s max health (from data)
+  - `__ow_setCardHealth(playerHeroId, newHealth)` → update health
+  - `__ow_updateSynergy(rowId, delta)` → mutate row synergy (e.g., -1)
+  - Use sparingly; long-term we’ll route all state changes through centralized actions
+
+Implementing Steps
+1) Create `src/abilities/heroes/<hero>.js` exporting needed triggers (`onDraw`, `onEnter`, `onUltimate`, etc.)
+2) Register the module in `src/abilities/index.js`
+3) Add audio imports/mappings in `src/assets/imageImports.js`
+4) If needed, integrate trigger calls in `App.checkOnEnterAbilities()` or the ultimate handler
+5) Test with targeting prompts, overlays, and sounds
+
+### Row Tokens & Dynamic Power
+
+- Store row-wide tokens as objects on the row effects:
+  - Ally-side: `row.allyEffects`, Enemy-side: `row.enemyEffects`
+  - Example (BOB): `{ id:'bob-token', hero:'bob', type:'ultCost', value:2, tooltip:'+2 to Synergy Costs' }`
+  - Example (Ana): `{ id:'ana-token', hero:'ana', type:'rowPowerBoost', tooltip:'+X Power (heroes in row)' }`
+- Dynamic power (e.g., Ana):
+  - Compute X = number of alive heroes in the row
+  - Exclude `special: true` units (BOB, MEKA, turret), except `nemesis` which counts as a hero
+  - Persist if source dies; recompute as heroes enter/leave/die
+
+### Audio & Targeting Conventions
+
+- Sound keys are unique and strict (no substring matches): `ashe-ability1`, `ana-ability1`, etc.
+  - Use `playAudioByKey(key, { debounceMs })` to avoid rapid double-plays
+  - Shared/global sounds are limited to items like `placement`, `endturn`
+- Targeting UX:
+  - Always show a toast prompt and draw a source→cursor aim line during selection
+  - Keep the indicator visible until a valid selection or explicit cancel (right-click)
+  - Clear both on resolve/cancel
+
 ### Modal Components
 - `components/modals/Modal.js` - Base modal component
 - `components/modals/ChoiceModal.js` - Choice between multiple options

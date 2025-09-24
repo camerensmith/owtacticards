@@ -3,7 +3,7 @@ import { showOnEnterChoice } from '../engine/modalController';
 import { dealDamage } from '../engine/damageBus';
 import crosshair from '../../assets/crosshair.svg';
 import { showMessage, clearMessage } from '../engine/targetingBus';
-import { getAudioFile } from '../../assets/imageImports';
+import { getAudioFile, playAudioByKey } from '../../assets/imageImports';
 
 function setTargetingCursor(active) {
     try {
@@ -57,7 +57,7 @@ export function onEnter({ playerNum, rowId }) {
                 console.log('Ashe Ability 1 - Applying damage:', { targetCardId, targetRow, amount: 2, ignoreShields: true });
                 dealDamage(targetCardId, targetRow, 2, true);
                 playAbilitySound(1); // voice line
-                try { const s = getAudioFile('ashe-shoot1'); if (s) new Audio(s).play().catch(()=>{}); } catch {}
+                playAudioByKey('ashe-shoot1');
                 setTargetingCursor(false);
                 clearMessage();
                 $('.card').off('click', handler);
@@ -84,7 +84,7 @@ export function onEnter({ playerNum, rowId }) {
                     dealDamage(selected[0].targetCardId, selected[0].targetRow, 1, true);
                     dealDamage(selected[1].targetCardId, selected[1].targetRow, 1, true);
                     playAbilitySound(2); // voice line
-                    try { const s = getAudioFile('ashe-shoot2'); if (s) new Audio(s).play().catch(()=>{}); } catch {}
+                    playAudioByKey('ashe-shoot2');
                     setTargetingCursor(false);
                     clearMessage();
                 }
