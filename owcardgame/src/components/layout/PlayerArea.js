@@ -26,6 +26,8 @@ export default function PlayerArea(props) {
                     playerNum={props.playerNum}
                     nextCardDraw={props.nextCardDraw}
                     setNextCardDraw={props.setNextCardDraw}
+                    gameLogic={props.gameLogic}
+                    trackDrawnHero={props.trackDrawnHero}
                 />
             </div>
 

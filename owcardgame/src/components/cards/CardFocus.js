@@ -24,6 +24,11 @@ export default function CardFocus(props) {
     // This is needed to ensure the 'turnstart' effects are picked up by HeroAbilities useEffect
     // TODO: using 'display: none' still renders the element, maybe that is a cleaner way to implement this
     if (cardFocus === 'invisible') {
+        // If no card has ever been focused, render a minimal component just for HeroAbilities
+        if (!heroRef.current) {
+            return null;
+        }
+        
         const playerHeroId = heroRef.current.playerHeroId;
         const playerNum = parseInt(playerHeroId[0]);
         const rowId = heroRef.current.rowId;

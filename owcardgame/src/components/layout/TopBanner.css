@@ -1,0 +1,15 @@
+.top-banner {
+    position: fixed;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.8);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 0 0 8px 8px;
+    z-index: 10002;
+    font-family: 'Big-Noodle-Titling', sans-serif;
+    letter-spacing: 0.5px;
+}
+
+

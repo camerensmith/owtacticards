@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { Draggable } from 'react-beautiful-dnd';
 import gameContext from 'context/gameContext';
 import turnContext from 'context/turnContext';
@@ -113,12 +113,15 @@ export default function Card(props) {
                             id={`${playerHeroId}`}
                             className={`card ${health > 0 ? 'alive' : 'dead'}`}
                             onClick={
-                                turnState.playerTurn === playerNum || isPlayed
-                                    ? () => {
-                                          props.setCardFocus({
-                                              playerHeroId: playerHeroId,
-                                              rowId: rowId,
-                                          });
+                                (turnState.playerTurn === playerNum || isPlayed)
+                                    ? (e) => {
+                                          // Only focus card on SHIFT + LEFT CLICK
+                                          if (e.shiftKey) {
+                                              props.setCardFocus({
+                                                  playerHeroId: playerHeroId,
+                                                  rowId: rowId,
+                                              });
+                                          }
                                       }
                                     : null
                             }

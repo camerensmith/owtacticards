@@ -35,6 +35,9 @@ import wreckingball from './heroes/cards/wreckingball.webp';
 import zarya from './heroes/cards/zarya.webp';
 import zenyatta from './heroes/cards/zenyatta.webp';
 import cardBack from './heroes/cards/card-back.webp';
+import ramattra from './heroes/cards/ramattra.webp';
+import nemesis from './heroes/cards/nemesis.webp';
+import turret from './heroes/cards/turret.webp';
 
 // Hero icon images (only import existing ones)
 import anaIcon from './heroes/cards/ana-icon.webp';
@@ -99,13 +102,24 @@ import tankClassIcon from './tank-classicon.webp';
 import supportClassIcon from './support-classicon.webp';
 import howToPlayPdf from './how-to-play.pdf';
 import overwatchTheme from './audio/overwatch-theme.mp3';
+import placement from './audio/placement.mp3';
+import endturn from './audio/endturn.mp3';
 
 // (moved exports below all imports to satisfy import/first rule)
 
 // Static audio imports for ability sounds
 import anaGrenade from './audio/ana-grenade.mp3';
 import anaUlt from './audio/ana-ult.mp3';
-import asheDeadlockgang from './audio/ashe-deadlockgang.mp3';
+import asheAbility1 from './audio/ashe-ability1.mp3';
+import asheAbility2 from './audio/ashe-ability2.mp3';
+import asheUltimate from './audio/ashe-ultimate.mp3';
+import asheShoot1 from './audio/ashe-shoot1.mp3';
+import asheShoot2 from './audio/ashe-shoot2.mp3';
+import bobEnter from './audio/bob-enter.mp3';
+import bobSmash from './audio/smash.mp3';
+import bobAbility from './audio/bob-ability.mp3';
+import asheEnter from './audio/ashe-enter.mp3';
+import asheIntro from './audio/ashe-intro.mp3';
 import baptisteImmortality from './audio/baptiste-immortality.mp3';
 import bastionUlt from './audio/bastion-ult.mp3';
 import genjiCutting from './audio/genji-cutting.mp3';
@@ -157,7 +171,7 @@ import zenyattaUlt from './audio/zenyatta-ult.mp3';
 
 // Create mapping objects
 export const heroCardImages = {
-    ana, ashe, baptiste, bastion, bob, brigitte, doomfist, dva, dvameka, echo, genji, hanzo, junkrat, lucio, mccree, mei, mercy, moira, orisa, pharah, reaper, reinhardt, roadhog, sigma, soldier, sombra, symmetra, torbjorn, tracer, widowmaker, winston, wreckingball, zarya, zenyatta, 'card-back': cardBack
+    ana, ashe, baptiste, bastion, bob, brigitte, doomfist, dva, dvameka, echo, genji, hanzo, junkrat, lucio, mccree, mei, mercy, moira, orisa, pharah, reaper, reinhardt, roadhog, sigma, soldier, sombra, symmetra, torbjorn, tracer, widowmaker, winston, wreckingball, zarya, zenyatta, ramattra, nemesis, turret, 'card-back': cardBack
 };
 
 export const heroIconImages = {
@@ -177,19 +191,32 @@ export const otherImages = {
     tankClassIcon,
     supportClassIcon,
     howToPlayPdf,
-    overwatchTheme
+    overwatchTheme,
+    placement,
+    endturn
 };
 
 // Audio files mapping
 export const audioFiles = {
-    'overwatch-theme': overwatchTheme
+    'overwatch-theme': overwatchTheme,
+    'placement': placement,
+    'endturn': endturn
 };
 
 // Create audio mapping object
 export const abilityAudioFiles = {
     'ana-grenade': anaGrenade,
     'ana-ult': anaUlt,
-    'ashe-deadlockgang': asheDeadlockgang,
+    'ashe-ability1': asheAbility1,
+    'ashe-ability2': asheAbility2,
+    'ashe-shoot1': asheShoot1,
+    'ashe-shoot2': asheShoot2,
+    'ashe-ultimate': asheUltimate,
+    'bob-enter': bobEnter,
+    'bob-smash': bobSmash,
+    'bob-ability': bobAbility,
+    'ashe-enter': asheEnter,
+    'ashe-intro': asheIntro,
     'baptiste-immortality': baptisteImmortality,
     'bastion-ult': bastionUlt,
     'genji-cutting': genjiCutting,
@@ -245,6 +272,11 @@ export const getAudioFile = (audioFileName) => {
     // First try the static ability audio files
     if (abilityAudioFiles[audioFileName]) {
         return abilityAudioFiles[audioFileName];
+    }
+    
+    // Then try the general audio files (like placement, overwatch-theme)
+    if (audioFiles[audioFileName]) {
+        return audioFiles[audioFileName];
     }
     
     // Fallback to dynamic require for intro sounds and other files

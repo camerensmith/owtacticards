@@ -1,5 +1,46 @@
 // Data for all hero cards
 
+// Hero role mapping from hero.json
+const heroRoles = {
+    ana: 'support',
+    ashe: 'offense', 
+    baptiste: 'support',
+    bastion: 'defense',
+    bob: 'offense', // BOB is offense class
+    brigitte: 'support',
+    doomfist: 'offense',
+    dva: 'tank',
+    dvameka: 'tank', // MEKA is tank class
+    echo: 'offense',
+    genji: 'offense',
+    hanzo: 'defense',
+    junkrat: 'defense',
+    lucio: 'support',
+    mccree: 'offense',
+    mei: 'defense',
+    mercy: 'support',
+    moira: 'support',
+    nemesis: 'tank', // Nemesis is tank class
+    orisa: 'tank',
+    pharah: 'offense',
+    ramattra: 'tank',
+    reaper: 'offense',
+    reinhardt: 'tank',
+    roadhog: 'tank',
+    sigma: 'tank',
+    soldier: 'offense',
+    sombra: 'offense',
+    symmetra: 'defense',
+    torbjorn: 'defense',
+    tracer: 'offense',
+    turret: 'defense', // Turret is defense class
+    widowmaker: 'defense',
+    winston: 'tank',
+    wreckingball: 'tank',
+    zarya: 'tank',
+    zenyatta: 'support'
+};
+
 /* hero effects API is as follows:
 
 player: ally, enemy
@@ -46,7 +87,7 @@ const data = {
                     value: 'allies',
                 },
             },
-            health: 4,
+            health: 3,
             power: {
                 f: 1,
                 m: 2,
@@ -94,7 +135,7 @@ const data = {
                     on: 'activate',
                 },
             },
-            health: 4,
+            health: 3,
             power: {
                 f: 3,
                 m: 2,
@@ -124,7 +165,7 @@ const data = {
                     on: 'movein',
                 },
             },
-            health: 5,
+            health: 4,
             power: {
                 f: 1,
                 m: 2,
@@ -165,6 +206,7 @@ const data = {
                 m: 0,
                 b: 0,
             },
+            special: true,
         },
 
         brigitte: {
@@ -237,6 +279,7 @@ const data = {
                 b: 3,
             },
             isImplemented: true,
+            special: true,
         },
 
         echo: {
@@ -357,7 +400,7 @@ const data = {
             id: 'mccree',
             name: 'McCree',
             image: 'assets/heroes/mccree.png',
-            health: 4,
+            health: 3,
             power: {
                 f: 2,
                 m: 3,
@@ -513,6 +556,28 @@ const data = {
             },
             isImplemented: true,
         },
+
+        // Added from hero.json
+        ramattra: {
+            id: 'ramattra',
+            name: 'Ramattra',
+            image: 'assets/heroes/ramattra.png',
+            health: 4,
+            power: { f: 1, m: 2, b: 3 },
+            synergy: { f: 3, m: 2, b: 1 },
+            isImplemented: false,
+        },
+
+        nemesis: {
+            id: 'nemesis',
+            name: 'Ramattra (Nemesis)',
+            image: 'assets/heroes/nemesis.png',
+            health: 2,
+            power: { f: 2, m: 2, b: 2 },
+            synergy: { f: 2, m: 1, b: 1 },
+            isImplemented: false,
+            special: true,
+        },
         reaper: {
             id: 'reaper',
             name: 'Reaper',
@@ -656,7 +721,7 @@ const data = {
                     value: 1,
                 },
             },
-            health: 4,
+            health: 3,
             power: {
                 f: 3,
                 m: 1,
@@ -686,6 +751,17 @@ const data = {
                 b: 3,
             },
             isImplemented: true,
+        },
+
+        turret: {
+            id: 'turret',
+            name: 'Turret',
+            image: 'assets/heroes/turret.png',
+            health: 3,
+            power: { f: 0, m: 0, b: 0 },
+            synergy: { f: 0, m: 0, b: 0 },
+            isImplemented: false,
+            special: true,
         },
 
         widowmaker: {
@@ -812,7 +888,7 @@ const data = {
                     value: 1,
                 },
             },
-            health: 4,
+            health: 2,
             power: {
                 f: 2,
                 m: 2,
@@ -969,5 +1045,12 @@ const data = {
         },
     },
 };
+
+// Automatically assign roles to all heroes
+Object.keys(data.heroes).forEach(heroId => {
+    if (heroRoles[heroId]) {
+        data.heroes[heroId].role = heroRoles[heroId];
+    }
+});
 
 export default data;

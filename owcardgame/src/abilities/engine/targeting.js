@@ -24,13 +24,29 @@ export function selectCardTarget() {
 export function selectRowTarget() {
     return new Promise((resolve) => {
         const handler = (e) => {
+            try { e.preventDefault(); e.stopPropagation(); } catch {}
             const $target = $(e.target);
-            const rowId = $target.closest('.row').attr('id');
-            const rowPosition = rowId ? rowId[1] : undefined;
+            // Support clicks on elements with class 'row' or the known row ids
+            const rowIds = ['1f','1m','1b','2f','2m','2b','player1hand','player2hand'];
+            let rowId = $target.closest('.row').attr('id');
+            if (!rowId) {
+                for (const rid of rowIds) {
+                    if ($target.closest(`#${rid}`).length) { rowId = rid; break; }
+                }
+            }
+            if (!rowId) {
+                // Ignore clicks not in a row; keep handler active
+                return;
+            }
+            const rowPosition = rowId[1];
             $('.row').off('click', handler);
+            for (const rid of rowIds) { $(document).off('click', handler, `#${rid}`); }
             resolve({ rowId, rowPosition });
         };
+        // Attach to generic row containers and specific ids as fallback
         $('.row').on('click', handler);
+        const rowIds = ['1f','1m','1b','2f','2m','2b','player1hand','player2hand'];
+        for (const rid of rowIds) { $(`#${rid}`).on('click', handler); }
     });
 }
 

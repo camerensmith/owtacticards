@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 import React, { useContext, useEffect, useRef } from 'react';
 import gameContext from 'context/gameContext';
 import turnContext from 'context/turnContext';
@@ -5,6 +6,7 @@ import $ from 'jquery';
 import { ACTIONS } from 'App';
 import { getAudioFile } from '../../assets/imageImports';
 import getRandInt from 'helper';
+import targetingBus from '../../abilities/engine/targetingBus';
 
 export default function HeroAbilities(props) {
     // Context
@@ -18,7 +20,7 @@ export default function HeroAbilities(props) {
     const { playerHeroId, unsetCardFocus, rowId, playAudio } = props;
     
     const currentCard =
-        gameState.playerCards[`player${playerHeroId[0]}cards`].cards[
+        gameState.playerCards[`player${playerHeroId?.[0]}cards`]?.cards?.[
             playerHeroId
         ];
     const heroId = playerHeroId.slice(1, playerHeroId.length);
@@ -52,6 +54,7 @@ export default function HeroAbilities(props) {
         targetRow,
         ignoreShields = false
     ) {
+        console.log('HeroAbilities - applyDamage called:', { damageValue, targetCardId, targetRow, ignoreShields });
         // Interrupt window: allow certain heroes (e.g., Tracer) to Recall before damage is applied
         try {
             const targetPlayerNumInterrupt = parseInt(targetCardId[0]);
@@ -275,6 +278,28 @@ export default function HeroAbilities(props) {
         return remainingHealing;
     }
 
+    // Subscribe to central damage bus to apply damage uniformly
+    // (Local subscription kept simple; ensure unsubscribe on unmount)
+    const damageBusRef = useRef(null);
+    useEffect(() => {
+        try {
+            const { subscribe } = require('../../abilities/engine/damageBus');
+            damageBusRef.current = subscribe((event) => {
+                console.log('HeroAbilities - Received damage event:', event);
+                if (event?.type === 'damage') {
+                    const { targetCardId, targetRow, amount, ignoreShields } = event;
+                    console.log('HeroAbilities - Processing damage:', { targetCardId, targetRow, amount, ignoreShields });
+                    applyDamage(amount, targetCardId, targetRow, !!ignoreShields);
+                }
+            });
+        } catch (e) {}
+        return () => {
+            if (typeof damageBusRef.current === 'function') {
+                damageBusRef.current();
+            }
+        };
+    }, []);
+
     // Abilities data
     const abilities = {
         ana: {
@@ -348,6 +373,11 @@ export default function HeroAbilities(props) {
                 run() {
                     return new Promise((resolve, reject) => {
                         $('.card').on('click', (e) => {
+                            // Skip if we're in targeting mode
+                            if (targetingBus.isTargeting()) {
+                                return;
+                            }
+                            
                             // Get target info
                             const targetCardId = $(e.target)
                                 .closest('.card')
@@ -420,6 +450,11 @@ export default function HeroAbilities(props) {
                 run() {
                     return new Promise((resolve, reject) => {
                         $('.card').on('click', (e) => {
+                            // Skip if we're in targeting mode
+                            if (targetingBus.isTargeting()) {
+                                return;
+                            }
+                            
                             // Get target info
                             const targetCardId = $(e.target)
                                 .closest('.card')
@@ -3155,11 +3190,8 @@ export default function HeroAbilities(props) {
         if (rowId[0] !== 'p') {
             // Call the relevant hero's ability
             try {
-                // Play ability audio if exists
-                if (
-                    'audioFile' in abilities[heroId].ability1 &&
-                    playAudio === true
-                ) {
+                // Play ability audio if exists (always enabled)
+                if ('audioFile' in abilities[heroId].ability1) {
                     const audioFile = abilities[heroId].ability1.audioFile;
                     console.log('Attempting to play audio:', audioFile);
                     const audioSrc = getAudioFile(audioFile);
@@ -3274,11 +3306,8 @@ export default function HeroAbilities(props) {
             if (rowSynergy >= synergyCost) {
                 // Call the relevant hero's ability and deduct synergy
                 try {
-                    // Play ability audio if exists
-                    if (
-                        'audioFile' in abilities[heroId].ability2 &&
-                        playAudio === true
-                    ) {
+                    // Play ability audio if exists (always enabled)
+                    if ('audioFile' in abilities[heroId].ability2) {
                         const audioFile = abilities[heroId].ability2.audioFile;
                         console.log('Attempting to play ultimate audio:', audioFile);
                         const audioSrc = getAudioFile(audioFile);

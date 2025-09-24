@@ -6,13 +6,18 @@ export default function HeroCounter(props) {
     const playerNum = props.playerNum;
     const rowId = props.rowId;
     const health = props.health;
+    const tooltip = props.tooltip;
 
     return (
         <div
             className='counter'
-            onClick={() =>
-                props.setCardFocus({ playerHeroId: playerHeroId, rowId: rowId })
-            }
+            onClick={(e) => {
+                // Only focus card on SHIFT + LEFT CLICK
+                if (e.shiftKey) {
+                    props.setCardFocus({ playerHeroId: playerHeroId, rowId: rowId });
+                }
+            }}
+            title={tooltip || ''}
         >
             <img
                 src={heroIconImages[`${heroId}-icon`] || heroCardImages[heroId]}

@@ -2,11 +2,14 @@
 // Initially empty; HeroAbilities.js will continue to define most logic
 // until migration progresses.
 
+import ashe from './heroes/ashe';
+import bob from './heroes/bob';
+
 export const abilities = {
-    // Example structure once migrated:
-    // tracer,
-    // roadhog,
-    // widowmaker,
+    ashe,
+    bob,
 };
+
+export default abilities;
 
 

@@ -23,7 +23,7 @@ Baptiste
 - ult (code): Not implemented (DIFF)
 
 Bastion
-- enter (json): 2 dmg OR place token near enemy row causing 2 dmg on enter/move
+- enter (json): 2 dmg OR place token near enemy row causing 1 dmg on enter/move
 - enter (code): Not clearly implemented; likely minimal (DIFF)
 - ult (json): Tank Mode: 2 dmg to one + 2 dmg to up to 2 adjacent enemies
 - ult (code): Not implemented (DIFF)

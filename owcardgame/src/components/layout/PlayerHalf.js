@@ -21,6 +21,8 @@ export default function PlayerHalf(props) {
                     nextCardDraw={props.nextCardDraw}
                     setNextCardDraw={props.setNextCardDraw}
                     matchState={props.matchState}
+                    gameLogic={props.gameLogic}
+                    trackDrawnHero={props.trackDrawnHero}
                 />
                 <PlayerBoard
                     playerNum={props.playerNum}
@@ -42,6 +44,8 @@ export default function PlayerHalf(props) {
                     nextCardDraw={props.nextCardDraw}
                     setNextCardDraw={props.setNextCardDraw}
                     matchState={props.matchState}
+                    gameLogic={props.gameLogic}
+                    trackDrawnHero={props.trackDrawnHero}
                 />
             </div>
         );

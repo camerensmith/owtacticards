@@ -20,6 +20,10 @@ import ChoiceModal from './components/modals/ChoiceModal';
 import InterruptModal from './components/modals/InterruptModal';
 import { subscribe as subscribeToActions, Actions } from './abilities/engine/actionsBus';
 import $ from 'jquery';
+import abilitiesIndex from './abilities';
+import TopBanner from './components/layout/TopBanner';
+import { subscribe as subscribeTargeting, showMessage as showToast, clearMessage as clearToast } from './abilities/engine/targetingBus';
+import { subscribe as subscribeDamage } from './abilities/engine/damageBus';
 
 export const ACTIONS = {
     ADD_CARD_EFFECT: 'add-card-effect',
@@ -375,39 +379,18 @@ function checkOnEnterAbilities(playerHeroId, rowId, playerNum) {
     const heroId = playerHeroId.slice(1);
     const heroData = data.heroes[heroId];
     
-    // Special-case: Ashe onEnter choice (since data.js doesn't carry onEnter1/2)
-    if (heroId === 'ashe') {
-        const onEnter1 = { name: 'The Viper', description: 'Deal 2 damage to one enemy ignoring shields.' };
-        const onEnter2 = { name: 'The Viper (Split Fire)', description: 'Deal 1 damage to two enemies in the same row ignoring shields.' };
-        showOnEnterChoice('Ashe', onEnter1, onEnter2, (choiceIndex) => {
-            if (choiceIndex === 0) {
-                // 2 damage ignoring shields to one enemy
-                $('.card').one('click', (e) => {
-                    const targetCardId = $(e.target).closest('.card').attr('id');
-                    const targetRow = $(e.target).closest('.row').attr('id');
-                    if (targetRow[0] === 'p' || parseInt(targetRow[0]) === playerNum) return;
-                    applyAsheDamage(targetCardId, targetRow, 2, true);
-                });
-            } else if (choiceIndex === 1) {
-                // 1 damage ignoring shields to two enemies in the same row
-                let selected = [];
-                const handler = (e) => {
-                    const targetCardId = $(e.target).closest('.card').attr('id');
-                    const targetRow = $(e.target).closest('.row').attr('id');
-                    if (targetRow[0] === 'p' || parseInt(targetRow[0]) === playerNum) return;
-                    if (selected.length === 0) {
-                        selected.push({ targetCardId, targetRow });
-                    } else if (selected.length === 1) {
-                        if (selected[0].targetRow !== targetRow) return;
-                        selected.push({ targetCardId, targetRow });
-                        $('.card').off('click', handler);
-                        applyAsheDamage(selected[0].targetCardId, selected[0].targetRow, 1, true);
-                        applyAsheDamage(selected[1].targetCardId, selected[1].targetRow, 1, true);
-                    }
-                };
-                $('.card').on('click', handler);
-            }
-        });
+    // Delegate modular heroes
+    if (heroId === 'ashe' && abilitiesIndex?.ashe?.onEnter) {
+        const doDamage = (targetCardId, targetRow, amount, ignoreShields) => {
+            // TODO: expose a central damage bus; for now log intent
+            console.log('modular Ashe damage', { targetCardId, targetRow, amount, ignoreShields });
+        };
+        abilitiesIndex.ashe.onEnter({ playerNum, rowId, doDamage });
+        return;
+    }
+
+    if (heroId === 'bob' && abilitiesIndex?.bob?.onEnter) {
+        abilitiesIndex.bob.onEnter({ playerNum, rowId });
         return;
     }
 
@@ -507,9 +490,199 @@ export default function App() {
     });
     const [playAudio, setPlayAudio] = useState(false);
     const [modalState, setModalState] = useState({ isOpen: false, type: null, data: null });
+    const [targetingMessage, setTargetingMessage] = useState(null);
+    
+    // Expose a minimal bridge for hero modules to append row effects (e.g., BOB token)
+    useEffect(() => {
+        window.__ow_appendRowEffect = (rowId, arrayKey, effect) => {
+            try {
+                const currentArr = gameState.rows[rowId]?.[arrayKey] || [];
+                dispatch({
+                    type: ACTIONS.EDIT_ROW,
+                    payload: {
+                        targetRow: rowId,
+                        editKeys: [arrayKey],
+                        editValues: [[...currentArr, effect]],
+                    },
+                });
+            } catch (e) {}
+        };
+        window.__ow_getRow = (rowId) => gameState.rows[rowId];
+        window.__ow_setRowArray = (rowId, arrayKey, nextArr) => {
+            dispatch({
+                type: ACTIONS.EDIT_ROW,
+                payload: { targetRow: rowId, editKeys: [arrayKey], editValues: [nextArr] }
+            });
+        };
+        window.__ow_updateSynergy = (rowId, delta) => {
+            dispatch({
+                type: ACTIONS.UPDATE_SYNERGY,
+                payload: { rowId, synergyCost: delta }
+            });
+        };
+        return () => { window.__ow_appendRowEffect = null; window.__ow_getRow = null; window.__ow_setRowArray = null; window.__ow_updateSynergy = null; };
+    }, [gameState]);
+    // Game logic state
+    const [gameLogic, setGameLogic] = useState({
+        currentRound: 1,
+        maxRounds: 3,
+        player1Score: 0,
+        player2Score: 0,
+        player1Turns: 0,
+        player2Turns: 0,
+        player1Deployed: 0,
+        player2Deployed: 0,
+        maxTurnsPerPlayer: 7,
+        maxHandSize: 6, // Changed from 10 to 6
+        maxHeroesPerPlayer: 6,
+        gamePhase: 'playing', // 'playing', 'roundEnd', 'gameEnd'
+        player1DrawnHeroes: [], // Track heroes drawn by player 1 this round
+        player2DrawnHeroes: []  // Track heroes drawn by player 2 this round
+    });
 
     // References for setting state inside useEffects
     let matchRef = useRef(null);
+
+    // Helper function to get heroes by role
+    const getHeroesByRole = (role) => {
+        return Object.keys(data.heroes).filter(heroId => 
+            data.heroes[heroId].role === role && 
+            !data.heroes[heroId].special // Exclude special cards
+        );
+    };
+
+    // Helper function to draw a random hero from a specific role
+    const drawHeroFromRole = (role, playerNum) => {
+        const availableHeroes = getHeroesByRole(role);
+        const drawnHeroes = playerNum === 1 ? gameLogic.player1DrawnHeroes : gameLogic.player2DrawnHeroes;
+        
+        // Filter out already drawn heroes
+        const availableHeroesFiltered = availableHeroes.filter(heroId => 
+            !drawnHeroes.includes(heroId)
+        );
+        
+        if (availableHeroesFiltered.length === 0) {
+            // Fallback to any available hero if role is exhausted
+            const allAvailable = Object.keys(data.heroes).filter(heroId => 
+                !drawnHeroes.includes(heroId) && 
+                !data.heroes[heroId].special
+            );
+            if (allAvailable.length === 0) return null;
+            return allAvailable[getRandInt(0, allAvailable.length)];
+        }
+        
+        return availableHeroesFiltered[getRandInt(0, availableHeroesFiltered.length)];
+    };
+
+    // Function to track drawn heroes
+    const trackDrawnHero = (heroId, playerNum) => {
+        setGameLogic(prev => ({
+            ...prev,
+            [`player${playerNum}DrawnHeroes`]: [...prev[`player${playerNum}DrawnHeroes`], heroId]
+        }));
+    };
+
+    // Initialize game with 4 cards per player (one from each role)
+    const initializeGame = () => {
+        const roles = ['offense', 'tank', 'support', 'defense'];
+        
+        // Reset drawn heroes for new round
+        setGameLogic(prev => ({
+            ...prev,
+            player1DrawnHeroes: [],
+            player2DrawnHeroes: []
+        }));
+        
+        // Draw 4 cards for player 1 (one from each role)
+        roles.forEach(role => {
+            const newCardId = drawHeroFromRole(role, 1);
+            if (newCardId) {
+                const playerHeroId = `1${newCardId}`;
+                
+                dispatch({
+                    type: ACTIONS.CREATE_CARD,
+                    payload: { playerNum: 1, heroId: newCardId },
+                });
+                dispatch({
+                    type: ACTIONS.ADD_CARD_TO_HAND,
+                    payload: { playerNum: 1, playerHeroId: playerHeroId },
+                });
+                
+                // Track drawn hero
+                setGameLogic(prev => ({
+                    ...prev,
+                    player1DrawnHeroes: [...prev.player1DrawnHeroes, newCardId]
+                }));
+            }
+        });
+        
+        // Draw 4 cards for player 2 (one from each role)
+        roles.forEach(role => {
+            const newCardId = drawHeroFromRole(role, 2);
+            if (newCardId) {
+                const playerHeroId = `2${newCardId}`;
+                
+                dispatch({
+                    type: ACTIONS.CREATE_CARD,
+                    payload: { playerNum: 2, heroId: newCardId },
+                });
+                dispatch({
+                    type: ACTIONS.ADD_CARD_TO_HAND,
+                    payload: { playerNum: 2, playerHeroId: playerHeroId },
+                });
+                
+                // Track drawn hero
+                setGameLogic(prev => ({
+                    ...prev,
+                    player2DrawnHeroes: [...prev.player2DrawnHeroes, newCardId]
+                }));
+            }
+        });
+    };
+
+    // Initialize game on first load
+    useEffect(() => {
+        initializeGame();
+    }, []); // Only run once on mount
+
+    // Track deployment counts
+    useEffect(() => {
+        const player1Deployed = gameState.rows['1f'].cardIds.length + 
+                               gameState.rows['1m'].cardIds.length + 
+                               gameState.rows['1b'].cardIds.length;
+        const player2Deployed = gameState.rows['2f'].cardIds.length + 
+                               gameState.rows['2m'].cardIds.length + 
+                               gameState.rows['2b'].cardIds.length;
+        
+        setGameLogic(prev => ({
+            ...prev,
+            player1Deployed,
+            player2Deployed
+        }));
+    }, [gameState.rows]);
+
+    // Track turns and check for game end
+    useEffect(() => {
+        if (turnState.turnCount > 1) { // Skip first turn (initialization)
+            const currentPlayer = turnState.playerTurn;
+            const otherPlayer = currentPlayer === 1 ? 2 : 1;
+            
+            // Increment turn count for the player who just ended their turn
+            setGameLogic(prev => ({
+                ...prev,
+                [`player${otherPlayer}Turns`]: prev[`player${otherPlayer}Turns`] + 1
+            }));
+            
+            // Check if both players have reached max turns
+            const newPlayer1Turns = currentPlayer === 2 ? gameLogic.player1Turns + 1 : gameLogic.player1Turns;
+            const newPlayer2Turns = currentPlayer === 1 ? gameLogic.player2Turns + 1 : gameLogic.player2Turns;
+            
+            if (newPlayer1Turns >= gameLogic.maxTurnsPerPlayer && newPlayer2Turns >= gameLogic.maxTurnsPerPlayer) {
+                console.log('Both players have reached max turns - ending round');
+                endRound();
+            }
+        }
+    }, [turnState.turnCount]);
 
     // Subscribe to modal state changes
     useEffect(() => {
@@ -518,6 +691,82 @@ export default function App() {
         });
         return unsubscribe;
     }, []);
+
+    // Subscribe to targeting banner to know when we're in targeting mode
+    useEffect(() => {
+        const unsub = subscribeTargeting((msg) => setTargetingMessage(msg));
+        return unsub;
+    }, []);
+
+    // Always-mounted damage subscriber: apply damage via reducer so it never depends on focus
+    useEffect(() => {
+        const unsub = subscribeDamage((event) => {
+            if (event?.type !== 'damage') return;
+            const { targetCardId, targetRow, amount, ignoreShields } = event;
+            try {
+                // Resolve target player/cards
+                const targetPlayerNum = parseInt(targetCardId[0]);
+                const targetCards = gameState.playerCards[`player${targetPlayerNum}cards`].cards;
+                if (!targetCards || !targetCards[targetCardId]) return;
+
+                const currentShield = targetCards[targetCardId].shield || 0;
+                const currentHealth = targetCards[targetCardId].health || 0;
+                const rowShieldTotal = gameState.rows[targetRow]?.totalShield?.() || 0;
+
+                let damageLeft = amount;
+                let newRowShield = rowShieldTotal;
+                let newCardShield = currentShield;
+                let newHealth = currentHealth;
+
+                if (!ignoreShields) {
+                    // Apply to row shield first
+                    const useRow = Math.min(newRowShield, damageLeft);
+                    newRowShield -= useRow;
+                    damageLeft -= useRow;
+
+                    // Then to card shield
+                    const useCard = Math.min(newCardShield, damageLeft);
+                    newCardShield -= useCard;
+                    damageLeft -= useCard;
+                }
+
+                // Apply remaining to health
+                if (damageLeft > 0) {
+                    newHealth = Math.max(0, newHealth - damageLeft);
+                }
+
+                // Commit updates
+                if (!ignoreShields) {
+                    // Update row shield if it changed
+                    if (rowShieldTotal !== newRowShield) {
+                        dispatch({
+                            type: ACTIONS.DAMAGE_ROW_SHIELD,
+                            payload: { rowId: targetRow, damageValue: amount - damageLeft }
+                        });
+                    }
+                    // Update card shield
+                    if (currentShield !== newCardShield) {
+                        dispatch({
+                            type: ACTIONS.EDIT_CARD,
+                            payload: { playerNum: targetPlayerNum, targetCardId, editKeys: ['shield'], editValues: [newCardShield] }
+                        });
+                    }
+                }
+
+                // Update health if changed
+                if (currentHealth !== newHealth) {
+                    dispatch({
+                        type: ACTIONS.EDIT_CARD,
+                        payload: { playerNum: targetPlayerNum, targetCardId, editKeys: ['health'], editValues: [newHealth] }
+                    });
+                }
+            } catch (e) {
+                // Silent fail-safe
+            }
+        });
+        return unsub;
+    }, [gameState]);
+
 
     // Subscribe to action requests
     useEffect(() => {
@@ -534,17 +783,75 @@ export default function App() {
                     return;
                 }
 
-                if (currentSynergy >= cost) {
+                const heroId = playerHeroId.slice(1);
+                // Base cost override (BOB = 1)
+                let adjustedCost = (heroId === 'bob') ? 1 : cost;
+                // Adjust cost if BOB token is on the opposing row (enemyEffects include {type:'ultCost', value:2})
+                try {
+                    const enemyEffects = gameState.rows[rowId]?.enemyEffects || [];
+                    const bobMod = enemyEffects.find(e => e?.type === 'ultCost' && e?.value);
+                    if (bobMod) adjustedCost += bobMod.value;
+                } catch {}
+
+                if (currentSynergy >= adjustedCost) {
                     // Deduct synergy and execute ultimate
                     dispatch({
                         type: ACTIONS.DEDUCT_SYNERGY,
-                        payload: { rowId, synergyCost: cost }
+                        payload: { rowId, synergyCost: adjustedCost }
                     });
                     
-                    // Execute ultimate ability (placeholder)
-                    console.log(`Executing ultimate for ${playerHeroId} in ${rowId} (cost: ${cost})`);
+                    // Execute ultimate ability
+                    // Ashe: B.O.B. (3) — Draw BOB into hand for this round only
+                    if (heroId === 'ashe') {
+                        try {
+                            const bobId = 'bob';
+                            const bobPlayerHeroId = `${playerNum}${bobId}`;
+                            // Create BOB card for this player
+                            dispatch({
+                                type: ACTIONS.CREATE_CARD,
+                                payload: { playerNum, heroId: bobId }
+                            });
+                            // Add to hand regardless of hand size (special bypasses limits)
+                            dispatch({
+                                type: ACTIONS.ADD_CARD_TO_HAND,
+                                payload: { playerNum, playerHeroId: bobPlayerHeroId }
+                            });
+                            // Mark as expiring at end of round if not played
+                            dispatch({
+                                type: ACTIONS.EDIT_CARD,
+                                payload: {
+                                    playerNum,
+                                    targetCardId: bobPlayerHeroId,
+                                    editKeys: ['expiresEndOfRound'],
+                                    editValues: [true]
+                                }
+                            });
+                            // Toast: BOB added
+                            showToast(`BOB added to Player ${playerNum}'s hand (this round only)`);
+                            setTimeout(() => clearToast(), 2000);
+                            // Play Ashe ultimate sound
+                            try {
+                                const ultSrc = getAudioFile('ashe-ultimate');
+                                if (ultSrc) {
+                                    const audio = new Audio(ultSrc);
+                                    audio.play().catch(() => {});
+                                }
+                            } catch {}
+                            console.log('Ashe ultimate: BOB added to hand for this round only');
+                        } catch (e) {
+                            console.log('Failed to add BOB to hand:', e);
+                        }
+                    } else if (heroId === 'bob' && abilitiesIndex?.bob?.onUltimate) {
+                        try {
+                            abilitiesIndex.bob.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
+                        } catch (e) {
+                            console.log('Error executing BOB ultimate:', e);
+                        }
+                    } else {
+                        console.log(`Executing ultimate for ${playerHeroId} in ${rowId} (cost: ${adjustedCost})`);
+                    }
                 } else {
-                    console.log(`Insufficient synergy for ultimate. Need ${cost}, have ${currentSynergy}`);
+                    console.log(`Insufficient synergy for ultimate. Need ${adjustedCost}, have ${currentSynergy}`);
                 }
             } else if (action.type === 'request:transform') {
                 const { playerHeroId } = action.payload;
@@ -555,51 +862,36 @@ export default function App() {
         return unsubscribe;
     }, [gameState.rows]);
 
-    // End the round and update match scores when both players have passed their turn
-    useEffect(() => {
+    // End the round, calculate who won, update score and move to next round
+    const endRound = () => {
         // Set ref to current match state, alter ref within endRound(), then call setMatchState once using ref as new state
         matchRef.current = matchState;
-
-        // End the round, calculate who won, update score and move to next round
-        const endRound = () => {
-            // Get power data
+            // Get power data from deployed heroes
             const totalPower1 = gameState.rows.player1hand.totalPower();
             const totalPower2 = gameState.rows.player2hand.totalPower();
 
-            // Get player rows info
-            const player1Rows = [
-                gameState.rows['1b'],
-                gameState.rows['1m'],
-                gameState.rows['1f'],
-            ];
-            const player2Rows = [
-                gameState.rows['2b'],
-                gameState.rows['2m'],
-                gameState.rows['2f'],
-            ];
+            // Count remaining units alive (deployed heroes)
+            const player1Units = gameState.rows['1f'].cardIds.length + 
+                                gameState.rows['1m'].cardIds.length + 
+                                gameState.rows['1b'].cardIds.length;
+            const player2Units = gameState.rows['2f'].cardIds.length + 
+                                gameState.rows['2m'].cardIds.length + 
+                                gameState.rows['2b'].cardIds.length;
+
+            // Calculate total score: power + remaining units
+            const player1Score = totalPower1 + player1Units;
+            const player2Score = totalPower2 + player2Units;
+
+            console.log(`Round End - P1: ${totalPower1} power + ${player1Units} units = ${player1Score} total`);
+            console.log(`Round End - P2: ${totalPower2} power + ${player2Units} units = ${player2Score} total`);
 
             // Calculate winning player
             let winningPlayer = 0;
 
-            if (totalPower1 > totalPower2) winningPlayer = 1;
-            else if (totalPower2 > totalPower1) winningPlayer = 2;
-            // If power is tied, remaining synergy decides the winner
-            else if (totalPower1 === totalPower2) {
-                let player1Synergy = 0;
-                let player2Synergy = 0;
-
-                for (let row of player1Rows) {
-                    player1Synergy += row.synergy;
-                }
-                for (let row of player2Rows) {
-                    player2Synergy += row.synergy;
-                }
-
-                if (player1Synergy > player2Synergy) winningPlayer = 1;
-                else if (player2Synergy > player1Synergy) winningPlayer = 2;
-                // If remaining synergy is also tied, it is a draw, denoted by setting player 3 as the winner
-                else winningPlayer = 3;
-            }
+            if (player1Score > player2Score) winningPlayer = 1;
+            else if (player2Score > player1Score) winningPlayer = 2;
+            // If scores are tied, it is a draw
+            else winningPlayer = 3;
 
             // Reset turn state
             // Winner of last round goes first next round. If round was a draw, random player goes first
@@ -615,12 +907,9 @@ export default function App() {
                 player2Passed: false,
             }));
 
-            // Update match state
-            // Update state if round is a draw
+            // Update match state and round tracking
             if (winningPlayer === 3) {
                 alert('Round is a draw! Neither player receives a win.');
-
-                // Update state for whichever player won
             } else {
                 // Add a win to winner's record
                 matchRef.current[`player${winningPlayer}`].wins += 1;
@@ -628,10 +917,62 @@ export default function App() {
                 alert(`Player ${winningPlayer} wins the round!`);
             }
 
+            // Update game logic for round tracking
+            setGameLogic(prev => ({
+                ...prev,
+                currentRound: prev.currentRound + 1,
+                player1Turns: 0,
+                player2Turns: 0,
+                player1Deployed: 0,
+                player2Deployed: 0,
+                player1DrawnHeroes: [], // Reset drawn heroes for new round
+                player2DrawnHeroes: []  // Reset drawn heroes for new round
+            }));
+
+            // Check if game is over (best 2 of 3)
+            const player1Wins = matchRef.current.player1.wins;
+            const player2Wins = matchRef.current.player2.wins;
+            
+            if (player1Wins >= 2 || player2Wins >= 2) {
+                // Game is over
+                const gameWinner = player1Wins >= 2 ? 1 : 2;
+                alert(`Game Over! Player ${gameWinner} wins the match!`);
+                setGameLogic(prev => ({ ...prev, gamePhase: 'gameEnd' }));
+            } else if (gameLogic.currentRound >= gameLogic.maxRounds) {
+                // All rounds completed, determine winner
+                if (player1Wins > player2Wins) {
+                    alert(`Game Over! Player 1 wins the match!`);
+                } else if (player2Wins > player1Wins) {
+                    alert(`Game Over! Player 2 wins the match!`);
+                } else {
+                    alert(`Game Over! The match is a draw!`);
+                }
+                setGameLogic(prev => ({ ...prev, gamePhase: 'gameEnd' }));
+            }
+
             // Discard all cards
             // Set ids of rows to be reset
             const player1RowIds = ['1b', '1m', '1f'];
             const player2RowIds = ['2b', '2m', '2f'];
+
+            // Discard any special, round-limited cards still in hand (e.g., BOB)
+            const expireFromHand = (playerNum) => {
+                const handId = `player${playerNum}hand`;
+                const handCards = [...gameState.rows[handId].cardIds];
+                for (const pid of handCards) {
+                    const card = gameState.playerCards[`player${playerNum}cards`].cards[pid];
+                    if (card?.expiresEndOfRound === true) {
+                        showToast(`Discarding ${card.id?.toUpperCase?.() || 'special card'} from Player ${playerNum} hand`);
+                        dispatch({
+                            type: ACTIONS.DISCARD_CARD,
+                            payload: { playerNum, targetCardId: pid, targetCardRow: handId }
+                        });
+                        setTimeout(() => clearToast(), 1500);
+                    }
+                }
+            };
+            expireFromHand(1);
+            expireFromHand(2);
 
             // Get card ids from every player 1 row
             let player1Cards = [];
@@ -719,18 +1060,16 @@ export default function App() {
             // Set new match state using the ref that was mutated
             setMatchState(matchRef.current);
 
-            // TODO: create a play again button
-            // If a player has reached two wins, end the match and reload the page for a new match
-            if (matchState['player1'].wins === 2) {
-                alert('Player 1 wins the match!');
-                alert('Starting a new match.');
-                window.location.reload();
-            } else if (matchState['player2'].wins === 2) {
-                alert('Player 2 wins the match!');
-                alert('Starting a new match.');
-                window.location.reload();
+            // Initialize new round with 4 cards per player (if game is not over)
+            if (gameLogic.gamePhase !== 'gameEnd') {
+                setTimeout(() => {
+                    initializeGame();
+                }, 1000); // Delay to allow alerts to show
             }
         };
+
+    // End the round and update match scores when both players have passed their turn
+    useEffect(() => {
         // When both players pass, end the round and move to the next round
         if (
             turnState.player1Passed === true &&
@@ -756,6 +1095,16 @@ export default function App() {
         // If not moving card within player's hand (i.e. moving into a row),
         // Set new row synergy and set card to played
         if (finishRowId[0] !== 'p' && parseInt(finishRowId[0]) === playerNum) {
+            // Check deployment limit (6 heroes maximum per player)
+            const deployedHeroes = gameState.rows[`${playerNum}f`].cardIds.length + 
+                                  gameState.rows[`${playerNum}m`].cardIds.length + 
+                                  gameState.rows[`${playerNum}b`].cardIds.length;
+            
+            if (deployedHeroes >= gameLogic.maxHeroesPerPlayer) {
+                console.log(`Player ${playerNum} has reached the maximum deployment limit (${deployedHeroes}/${gameLogic.maxHeroesPerPlayer})`);
+                return; // Prevent deployment
+            }
+            
             // Apply card movement
             dispatch({
                 type: ACTIONS.MOVE_CARD,
@@ -767,17 +1116,39 @@ export default function App() {
                     finishIndex: destination.index,
                 },
             });
-            // If audio is on, play intro audio
-            if (playAudio === true) {
-                try {
-                    const introAudio = new Audio(
-                        getAudioFile(`${heroId}-intro`)
-                    );
-                    introAudio.play();
-                } catch (err) {
-                    console.log('No intro audio available');
-                }
+            
+            // Play placement sound for all unit placements (always enabled)
+            try {
+                console.log('Attempting to play placement sound...');
+                const placementAudioSrc = getAudioFile('placement');
+                console.log('Placement audio source:', placementAudioSrc);
+                const placementAudio = new Audio(placementAudioSrc);
+                console.log('Created placement audio object:', placementAudio);
+                placementAudio.play().then(() => {
+                    console.log('Placement sound played successfully');
+                }).catch(err => {
+                    console.log('Placement sound play failed:', err);
+                });
+            } catch (err) {
+                console.log('Placement audio creation failed:', err);
             }
+            
+            // Play hero-specific enter sound (if available)
+            try {
+                const enterAudioSrc = getAudioFile(`${heroId}-enter`);
+                if (enterAudioSrc) {
+                    console.log(`Playing ${heroId} enter sound...`);
+                    const enterAudio = new Audio(enterAudioSrc);
+                    enterAudio.play().then(() => {
+                        console.log(`${heroId} enter sound played successfully`);
+                    }).catch(err => {
+                        console.log(`${heroId} enter sound play failed:`, err);
+                    });
+                }
+            } catch (err) {
+                console.log(`${heroId} enter audio creation failed:`, err);
+            }
+            
 
             // Set new row synergy
             const addSynergy =
@@ -845,31 +1216,39 @@ export default function App() {
                                 setCardFocus={setCardFocus}
                                 nextCardDraw={nextCardDraw}
                                 setNextCardDraw={setNextCardDraw}
+                                gameLogic={gameLogic}
+                                trackDrawnHero={trackDrawnHero}
                             />
-                            <CenterSection matchState={matchState}></CenterSection>
+                            <CenterSection 
+                                matchState={matchState}
+                                gameLogic={gameLogic}
+                                turnState={turnState}
+                            />
                             <PlayerHalf
                                 playerNum={2}
                                 setCardFocus={setCardFocus}
                                 nextCardDraw={nextCardDraw}
                                 setNextCardDraw={setNextCardDraw}
+                                gameLogic={gameLogic}
+                                trackDrawnHero={trackDrawnHero}
                             />
                         </DragDropContext>
-                        {cardFocus !== null && (
-                            <CardFocus
-                                setCardFocus={setCardFocus}
-                                unsetCardFocus={() => {
-                                    setCardFocus('invisible');
-                                }}
-                                cardFocus={cardFocus}
-                                setNextCardDraw={setNextCardDraw}
-                                playAudio={playAudio}
-                            />
-                        )}
+                        <CardFocus
+                            setCardFocus={setCardFocus}
+                            unsetCardFocus={() => {
+                                setCardFocus('invisible');
+                            }}
+                            cardFocus={cardFocus || 'invisible'}
+                            setNextCardDraw={setNextCardDraw}
+                            playAudio={playAudio}
+                            style={targetingMessage ? { display: 'none' } : undefined}
+                        />
                     </gameContext.Provider>
                 </turnContext.Provider>
             </div>
             <Tutorial />
             <Footer />
+            <TopBanner />
             
             {/* Modal Components */}
             {modalState.type === 'choice' && (
