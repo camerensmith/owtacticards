@@ -1185,6 +1185,121 @@ export default function CardEffects(props) {
 }
 ```
 
+### Audio Implementation Patterns
+
+**Problem**: Incorrect audio file usage or missing audio files causing build errors.
+
+**Solution**: Follow established audio patterns and verify file existence:
+
+```javascript
+// Correct audio flow pattern
+export async function onEnter({ playerHeroId, rowId }) {
+    // 1. Play enter sound on activation
+    try {
+        playAudioByKey('hero-enter');
+    } catch {}
+    
+    // ... ability logic ...
+    
+    // 2. Play ability sound on resolve
+    try {
+        playAudioByKey('hero-ability1');
+    } catch {}
+}
+
+export async function onUltimate({ playerHeroId, rowId, cost }) {
+    // 1. Play ultimate activation sound
+    try {
+        playAudioByKey('hero-ultimate');
+    } catch {}
+    
+    // ... ultimate logic ...
+    
+    // 2. Play ultimate resolve sound (if different)
+    try {
+        playAudioByKey('hero-ultimate-resolve');
+    } catch {}
+}
+```
+
+**Audio File Naming Convention**:
+- `{hero}-intro.mp3` - onDraw (if implemented)
+- `{hero}-enter.mp3` - onEnter activation
+- `{hero}-ability1.mp3` - onEnter resolve
+- `{hero}-ability2.mp3` - onEnter2 resolve (if applicable)
+- `{hero}-ultimate.mp3` - onUltimate activation
+- `{hero}-ultimate-resolve.mp3` - onUltimate execution (if different)
+
+**Common Mistakes**:
+- Using non-existent audio files (check file existence first)
+- Playing wrong audio at wrong times
+- Missing audio imports in `imageImports.js`
+- Not adding audio mappings to `abilityAudioFiles`
+
+### Column Targeting Implementation
+
+**Problem**: Incorrect column targeting logic causing wrong targets or errors.
+
+**Solution**: Use proper column targeting pattern:
+
+```javascript
+// Column targeting pattern (e.g., Genji Shuriken)
+export async function onEnter({ playerHeroId, rowId }) {
+    const target = await selectCardTarget();
+    if (target) {
+        // 1. Get target's column index
+        const targetRow = window.__ow_getRow?.(target.rowId);
+        const columnIndex = targetRow.cardIds.indexOf(target.cardId);
+        
+        // 2. Determine enemy rows
+        const playerNum = parseInt(playerHeroId[0]);
+        const enemyPlayer = playerNum === 1 ? 2 : 1;
+        const enemyRows = [`${enemyPlayer}f`, `${enemyPlayer}m`, `${enemyPlayer}b`];
+        
+        // 3. Hit all enemies in same column
+        for (const enemyRowId of enemyRows) {
+            const enemyRow = window.__ow_getRow?.(enemyRowId);
+            if (enemyRow && enemyRow.cardIds[columnIndex]) {
+                const enemyCardId = enemyRow.cardIds[columnIndex];
+                // Apply effect to enemyCardId
+            }
+        }
+    }
+}
+```
+
+**Key Points**:
+- Column index is based on position in `row.cardIds` array
+- Check for card existence before applying effects
+- Handle cases where rows don't have cards at certain positions
+- Use proper enemy row ID calculation
+
+### Ultimate Tracking Integration
+
+**Problem**: New heroes not tracked for Echo's Duplicate ability.
+
+**Solution**: Add tracking to all ultimate executions in `App.js`:
+
+```javascript
+// In App.js ultimate handling
+} else if (heroId === 'newhero' && abilitiesIndex?.newhero?.onUltimate) {
+    try {
+        // Track ultimate usage for Echo's Duplicate
+        window.__ow_trackUltimateUsed?.(heroId, 'Hero Name', 'Ability Name', playerNum, rowId, adjustedCost);
+        abilitiesIndex.newhero.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
+    } catch (e) {
+        console.log('Error executing NEWHERO ultimate:', e);
+    }
+```
+
+**Required Information**:
+- `heroId`: Base hero ID (e.g., 'genji')
+- `'Hero Name'`: Display name (e.g., 'Genji')
+- `'Ability Name'`: Ultimate ability name (e.g., 'Dragon Blade')
+- `playerNum`: Player number
+- `rowId`: Row where ultimate was used
+- `adjustedCost`: Final synergy cost
+
 ### Testing Checklist
 
 Before considering any hero implementation complete:
@@ -1198,6 +1313,11 @@ Before considering any hero implementation complete:
 - [ ] No runtime errors in console
 - [ ] All required arrays present (`enemyEffects`, `allyEffects`)
 - [ ] No hardcoded special behavior for regular heroes
+- [ ] Audio files exist and are properly imported
+- [ ] Audio plays at correct times (activation vs resolve)
+- [ ] Ultimate tracking added to App.js
+- [ ] Column targeting works correctly (if applicable)
+- [ ] Edge cases handled (invalid targets, empty columns, etc.)
 
 ## Example: Complete Hero Implementation
 

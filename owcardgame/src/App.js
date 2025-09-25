@@ -759,6 +759,11 @@ function checkOnEnterAbilities(playerHeroId, rowId, playerNum) {
         return;
     }
 
+    if (heroId === 'genji' && abilitiesIndex?.genji?.onEnter) {
+        abilitiesIndex.genji.onEnter({ playerHeroId, rowId });
+        return;
+    }
+
     if (heroId === 'dvameka' && abilitiesIndex?.dvameka?.onEnter) {
         abilitiesIndex.dvameka.onEnter({ playerHeroId, rowId });
         return;
@@ -1532,6 +1537,14 @@ export default function App() {
                             abilitiesIndex.echo.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
                         } catch (e) {
                             console.log('Error executing ECHO ultimate:', e);
+                        }
+                    } else if (heroId === 'genji' && abilitiesIndex?.genji?.onUltimate) {
+                        try {
+                            // Track ultimate usage for Echo's Duplicate
+                            window.__ow_trackUltimateUsed?.(heroId, 'Genji', 'Dragon Blade', playerNum, rowId, adjustedCost);
+                            abilitiesIndex.genji.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
+                        } catch (e) {
+                            console.log('Error executing GENJI ultimate:', e);
                         }
                     } else {
                         console.log(`Executing ultimate for ${playerHeroId} in ${rowId} (cost: ${adjustedCost})`);

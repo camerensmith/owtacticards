@@ -318,6 +318,7 @@ const data = {
                 m: 2,
                 b: 3,
             },
+            ultimate: 'Dragon Blade (3): Defeat one damaged enemy Hero.',
             isImplemented: true,
         },
 
