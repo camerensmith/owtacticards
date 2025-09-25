@@ -260,6 +260,12 @@ function reducer(gameState, action) {
             const startRow = gameState.rows[startRowId];
             const finishRow = gameState.rows[finishRowId];
 
+            // Enforce max row capacity (4)
+            if (finishRow && Array.isArray(finishRow.cardIds) && finishRow.cardIds.length >= 4 && startRowId !== finishRowId) {
+                // Destination full; cancel move
+                return gameState;
+            }
+
             // Move card within same row
             if (startRowId === finishRowId) {
                 const rowId = startRowId;
@@ -535,6 +541,11 @@ function checkOnEnterAbilities(playerHeroId, rowId, playerNum) {
         return;
     }
 
+    if (heroId === 'doomfist' && abilitiesIndex?.doomfist?.onEnter) {
+        abilitiesIndex.doomfist.onEnter({ playerHeroId, rowId });
+        return;
+    }
+
     if (!heroData) return;
     
     // Check if hero has onEnter abilities from hero.json
@@ -761,7 +772,53 @@ export default function App() {
                 });
             }
         };
-        return () => { window.__ow_appendRowEffect = null; window.__ow_getRow = null; window.__ow_setRowArray = null; window.__ow_updateSynergy = null; window.__ow_getCard = null; window.__ow_getMaxHealth = null; window.__ow_setCardHealth = null; window.__ow_isSpecial = null; window.__ow_setRowPower = null; window.__ow_setInvulnerableSlots = null; window.__ow_clearInvulnerableSlots = null; window.__ow_isSlotInvulnerable = null; window.__ow_removeRowEffect = null; window.__ow_cleanupImmortalityField = null; window.__ow_dealDamage = null; window.__ow_dispatchShieldUpdate = null; window.__ow_appendCardEffect = null; };
+        window.__ow_isRowFull = (rowId) => {
+            try {
+                const cards = gameState.rows[rowId]?.cardIds || [];
+                return cards.length >= 4;
+            } catch { return false; }
+        };
+        window.__ow_moveCardToRow = (cardId, targetRowId) => {
+            // Move a card to a different row
+            const playerNum = parseInt(cardId[0]);
+            const playerKey = `player${playerNum}cards`;
+            const currentCard = gameState.playerCards[playerKey]?.cards?.[cardId];
+            
+            if (currentCard) {
+                // Find current row and index
+                let currentRowId = null;
+                let currentIndex = -1;
+                
+                const allRows = ['1f', '1m', '1b', '2f', '2m', '2b'];
+                for (const rowId of allRows) {
+                    const rowCards = gameState.rows[rowId]?.cardIds || [];
+                    const index = rowCards.indexOf(cardId);
+                    if (index !== -1) {
+                        currentRowId = rowId;
+                        currentIndex = index;
+                        break;
+                    }
+                }
+                
+                if (currentRowId && currentIndex !== -1) {
+                    // Get target row cards to determine insertion point
+                    const targetRowCards = gameState.rows[targetRowId]?.cardIds || [];
+                    const targetIndex = targetRowCards.length; // Insert at end
+                    
+                    dispatch({
+                        type: ACTIONS.MOVE_CARD,
+                        payload: {
+                            targetCardId: cardId,
+                            startRowId: currentRowId,
+                            startIndex: currentIndex,
+                            finishRowId: targetRowId,
+                            finishIndex: targetIndex
+                        }
+                    });
+                }
+            }
+        };
+        return () => { window.__ow_appendRowEffect = null; window.__ow_getRow = null; window.__ow_setRowArray = null; window.__ow_updateSynergy = null; window.__ow_getCard = null; window.__ow_getMaxHealth = null; window.__ow_setCardHealth = null; window.__ow_isSpecial = null; window.__ow_setRowPower = null; window.__ow_setInvulnerableSlots = null; window.__ow_clearInvulnerableSlots = null; window.__ow_isSlotInvulnerable = null; window.__ow_removeRowEffect = null; window.__ow_cleanupImmortalityField = null; window.__ow_dealDamage = null; window.__ow_dispatchShieldUpdate = null; window.__ow_appendCardEffect = null; window.__ow_moveCardToRow = null; };
     }, [gameState]);
     // Game logic state
     const [gameLogic, setGameLogic] = useState({
@@ -1127,6 +1184,12 @@ export default function App() {
                         } catch (e) {
                             console.log('Error executing BRIGITTE ultimate:', e);
                         }
+                    } else if (heroId === 'doomfist' && abilitiesIndex?.doomfist?.onUltimate) {
+                        try {
+                            abilitiesIndex.doomfist.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
+                        } catch (e) {
+                            console.log('Error executing DOOMFIST ultimate:', e);
+                        }
                     } else {
                         console.log(`Executing ultimate for ${playerHeroId} in ${rowId} (cost: ${adjustedCost})`);
                     }
@@ -1393,6 +1456,13 @@ export default function App() {
             if (deployedHeroes >= gameLogic.maxHeroesPerPlayer) {
                 console.log(`Player ${playerNum} has reached the maximum deployment limit (${deployedHeroes}/${gameLogic.maxHeroesPerPlayer})`);
                 return; // Prevent deployment
+            }
+
+            // Enforce max row capacity (4) for destination row
+            const destCards = gameState.rows[finishRowId]?.cardIds || [];
+            if (destCards.length >= 4 && startRowId !== finishRowId) {
+                console.log(`Row ${finishRowId} is full (4). Cannot place ${draggableId}.`);
+                return;
             }
             
             // Apply card movement

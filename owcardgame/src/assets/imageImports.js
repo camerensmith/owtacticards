@@ -141,6 +141,12 @@ import brigitteAbility1 from './audio/brigitte-ability1.mp3';
 import brigitteUltimate from './audio/brigitte-ultimate.mp3';
 import brigitteBash from './audio/brigitte-bash.mp3';
 import brigitteArmor from './audio/brigitte-armor.mp3';
+import doomfistIntro from './audio/doomfist-intro.mp3';
+import doomfistEnter from './audio/doomfist-enter.mp3';
+import doomfistAbility1 from './audio/doomfist-ability1.mp3';
+import doomfistPunch from './audio/doomfist-punch.mp3';
+import doomfistUltimate from './audio/doomfist-ultimate.mp3';
+import doomfistMeteorLanding from './audio/doomfist-meteor-landing.mp3';
 import genjiCutting from './audio/genji-cutting.mp3';
 import genjiUlt from './audio/genji-ult.mp3';
 import hanzoMarked from './audio/hanzo-marked.mp3';
@@ -256,6 +262,12 @@ export const abilityAudioFiles = {
     'brigitte-ultimate': brigitteUltimate,
     'brigitte-bash': brigitteBash,
     'brigitte-armor': brigitteArmor,
+    'doomfist-intro': doomfistIntro,
+    'doomfist-enter': doomfistEnter,
+    'doomfist-ability1': doomfistAbility1,
+    'doomfist-punch': doomfistPunch,
+    'doomfist-ultimate': doomfistUltimate,
+    'doomfist-meteor-landing': doomfistMeteorLanding,
     'bastion-ult': bastionUlt,
     'genji-cutting': genjiCutting,
     'genji-ult': genjiUlt,

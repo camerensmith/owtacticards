@@ -8,6 +8,7 @@ import ana from './heroes/ana';
 import baptiste from './heroes/baptiste';
 import bastion from './heroes/bastion';
 import brigitte from './heroes/brigitte';
+import doomfist from './heroes/doomfist';
 
 export const abilities = {
     ashe,
@@ -16,6 +17,7 @@ export const abilities = {
     baptiste,
     bastion,
     brigitte,
+    doomfist,
 };
 
 export default abilities;

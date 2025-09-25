@@ -451,6 +451,11 @@ Definitions used across abilities and effects:
 
 These conventions ensure consistent behavior for column-based abilities (e.g., effects that hit “this column” across multiple rows).
 
+### Row Capacity Standard
+- Baseline maximum of 4 units per row.
+- Moves or placements into a full row are prevented by the reducer and drag/deploy handler.
+- Use `window.__ow_isRowFull(rowId)` to check capacity from hero modules/UI before attempting moves.
+
 ## Hero Implementation Checklist
 
 Use this checklist when adding a new hero module in `src/abilities/heroes/<hero>.js`:
@@ -487,6 +492,8 @@ Use this checklist when adding a new hero module in `src/abilities/heroes/<hero>
   - `__ow_getMaxHealth(playerHeroId)` → card’s max health (from data)
   - `__ow_setCardHealth(playerHeroId, newHealth)` → update health
   - `__ow_updateSynergy(rowId, delta)` → mutate row synergy (e.g., -1)
+  - `__ow_isRowFull(rowId)` → returns true if row has 4 units
+  - `__ow_moveCardToRow(cardId, targetRowId)` → moves a card to another row (inserts at end), capacity-enforced
   - Use sparingly; long-term we’ll route all state changes through centralized actions
 
 Implementing Steps
@@ -734,6 +741,34 @@ Custom React components for visual effects that follow heroes.
 ```
 
 ## Ultimate Usage Tracking System
+
+## Hero Mechanics: Doomfist (Reference)
+
+### Rocket Punch (On Enter Option)
+- Deal 2 damage to a single enemy (respects shields).
+- After damage, attempt to push the target to the row behind on its side:
+  - Front → Middle, Middle → Back, Back → no push.
+  - Push is blocked if destination row is full (4 units).
+- If the target dies from the hit, still attempt the push (if possible), then deal 1 damage to all remaining enemies in the target’s original row.
+- Cannot target dead heroes.
+
+Implementation notes:
+- Use `dealDamage(target.cardId, target.rowId, 2)`.
+- Determine push row from `target.rowId[1]` and call `window.__ow_moveCardToRow(target.cardId, pushToRow)` if `!window.__ow_isRowFull(pushToRow)`.
+- For the death-trigger, iterate the original row’s `cardIds` and apply `dealDamage(..., 1)` to others.
+
+### Meteor Strike (Ultimate, Cost 3)
+- Deal 3 damage to the selected enemy.
+- Then deal 1 damage to adjacent enemies:
+  - Left and right neighbors in the same row (based on index in `row.cardIds`).
+  - Row-adjacent positions on the same side: from Front↔Middle↔Back (do not cross sides).
+
+Audio guidance:
+- Play the start sound on activation and a distinct landing/impact sound after resolving damage.
+
+Edge cases handled:
+- Shields absorb Rocket Punch damage; push still occurs if capacity allows.
+- If destination row is full, no push occurs but damage still applies.
 
 ### Overview
 The game enforces that **each hero can only use their ultimate once per round**. This system tracks usage and provides visual feedback.

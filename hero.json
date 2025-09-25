@@ -104,8 +104,8 @@
     "middle_synergy": 0,
     "back_power": 1,
     "back_synergy": 0,
-    "on_enter1": "Call Mech — Place D.Va+MEKA on top of your deck.",
-    "ultimate": "Call Mech (2): Place D.Va+MEKA on top of your deck."
+    "on_enter1": "None",
+    "ultimate": "Call Mech (2): Place D.Va+MEKA on top of your hand."
   },
   {
     "name": "Echo",
@@ -157,7 +157,7 @@
     "back_power": 1,
     "back_synergy": 3,
     "on_enter1": "Total Mayhem — If Junkrat is Defeated, deal 2 damage to the enemy who defeated Junkrat and 1 damage to up to 2 more enemies in that same row.",
-    "ultimate": "RIP-Tire (3): Move Junkrat to any of your rows and deal 2 damage to all enemies in opposing row."
+    "ultimate": "RIP-Tire (4): Move Junkrat to any of your rows and deal [Row Synergy] damage to all enemies in opposing row."
   },
   {
     "name": "Lúcio",
@@ -236,7 +236,7 @@
     "middle_synergy": 3,
     "back_power": 2,
     "back_synergy": 2,
-    "on_enter1": "Biotic Grasp — Deal 2 damage to any enemy ignoring shields and heal 2 health to any ally.",
+    "on_enter1": "Biotic Grasp — Deal 1 damage to any enemy ignoring shields and heal 2 health to any ally.",
     "ultimate": "Coalescence (3): Heal all allies in target column for 2 health and deal 2 damage to all enemies in opposing column ignoring all shields."
   },
   {
@@ -264,7 +264,7 @@
     "back_power": 3,
     "back_synergy": 1,
     "on_enter1": "Protective Barrier — All Heroes in Orisa’s row (including Orisa) take 1 less damage from attacks, but no less than 1 damage.",
-    "ultimate": "Supercharger (3): Place Orisa Token on Orisa. All allies in Orisa’s row receive +1 Power. Discard token if Orisa is defeated."
+    "ultimate": "Supercharger (3): Place Orisa Token on Orisa's row. Orisa's row now receives +1 Synergy per Hero until Orisa is defeated."
   },
   {
     "name": "Pharah",
@@ -277,7 +277,7 @@
     "back_power": 2,
     "back_synergy": 2,
     "on_enter1": "Concussive Blast — Move target enemy back one row (if possible). Remove 2 Synergy Points from target’s starting row.",
-    "ultimate": "Barrage (3): Deal 2 damage to up to three enemies anywhere on the board."
+    "ultimate": "Barrage (3): Deal X damage to up to 3 enemies anywhere on the board, where X equals the remaining Synergy in Pharah's row after activating this ability."
   },
   {
     "name": "Ramattra",
@@ -304,7 +304,7 @@
     "back_synergy": 1,
     "on_enter1": "Hellfire Shotguns — Deal 2 damage to one enemy",
     "on_enter2": "Hellfire Shotguns — Deal 1 damage to two adjacent enemies in a single row.",
-    "ultimate": "Death Blossom (3): Discard Reaper to deal 3 damage to all enemies in Reaper’s opposing row."
+    "ultimate": "Death Blossom (4): Discard Reaper to deal 3 damage to all enemies in Reaper’s opposing row. Ignores shields."
   },
   {
     "name": "Reinhardt",
@@ -330,7 +330,7 @@
     "back_power": 1,
     "back_synergy": 3,
     "on_enter1": "Chain Hook — Move target enemy to first row and deal 2 damage.",
-    "ultimate": "Whole Hog (3): Deal (+2 per enemy) damage spread randomly between each and all enemy targets."
+    "ultimate": "Whole Hog (4): Deal (+2 per enemy) damage spread randomly between each and all enemy targets."
   },
   {
     "name": "Sigma",
@@ -382,7 +382,7 @@
     "back_power": 2,
     "back_synergy": 2,
     "on_enter1": "Teleporter — You may return one of your undefeated Heroes to your hand. Remove all tokens and counters on or associated with that Hero.",
-    "ultimate": "Shield Generator (3): All of your deployed Heroes (including Symmetra) gain one shield token."
+    "ultimate": "Shield Generator (2): All of your deployed Heroes (including Symmetra) gain one shield token."
   },
   {
     "name": "Torbjörn",
@@ -421,7 +421,7 @@
     "middle_synergy": 0,
     "back_power": 0,
     "back_synergy": 0,
-    "on_enter1": "Deployment — Immobile and cannot receive direct shield tokens. At the start of each of your opponent’s turns they must deal 1 damage to two of their Heroes in that row.",
+    "on_enter1": "Deployment — Immobile and cannot receive Shields or Healing effects. Deals 1 damage to a random unit in the opposite row at the start of the enemy turn.",
     "ultimate": "Deployment (0): Ongoing text as above.",
     "special": true
   },
@@ -449,7 +449,7 @@
     "back_power": 1,
     "back_synergy": 3,
     "on_enter1": "Barrier Protector — Place 3 Shield Tokens on Winston. You may choose to absorb damage to Heroes in Winston’s row by removing shield tokens from Winston instead.",
-    "ultimate": "Primal Rage (3): You may move Winston to any row and deal 2 damage to all enemies in the opposing row."
+    "ultimate": "Primal Rage (3): You may move Winston to any row and deal 2 damage to all enemies in an opposing adjacent row."
   },
   {
     "name": "Wrecking Ball",

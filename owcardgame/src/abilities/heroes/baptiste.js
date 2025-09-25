@@ -27,12 +27,27 @@ export function onEnter({ playerNum, rowId }) {
 
             const doDamageColumn = async () => {
                 const enemyPlayer = playerNum === 1 ? 2 : 1;
-                const rows = [`${enemyPlayer}f`, `${enemyPlayer}m`, `${enemyPlayer}b`];
-                const candidates = rows.map(r => window.__ow_getRow?.(r)?.cardIds?.[liIndex]).filter(Boolean);
-                // Apply up to three adjacent by column (front/middle/back contiguous); here we just take available
-                for (const pid of candidates) {
-                    const rowId = pid[0] + clickedRow[1];
-                    dealDamage(pid, rowId, 1, false);
+                const enemyRows = [`${enemyPlayer}f`, `${enemyPlayer}m`, `${enemyPlayer}b`];
+                // Collect tuples of [pid, rowId] at the selected column index
+                const rawTargets = enemyRows
+                    .map(r => {
+                        const cardIds = window.__ow_getRow?.(r)?.cardIds || [];
+                        if (liIndex < 0 || liIndex >= cardIds.length) return null;
+                        const pid = cardIds[liIndex];
+                        return pid ? [pid, r] : null;
+                    })
+                    .filter(Boolean);
+
+                // De-duplicate by pid just in case
+                const seen = new Set();
+                const targets = [];
+                for (const [pid, r] of rawTargets) {
+                    if (!seen.has(pid)) { seen.add(pid); targets.push([pid, r]); }
+                }
+
+                // Apply damage to up to 3 (front/middle/back)
+                for (const [pid, r] of targets) {
+                    dealDamage(pid, r, 1, false);
                     effectsBus.publish(Effects.showDamage(pid, 1));
                 }
                 playAudioByKey('baptiste-ability1');
