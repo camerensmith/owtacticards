@@ -36,6 +36,30 @@ export default function TurnEffectsRunner() {
             const playerTurn = turnState.playerTurn;
             const playerRowIds = [`${playerTurn}b`, `${playerTurn}m`, `${playerTurn}f`];
 
+            // Clean up special cards that weren't played this turn
+            const handId = `player${playerTurn}hand`;
+            const handCards = gameState.rows[handId]?.cardIds || [];
+            const specialCardsInHand = handCards.filter(cardId => {
+                const card = gameState.playerCards[`player${playerTurn}cards`]?.cards?.[cardId];
+                return card?.special === true;
+            });
+            
+            if (specialCardsInHand.length > 0) {
+                console.log('TurnEffectsRunner: Found special cards in hand, removing them:', specialCardsInHand);
+                
+                // Remove special cards from hand and player cards
+                for (const cardId of specialCardsInHand) {
+                    window.__ow_removeSpecialCard?.(cardId, playerTurn);
+                }
+                
+                // Clean up D.Va "suited-up" state if D.Va+MEKA was removed
+                const hadDvameka = specialCardsInHand.some(cardId => cardId.includes('dvameka'));
+                if (hadDvameka) {
+                    console.log('TurnEffectsRunner: D.Va+MEKA was removed, cleaning up D.Va suited-up state');
+                    window.__ow_cleanupDvaSuitedUp?.(playerTurn);
+                }
+            }
+
             for (let rowId of playerRowIds) {
                 const allyRowEffects = gameState.rows[rowId].allyEffects || [];
                 const enemyRowEffects = gameState.rows[rowId].enemyEffects || [];

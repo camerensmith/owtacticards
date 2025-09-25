@@ -46,6 +46,11 @@ export const ACTIONS = {
     MARK_ULTIMATE_USED: 'mark-ultimate-used',
     RESET_ULTIMATE_USAGE: 'reset-ultimate-usage',
     CLEANUP_SHIELD_BASH: 'cleanup-shield-bash',
+    ADD_SPECIAL_CARD_TO_HAND: 'add-special-card-to-hand',
+    RETURN_DVA_TO_HAND: 'return-dva-to-hand',
+    REPLACE_WITH_DVA: 'replace-with-dva',
+    CLEANUP_DVA_SUITED_UP: 'cleanup-dva-suited-up',
+    REMOVE_SPECIAL_CARD: 'remove-special-card',
     UPDATE_ROW: 'update-row',
     UPDATE_SYNERGY: 'update-synergy',
     DEDUCT_SYNERGY: 'deduct-synergy',
@@ -443,6 +448,188 @@ function reducer(gameState, action) {
             });
         }
 
+        // Add special card to hand (ignores hand size limit)
+        case ACTIONS.ADD_SPECIAL_CARD_TO_HAND: {
+            const { playerNum, cardId } = action.payload; // cardId is base hero id, e.g. 'dvameka'
+            const playerKey = `player${playerNum}cards`;
+            const handId = `player${playerNum}hand`;
+
+            return produce(gameState, (draft) => {
+                const heroData = data.heroes[cardId];
+                if (!heroData) return;
+
+                // Construct player-specific card id (e.g., '1dvameka')
+                const playerCardId = `${playerNum}${cardId}`;
+
+                // Extract ultimate cost from ultimate description
+                const ultimateCost = heroData.ultimate ? 
+                    (heroData.ultimate.match(/\((\d+)\)/) ? parseInt(heroData.ultimate.match(/\((\d+)\)/)[1]) : 3) : 3;
+
+                // Create the special card object under the player-specific id
+                draft.playerCards[playerKey].cards[playerCardId] = {
+                    id: cardId, // base hero id
+                    name: heroData.name,
+                    health: heroData.health,
+                    maxHealth: heroData.health,
+                    power: heroData.power,
+                    synergy: heroData.synergy,
+                    shield: 0,
+                    effects: [],
+                    enemyEffects: [],
+                    allyEffects: [],
+                    isPlayed: false,
+                    isDiscarded: false,
+                    enteredTurn: 0,
+                    ultimateCost,
+                    special: true, // Mark as special card for cleanup
+                };
+
+                // Add to top of hand using the player-specific id
+                draft.rows[handId].cardIds.unshift(playerCardId);
+            });
+        }
+
+        // Replace D.Va+MEKA with D.Va
+        case ACTIONS.RETURN_DVA_TO_HAND: {
+            const { playerNum } = action.payload;
+            const playerKey = `player${playerNum}cards`;
+            const handId = `player${playerNum}hand`;
+
+            return produce(gameState, (draft) => {
+                // Find D.Va in any row and move her to hand
+                const dvaCardId = `${playerNum}dva`;
+                let foundRow = null;
+                let foundIndex = -1;
+
+                // Search all rows for D.Va
+                for (const [rowId, row] of Object.entries(draft.rows)) {
+                    if (rowId.includes(playerNum.toString())) {
+                        const index = row.cardIds.indexOf(dvaCardId);
+                        if (index !== -1) {
+                            foundRow = rowId;
+                            foundIndex = index;
+                            break;
+                        }
+                    }
+                }
+
+                if (foundRow && foundIndex !== -1) {
+                    // Remove D.Va from the row
+                    draft.rows[foundRow].cardIds.splice(foundIndex, 1);
+                    
+                    // Add D.Va to hand
+                    draft.rows[handId].cardIds.unshift(dvaCardId);
+                    
+                    // Mark D.Va as not played (so she can be dragged from hand)
+                    if (draft.playerCards[playerKey]?.cards?.[dvaCardId]) {
+                        draft.playerCards[playerKey].cards[dvaCardId].isPlayed = false;
+                    }
+                }
+            });
+        }
+
+        case ACTIONS.CLEANUP_DVA_SUITED_UP: {
+            const { playerNum } = action.payload;
+            const playerKey = `player${playerNum}cards`;
+
+            return produce(gameState, (draft) => {
+                const dvaCardId = `${playerNum}dva`;
+                const dvaCard = draft.playerCards[playerKey]?.cards?.[dvaCardId];
+                
+                if (dvaCard && Array.isArray(dvaCard.effects)) {
+                    // Remove "suited-up" effect
+                    dvaCard.effects = dvaCard.effects.filter(effect => effect.id !== 'suited-up');
+                }
+            });
+        }
+
+        case ACTIONS.REMOVE_SPECIAL_CARD: {
+            const { cardId, playerNum } = action.payload;
+            const playerKey = `player${playerNum}cards`;
+            const handId = `player${playerNum}hand`;
+
+            return produce(gameState, (draft) => {
+                // Remove from hand
+                const handCards = draft.rows[handId]?.cardIds || [];
+                const cardIndex = handCards.indexOf(cardId);
+                if (cardIndex !== -1) {
+                    handCards.splice(cardIndex, 1);
+                }
+                
+                // Remove from player cards
+                if (draft.playerCards[playerKey]?.cards?.[cardId]) {
+                    delete draft.playerCards[playerKey].cards[cardId];
+                }
+            });
+        }
+
+        case ACTIONS.REPLACE_WITH_DVA: {
+            const { mechCardId, rowId, playerNum } = action.payload;
+            const playerKey = `player${playerNum}cards`;
+            const handId = `player${playerNum}hand`;
+
+            return produce(gameState, (draft) => {
+                const rowCards = draft.rows[rowId].cardIds;
+                const mechIndex = rowCards.indexOf(mechCardId);
+                if (mechIndex === -1) return;
+
+                // Remove MEKA from row and player cards
+                rowCards.splice(mechIndex, 1);
+                delete draft.playerCards[playerKey].cards[mechCardId];
+
+                // Find D.Va in hand and move her to the field
+                const dvaCardId = `${playerNum}dva`;
+                const handCards = draft.rows[handId].cardIds;
+                const dvaHandIndex = handCards.indexOf(dvaCardId);
+                
+                if (dvaHandIndex !== -1) {
+                    // Remove D.Va from hand
+                    handCards.splice(dvaHandIndex, 1);
+                    
+                    // Update D.Va's state
+                    if (draft.playerCards[playerKey].cards[dvaCardId]) {
+                        // Remove "suited-up" effect
+                        const currentEffects = Array.isArray(draft.playerCards[playerKey].cards[dvaCardId].effects) 
+                            ? draft.playerCards[playerKey].cards[dvaCardId].effects 
+                            : [];
+                        const filteredEffects = currentEffects.filter(effect => effect.id !== 'suited-up');
+                        
+                        // Update D.Va's properties
+                        draft.playerCards[playerKey].cards[dvaCardId].effects = filteredEffects;
+                        draft.playerCards[playerKey].cards[dvaCardId].isPlayed = true; // Now on field
+                        draft.playerCards[playerKey].cards[dvaCardId].enteredTurn = gameState.currentTurn || 1;
+                    }
+                    
+                    // Insert D.Va into the same row slot where MEKA was
+                    rowCards.splice(mechIndex, 0, dvaCardId);
+                } else {
+                    // Fallback: create new D.Va if not found in hand (shouldn't happen)
+                    const dvaHero = data.heroes['dva'];
+                    const dvaUltimateCost = dvaHero?.ultimate ? 
+                        (dvaHero.ultimate.match(/\((\d+)\)/) ? parseInt(dvaHero.ultimate.match(/\((\d+)\)/)[1]) : 3) : 3;
+
+                    draft.playerCards[playerKey].cards[dvaCardId] = {
+                        id: 'dva',
+                        name: dvaHero?.name || 'D.Va',
+                        health: dvaHero?.health ?? 2,
+                        maxHealth: dvaHero?.health ?? 2,
+                        power: dvaHero?.power || { f: 1, m: 1, b: 1 },
+                        synergy: dvaHero?.synergy || { f: 0, m: 0, b: 0 },
+                        shield: 0,
+                        effects: [],
+                        enemyEffects: [],
+                        allyEffects: [],
+                        isPlayed: true,
+                        isDiscarded: false,
+                        enteredTurn: gameState.currentTurn || 1,
+                        ultimateCost: dvaUltimateCost,
+                    };
+
+                    rowCards.splice(mechIndex, 0, dvaCardId);
+                }
+            });
+        }
+
         // Remove row effect
         case ACTIONS.REMOVE_ROW_EFFECT: {
             const { rowId, effectType, effectId } = action.payload;
@@ -543,6 +730,16 @@ function checkOnEnterAbilities(playerHeroId, rowId, playerNum) {
 
     if (heroId === 'doomfist' && abilitiesIndex?.doomfist?.onEnter) {
         abilitiesIndex.doomfist.onEnter({ playerHeroId, rowId });
+        return;
+    }
+
+    if (heroId === 'dva' && abilitiesIndex?.dva?.onEnter) {
+        abilitiesIndex.dva.onEnter({ playerHeroId, rowId });
+        return;
+    }
+
+    if (heroId === 'dvameka' && abilitiesIndex?.dvameka?.onEnter) {
+        abilitiesIndex.dvameka.onEnter({ playerHeroId, rowId });
         return;
     }
 
@@ -772,11 +969,66 @@ export default function App() {
                 });
             }
         };
+        window.__ow_removeCardEffect = (cardId, effectId) => {
+            // Remove effect from card by ID
+            const playerNum = parseInt(cardId[0]);
+            const playerKey = `player${playerNum}cards`;
+            const currentCard = gameState.playerCards[playerKey]?.cards?.[cardId];
+            
+            if (currentCard) {
+                const currentEffects = Array.isArray(currentCard.effects) ? currentCard.effects : [];
+                const filteredEffects = currentEffects.filter(effect => effect.id !== effectId);
+                dispatch({
+                    type: ACTIONS.EDIT_CARD,
+                    payload: {
+                        playerNum: playerNum,
+                        targetCardId: cardId,
+                        editKeys: ['effects'],
+                        editValues: [filteredEffects]
+                    }
+                });
+            }
+        };
         window.__ow_isRowFull = (rowId) => {
             try {
                 const cards = gameState.rows[rowId]?.cardIds || [];
                 return cards.length >= 4;
             } catch { return false; }
+        };
+        window.__ow_addSpecialCardToHand = (playerNum, cardId) => {
+            // Add special card to hand (ignores hand size limit)
+            dispatch({
+                type: ACTIONS.ADD_SPECIAL_CARD_TO_HAND,
+                payload: { playerNum, cardId }
+            });
+        };
+        window.__ow_returnDvaToHand = (playerNum) => {
+            // Return D.Va to hand when D.Va+MEKA enters
+            dispatch({
+                type: ACTIONS.RETURN_DVA_TO_HAND,
+                payload: { playerNum }
+            });
+        };
+        window.__ow_replaceWithDva = (mechCardId, rowId, playerNum) => {
+            // Replace D.Va+MEKA with D.Va in the same row slot
+            dispatch({
+                type: ACTIONS.REPLACE_WITH_DVA,
+                payload: { mechCardId, rowId, playerNum }
+            });
+        };
+        window.__ow_cleanupDvaSuitedUp = (playerNum) => {
+            // Clean up D.Va's "suited-up" state when special cards are removed
+            dispatch({
+                type: ACTIONS.CLEANUP_DVA_SUITED_UP,
+                payload: { playerNum }
+            });
+        };
+        window.__ow_removeSpecialCard = (cardId, playerNum) => {
+            // Remove special card from hand and player cards
+            dispatch({
+                type: ACTIONS.REMOVE_SPECIAL_CARD,
+                payload: { cardId, playerNum }
+            });
         };
         window.__ow_moveCardToRow = (cardId, targetRowId) => {
             // Move a card to a different row
@@ -818,7 +1070,7 @@ export default function App() {
                 }
             }
         };
-        return () => { window.__ow_appendRowEffect = null; window.__ow_getRow = null; window.__ow_setRowArray = null; window.__ow_updateSynergy = null; window.__ow_getCard = null; window.__ow_getMaxHealth = null; window.__ow_setCardHealth = null; window.__ow_isSpecial = null; window.__ow_setRowPower = null; window.__ow_setInvulnerableSlots = null; window.__ow_clearInvulnerableSlots = null; window.__ow_isSlotInvulnerable = null; window.__ow_removeRowEffect = null; window.__ow_cleanupImmortalityField = null; window.__ow_dealDamage = null; window.__ow_dispatchShieldUpdate = null; window.__ow_appendCardEffect = null; window.__ow_moveCardToRow = null; };
+        return () => { window.__ow_appendRowEffect = null; window.__ow_getRow = null; window.__ow_setRowArray = null; window.__ow_updateSynergy = null; window.__ow_getCard = null; window.__ow_getMaxHealth = null; window.__ow_setCardHealth = null; window.__ow_isSpecial = null; window.__ow_setRowPower = null; window.__ow_setInvulnerableSlots = null; window.__ow_clearInvulnerableSlots = null; window.__ow_isSlotInvulnerable = null; window.__ow_removeRowEffect = null; window.__ow_cleanupImmortalityField = null; window.__ow_dealDamage = null; window.__ow_dispatchShieldUpdate = null; window.__ow_appendCardEffect = null; window.__ow_removeCardEffect = null; window.__ow_moveCardToRow = null; window.__ow_isRowFull = null; window.__ow_addSpecialCardToHand = null; window.__ow_returnDvaToHand = null; window.__ow_replaceWithDva = null; window.__ow_cleanupDvaSuitedUp = null; window.__ow_removeSpecialCard = null; };
     }, [gameState]);
     // Game logic state
     const [gameLogic, setGameLogic] = useState({
@@ -1183,6 +1435,18 @@ export default function App() {
                             abilitiesIndex.brigitte.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
                         } catch (e) {
                             console.log('Error executing BRIGITTE ultimate:', e);
+                        }
+                    } else if (heroId === 'dva' && abilitiesIndex?.dva?.onUltimate) {
+                        try {
+                            abilitiesIndex.dva.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
+                        } catch (e) {
+                            console.log('Error executing DVA ultimate:', e);
+                        }
+                    } else if (heroId === 'dvameka' && abilitiesIndex?.dvameka?.onUltimate) {
+                        try {
+                            abilitiesIndex.dvameka.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
+                        } catch (e) {
+                            console.log('Error executing DVA+MEKA ultimate:', e);
                         }
                     } else if (heroId === 'doomfist' && abilitiesIndex?.doomfist?.onUltimate) {
                         try {

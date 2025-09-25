@@ -2,7 +2,7 @@ import HeroCounter from 'components/counters/HeroCounter';
 
 export default function CardEffects(props) {
     const type = props.type;
-    const effects = props.effects;
+    const effects = props.effects || []; // Safety check for undefined effects
 
     return (
         <div className={`effectscontainer ${type}effects`}>

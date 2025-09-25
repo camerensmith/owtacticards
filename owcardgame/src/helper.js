@@ -21,9 +21,11 @@ class PlayerCard {
         const maxHealth = heroData.health;
 
         // Summoned heroes contain special path
-        if (heroId === 'dva') {
-            isPlayed = true;
-        }
+        // D.Va is a normal hero, not a summoned hero
+
+        // Extract ultimate cost from ultimate description (e.g., "Call Mech (2)" -> 2)
+        const ultimateCost = heroData.ultimate ? 
+            (heroData.ultimate.match(/\((\d+)\)/) ? parseInt(heroData.ultimate.match(/\((\d+)\)/)[1]) : 3) : 3;
 
         // Combine values into one new hero object and assign to relevant player
         const newCard = {
@@ -31,25 +33,26 @@ class PlayerCard {
             ...heroData,
             maxHealth,
             shield,
+            effects: [], // Initialize effects array for all cards
             enemyEffects,
             allyEffects,
             isPlayed,
             isDiscarded,
             ability1Used,
             ability2Used,
+            ultimateCost,
         };
 
         // Add hero effects to card, and insert playerHeroId for future use
         if ('effects' in heroData) {
             // Deep copy of effects object is needed in order to not alter the original object later on
-            let effects = JSON.parse(JSON.stringify(heroData.effects));
-            for (let key in effects) {
-                effects[key]['playerHeroId'] = playerHeroId;
+            let heroEffects = JSON.parse(JSON.stringify(heroData.effects));
+            for (let key in heroEffects) {
+                heroEffects[key]['playerHeroId'] = playerHeroId;
             }
-            newCard['effects'] = effects;
+            // Merge hero effects with the initialized effects array
+            newCard['effects'] = [...newCard.effects, ...Object.values(heroEffects)];
         }
-
-        console.log(newCard);
 
         return newCard;
     }

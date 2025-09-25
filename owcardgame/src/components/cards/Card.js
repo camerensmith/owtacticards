@@ -6,6 +6,7 @@ import CardEffects from 'components/cards/CardEffects';
 import HealthCounter from 'components/counters/HealthCounter';
 import ShieldCounter from 'components/counters/ShieldCounter';
 import ShieldBashOverlay from '../effects/ShieldBashOverlay';
+import SuitedUpOverlay from '../effects/SuitedUpOverlay';
 import { heroCardImages } from '../../assets/imageImports';
 import ContextMenu from './ContextMenu';
 import actionsBus, { Actions } from '../../abilities/engine/actionsBus';
@@ -33,6 +34,7 @@ export default function Card(props) {
         power,
         synergy,
         shield,
+        effects,
         enemyEffects,
         allyEffects,
         isPlayed,
@@ -72,7 +74,10 @@ export default function Card(props) {
                 // Get current row synergy and ultimate cost
                 const currentRow = gameState.rows[rowId];
                 const currentSynergy = currentRow ? currentRow.synergy : 0;
-                const ultimateCost = 3; // Default cost, could be made dynamic based on hero
+                
+                // Get ultimate cost from hero data
+                const heroData = gameState.playerCards[playerCardsId]?.cards?.[playerHeroId];
+                const ultimateCost = heroData?.ultimateCost || 3; // Default to 3 if not specified
                 
                 actionsBus.publish(Actions.requestUltimate(playerHeroId, rowId, ultimateCost));
                 setMenu(null);
@@ -90,11 +95,14 @@ export default function Card(props) {
         setMenu({ x: e.clientX, y: e.clientY, items });
     }
 
+    // Check if D.Va is in "Suited Up" state (not draggable)
+    const isSuitedUp = Array.isArray(effects) && effects.some(effect => effect?.id === 'suited-up');
+
     return isDiscarded ? null : (
         <Draggable
             draggableId={playerHeroId}
             index={index}
-            isDragDisabled={isPlayed || turnState.playerTurn !== playerNum}
+            isDragDisabled={isPlayed || turnState.playerTurn !== playerNum || isSuitedUp}
         >
             {(provided, snapshot) => (
                 <div className={`cardcontainer`}>
@@ -126,7 +134,7 @@ export default function Card(props) {
                         )}
                         <div
                             id={`${playerHeroId}`}
-                            className={`card ${health > 0 ? 'alive' : 'dead'}`}
+                            className={`card ${health > 0 ? 'alive' : 'dead'} ${isSuitedUp ? 'suited-up' : ''}`}
                             onClick={(e) => {
                                 // SHIFT + LEFT CLICK should always open focus preview, regardless of turn
                                 if (e.shiftKey) {
@@ -139,6 +147,7 @@ export default function Card(props) {
                         >
                             <EffectBadges playerHeroId={playerHeroId} />
                             <ShieldBashOverlay playerHeroId={playerHeroId} rowId={rowId} />
+                            <SuitedUpOverlay effects={effects} />
                             {imageLoaded === playerHeroId &&
                                 (turnState.playerTurn === playerNum ||
                                 isPlayed ? (

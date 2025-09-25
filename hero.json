@@ -105,7 +105,7 @@
     "back_power": 1,
     "back_synergy": 0,
     "on_enter1": "None",
-    "ultimate": "Call Mech (2): Place D.Va+MEKA on top of your hand."
+    "ultimate": "Call Mech (2): Place D.Va+MEKA into your hand."
   },
   {
     "name": "Echo",
@@ -209,8 +209,8 @@
     "middle_synergy": 1,
     "back_power": 1,
     "back_synergy": 3,
-    "on_enter1": "Defense Matrix — D.Va+MEKA gains two Shield tokens.",
-    "ultimate": "Self Destruct (3): Deal 4 damage to all opponents AND allies in D.Va+MEKA’s row and the opposing row. Replace D.Va+MEKA with D.Va, and remove D.Va+MEKA from the game.",
+    "on_enter1": "Defense Matrix — D.Va+MEKA gains 2 Shields if placed in the Front Row, or 1 Shield if placed in the Middle or Back..",
+    "ultimate": "Self Destruct (3): Deal 4 damage to all opponents AND allies in D.Va+MEKA’s row and the opposing row. Replace D.Va+MEKA with D.Va.",
     "special": true
   },
   {

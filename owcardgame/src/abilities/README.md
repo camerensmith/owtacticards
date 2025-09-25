@@ -1081,6 +1081,124 @@ export function onEnter({ playerHeroId, rowId }) {
 }
 ```
 
+## Common Implementation Pitfalls and Solutions
+
+### Card Object Structure Issues
+
+**Problem**: Cards missing required properties causing runtime errors (e.g., `Cannot read properties of undefined (reading 'length')`).
+
+**Solution**: Always ensure cards have complete structure matching `PlayerCard` class:
+
+```javascript
+// Complete card object structure
+const cardObject = {
+    id: 'heroId',                    // Base hero ID
+    name: 'Hero Name',               // Display name
+    health: 3,                       // Current health
+    maxHealth: 3,                    // Maximum health
+    power: { f: 1, m: 2, b: 3 },    // Power per row
+    synergy: { f: 0, m: 1, b: 2 },  // Synergy per row
+    shield: 0,                       // Shield count
+    effects: [],                     // Card-specific effects
+    enemyEffects: [],                // REQUIRED: Enemy effects array
+    allyEffects: [],                 // REQUIRED: Ally effects array
+    isPlayed: false,                 // Deployment status
+    isDiscarded: false,              // Discard status
+    enteredTurn: 0,                  // Turn when deployed
+};
+```
+
+**Critical**: Never create cards without `enemyEffects: []` and `allyEffects: []` - these are required by `CardEffects` component.
+
+### Special Card Creation
+
+**Problem**: Special cards (like D.Va+MEKA) not draggable or missing properties.
+
+**Solution**: Use `ADD_SPECIAL_CARD_TO_HAND` action with complete card structure:
+
+```javascript
+// In hero module
+window.__ow_addSpecialCardToHand?.(playerNum, 'specialHeroId');
+
+// In App.js reducer
+case ACTIONS.ADD_SPECIAL_CARD_TO_HAND: {
+    const { playerNum, cardId } = action.payload;
+    const playerKey = `player${playerNum}cards`;
+    const handId = `player${playerNum}hand`;
+    
+    return produce(gameState, (draft) => {
+        const heroData = data.heroes[cardId];
+        if (!heroData) return;
+        
+        const playerCardId = `${playerNum}${cardId}`;
+        
+        // Create complete card object
+        draft.playerCards[playerKey].cards[playerCardId] = {
+            id: cardId,
+            name: heroData.name,
+            health: heroData.health,
+            maxHealth: heroData.health,
+            power: heroData.power,
+            synergy: heroData.synergy,
+            shield: 0,
+            effects: [],
+            enemyEffects: [],  // REQUIRED
+            allyEffects: [],   // REQUIRED
+            isPlayed: false,   // Must be false for hand cards
+            isDiscarded: false,
+            enteredTurn: 0,
+        };
+        
+        // Add to hand
+        draft.rows[handId].cardIds.unshift(playerCardId);
+    });
+}
+```
+
+### Hero vs Special Card Distinction
+
+**Problem**: Confusing regular heroes with special cards.
+
+**Solution**: Clear distinction:
+- **Regular Heroes**: Can be drawn, played normally, have `special: false` in data
+- **Special Cards**: Spawned by abilities, have `special: true` in data, ignore hand size limits
+
+**Never**: Hardcode special behavior for regular heroes (e.g., `isPlayed: true` in `helper.js`).
+
+### Component Safety Checks
+
+**Problem**: Components crashing on undefined props.
+
+**Solution**: Add safety checks in components:
+
+```javascript
+// CardEffects.js - Safe array handling
+export default function CardEffects(props) {
+    const effects = props.effects || []; // Safety check
+    return (
+        <div className={`effectscontainer ${props.type}effects`}>
+            {effects.length > 0 ? (
+                // Render effects
+            ) : null}
+        </div>
+    );
+}
+```
+
+### Testing Checklist
+
+Before considering any hero implementation complete:
+
+- [ ] Card shows card back when not your turn
+- [ ] Card shows front when it's your turn  
+- [ ] Card is draggable from hand
+- [ ] Card can be placed in rows
+- [ ] Card has complete object structure
+- [ ] Special cards work with hand system
+- [ ] No runtime errors in console
+- [ ] All required arrays present (`enemyEffects`, `allyEffects`)
+- [ ] No hardcoded special behavior for regular heroes
+
 ## Example: Complete Hero Implementation
 
 See `src/abilities/heroes/ashe.js` for a complete implementation example with:

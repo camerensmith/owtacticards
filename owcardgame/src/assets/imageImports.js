@@ -147,6 +147,13 @@ import doomfistAbility1 from './audio/doomfist-ability1.mp3';
 import doomfistPunch from './audio/doomfist-punch.mp3';
 import doomfistUltimate from './audio/doomfist-ultimate.mp3';
 import doomfistMeteorLanding from './audio/doomfist-meteor-landing.mp3';
+import dvaIntro from './audio/dva-intro.mp3';
+import dvaEnter from './audio/dva-enter.mp3';
+import dvaUltimate from './audio/dva-ultimate.mp3';
+import dvamekaIntro from './audio/dvameka-intro.mp3';
+import dvamekaEnter from './audio/dvameka-enter.mp3';
+import dvamekaUltimate from './audio/dvameka-ultimate.mp3';
+import dvamekaExplosion from './audio/dvameka-explosion.mp3';
 import genjiCutting from './audio/genji-cutting.mp3';
 import genjiUlt from './audio/genji-ult.mp3';
 import hanzoMarked from './audio/hanzo-marked.mp3';
@@ -268,6 +275,13 @@ export const abilityAudioFiles = {
     'doomfist-punch': doomfistPunch,
     'doomfist-ultimate': doomfistUltimate,
     'doomfist-meteor-landing': doomfistMeteorLanding,
+    'dva-intro': dvaIntro,
+    'dva-enter': dvaEnter,
+    'dva-ultimate': dvaUltimate,
+    'dvameka-intro': dvamekaIntro,
+    'dvameka-enter': dvamekaEnter,
+    'dvameka-ultimate': dvamekaUltimate,
+    'dvameka-explosion': dvamekaExplosion,
     'bastion-ult': bastionUlt,
     'genji-cutting': genjiCutting,
     'genji-ult': genjiUlt,
