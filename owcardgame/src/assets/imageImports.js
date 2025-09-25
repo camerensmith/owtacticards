@@ -154,6 +154,10 @@ import dvamekaIntro from './audio/dvameka-intro.mp3';
 import dvamekaEnter from './audio/dvameka-enter.mp3';
 import dvamekaUltimate from './audio/dvameka-ultimate.mp3';
 import dvamekaExplosion from './audio/dvameka-explosion.mp3';
+import echoIntro from './audio/echo-intro.mp3';
+import echoEnter from './audio/echo-enter.mp3';
+import echoAbility1 from './audio/echo-ability1.mp3';
+import echoUltimate from './audio/echo-ultimate.mp3';
 import genjiCutting from './audio/genji-cutting.mp3';
 import genjiUlt from './audio/genji-ult.mp3';
 import hanzoMarked from './audio/hanzo-marked.mp3';
@@ -282,6 +286,10 @@ export const abilityAudioFiles = {
     'dvameka-enter': dvamekaEnter,
     'dvameka-ultimate': dvamekaUltimate,
     'dvameka-explosion': dvamekaExplosion,
+    'echo-intro': echoIntro,
+    'echo-enter': echoEnter,
+    'echo-ability1': echoAbility1,
+    'echo-ultimate': echoUltimate,
     'bastion-ult': bastionUlt,
     'genji-cutting': genjiCutting,
     'genji-ult': genjiUlt,

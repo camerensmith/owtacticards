@@ -57,6 +57,7 @@ export const ACTIONS = {
     SET_INVULNERABLE_SLOTS: 'set-invulnerable-slots',
     CLEAR_INVULNERABLE_SLOTS: 'clear-invulnerable-slots',
     REMOVE_ROW_EFFECT: 'remove-row-effect',
+    TRACK_ULTIMATE_USED: 'track-ultimate-used',
 };
 
 function reducer(gameState, action) {
@@ -658,6 +659,21 @@ function reducer(gameState, action) {
             return produce(gameState, (draft) => {
                 draft.ultimateUsage.player1 = [];
                 draft.ultimateUsage.player2 = [];
+                draft.lastUltimateUsed = null; // Reset last ultimate used
+            });
+        }
+
+        case ACTIONS.TRACK_ULTIMATE_USED: {
+            const { heroId, heroName, abilityName, playerNum, rowId, cost } = action.payload;
+            return produce(gameState, (draft) => {
+                draft.lastUltimateUsed = {
+                    heroId,
+                    heroName,
+                    abilityName,
+                    playerNum,
+                    rowId,
+                    cost
+                };
             });
         }
 
@@ -735,6 +751,11 @@ function checkOnEnterAbilities(playerHeroId, rowId, playerNum) {
 
     if (heroId === 'dva' && abilitiesIndex?.dva?.onEnter) {
         abilitiesIndex.dva.onEnter({ playerHeroId, rowId });
+        return;
+    }
+
+    if (heroId === 'echo' && abilitiesIndex?.echo?.onEnter) {
+        abilitiesIndex.echo.onEnter({ playerHeroId, rowId });
         return;
     }
 
@@ -1030,6 +1051,42 @@ export default function App() {
                 payload: { cardId, playerNum }
             });
         };
+        window.__ow_getLastUltimateUsed = () => {
+            return gameState.lastUltimateUsed;
+        };
+        window.__ow_trackUltimateUsed = (heroId, heroName, abilityName, playerNum, rowId, cost) => {
+            dispatch({
+                type: ACTIONS.TRACK_ULTIMATE_USED,
+                payload: { heroId, heroName, abilityName, playerNum, rowId, cost }
+            });
+        };
+        window.__ow_executeDuplicatedUltimate = async (lastUltimate, playerHeroId, rowId) => {
+            // Execute the duplicated ultimate by calling the original hero's ability
+            try {
+                const heroId = lastUltimate.heroId;
+                const playerNum = parseInt(playerHeroId[0]);
+                
+                // Get the hero's ability from the abilities index
+                const heroAbility = abilitiesIndex[heroId]?.onUltimate;
+                if (!heroAbility) {
+                    console.log('Echo: Cannot duplicate - hero ability not found:', heroId);
+                    return false;
+                }
+                
+                // Execute the duplicated ultimate with Echo's cost (2)
+                await heroAbility({ 
+                    playerHeroId, 
+                    rowId, 
+                    cost: 2 // Echo's Duplicate always costs 2
+                });
+                
+                console.log('Echo: Successfully duplicated ultimate:', lastUltimate.abilityName);
+                return true;
+            } catch (error) {
+                console.error('Echo: Failed to execute duplicated ultimate:', error);
+                return false;
+            }
+        };
         window.__ow_moveCardToRow = (cardId, targetRowId) => {
             // Move a card to a different row
             const playerNum = parseInt(cardId[0]);
@@ -1070,7 +1127,7 @@ export default function App() {
                 }
             }
         };
-        return () => { window.__ow_appendRowEffect = null; window.__ow_getRow = null; window.__ow_setRowArray = null; window.__ow_updateSynergy = null; window.__ow_getCard = null; window.__ow_getMaxHealth = null; window.__ow_setCardHealth = null; window.__ow_isSpecial = null; window.__ow_setRowPower = null; window.__ow_setInvulnerableSlots = null; window.__ow_clearInvulnerableSlots = null; window.__ow_isSlotInvulnerable = null; window.__ow_removeRowEffect = null; window.__ow_cleanupImmortalityField = null; window.__ow_dealDamage = null; window.__ow_dispatchShieldUpdate = null; window.__ow_appendCardEffect = null; window.__ow_removeCardEffect = null; window.__ow_moveCardToRow = null; window.__ow_isRowFull = null; window.__ow_addSpecialCardToHand = null; window.__ow_returnDvaToHand = null; window.__ow_replaceWithDva = null; window.__ow_cleanupDvaSuitedUp = null; window.__ow_removeSpecialCard = null; };
+        return () => { window.__ow_appendRowEffect = null; window.__ow_getRow = null; window.__ow_setRowArray = null; window.__ow_updateSynergy = null; window.__ow_getCard = null; window.__ow_getMaxHealth = null; window.__ow_setCardHealth = null; window.__ow_isSpecial = null; window.__ow_setRowPower = null; window.__ow_setInvulnerableSlots = null; window.__ow_clearInvulnerableSlots = null; window.__ow_isSlotInvulnerable = null; window.__ow_removeRowEffect = null; window.__ow_cleanupImmortalityField = null; window.__ow_dealDamage = null; window.__ow_dispatchShieldUpdate = null; window.__ow_appendCardEffect = null; window.__ow_removeCardEffect = null; window.__ow_moveCardToRow = null; window.__ow_isRowFull = null; window.__ow_addSpecialCardToHand = null; window.__ow_returnDvaToHand = null; window.__ow_replaceWithDva = null; window.__ow_cleanupDvaSuitedUp = null; window.__ow_removeSpecialCard = null; window.__ow_getLastUltimateUsed = null; window.__ow_trackUltimateUsed = null; window.__ow_executeDuplicatedUltimate = null; };
     }, [gameState]);
     // Game logic state
     const [gameLogic, setGameLogic] = useState({
@@ -1408,51 +1465,73 @@ export default function App() {
                         }
                     } else if (heroId === 'bob' && abilitiesIndex?.bob?.onUltimate) {
                         try {
+                            // Track ultimate usage for Echo's Duplicate
+                            window.__ow_trackUltimateUsed?.(heroId, 'BOB', 'Smash', playerNum, rowId, adjustedCost);
                             abilitiesIndex.bob.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
                         } catch (e) {
                             console.log('Error executing BOB ultimate:', e);
                         }
                     } else if (heroId === 'ana' && abilitiesIndex?.ana?.onUltimate) {
                         try {
+                            // Track ultimate usage for Echo's Duplicate
+                            window.__ow_trackUltimateUsed?.(heroId, 'Ana', 'Nano Boost', playerNum, rowId, adjustedCost);
                             abilitiesIndex.ana.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
                         } catch (e) {
                             console.log('Error executing ANA ultimate:', e);
                         }
                     } else if (heroId === 'baptiste' && abilitiesIndex?.baptiste?.onUltimate) {
                         try {
+                            // Track ultimate usage for Echo's Duplicate
+                            window.__ow_trackUltimateUsed?.(heroId, 'Baptiste', 'Amplification Matrix', playerNum, rowId, adjustedCost);
                             abilitiesIndex.baptiste.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
                         } catch (e) {
                             console.log('Error executing BAPTISTE ultimate:', e);
                         }
                     } else if (heroId === 'bastion' && abilitiesIndex?.bastion?.onUltimate) {
                         try {
+                            // Track ultimate usage for Echo's Duplicate
+                            window.__ow_trackUltimateUsed?.(heroId, 'Bastion', 'Configuration: Tank', playerNum, rowId, adjustedCost);
                             abilitiesIndex.bastion.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
                         } catch (e) {
                             console.log('Error executing BASTION ultimate:', e);
                         }
                     } else if (heroId === 'brigitte' && abilitiesIndex?.brigitte?.onUltimate) {
                         try {
+                            // Track ultimate usage for Echo's Duplicate
+                            window.__ow_trackUltimateUsed?.(heroId, 'Brigitte', 'Shield Bash', playerNum, rowId, adjustedCost);
                             abilitiesIndex.brigitte.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
                         } catch (e) {
                             console.log('Error executing BRIGITTE ultimate:', e);
                         }
                     } else if (heroId === 'dva' && abilitiesIndex?.dva?.onUltimate) {
                         try {
+                            // Track ultimate usage for Echo's Duplicate
+                            window.__ow_trackUltimateUsed?.(heroId, 'D.Va', 'Call Mech', playerNum, rowId, adjustedCost);
                             abilitiesIndex.dva.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
                         } catch (e) {
                             console.log('Error executing DVA ultimate:', e);
                         }
                     } else if (heroId === 'dvameka' && abilitiesIndex?.dvameka?.onUltimate) {
                         try {
+                            // Track ultimate usage for Echo's Duplicate
+                            window.__ow_trackUltimateUsed?.(heroId, 'D.Va+MEKA', 'Self Destruct', playerNum, rowId, adjustedCost);
                             abilitiesIndex.dvameka.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
                         } catch (e) {
                             console.log('Error executing DVA+MEKA ultimate:', e);
                         }
                     } else if (heroId === 'doomfist' && abilitiesIndex?.doomfist?.onUltimate) {
                         try {
+                            // Track ultimate usage for Echo's Duplicate
+                            window.__ow_trackUltimateUsed?.(heroId, 'Doomfist', 'Meteor Strike', playerNum, rowId, adjustedCost);
                             abilitiesIndex.doomfist.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
                         } catch (e) {
                             console.log('Error executing DOOMFIST ultimate:', e);
+                        }
+                    } else if (heroId === 'echo' && abilitiesIndex?.echo?.onUltimate) {
+                        try {
+                            abilitiesIndex.echo.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
+                        } catch (e) {
+                            console.log('Error executing ECHO ultimate:', e);
                         }
                     } else {
                         console.log(`Executing ultimate for ${playerHeroId} in ${rowId} (cost: ${adjustedCost})`);

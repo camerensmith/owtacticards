@@ -299,6 +299,7 @@ const data = {
                 m: 1,
                 b: 2,
             },
+            ultimate: 'Duplicate (2): Copy the last ultimate ability that was used.',
             isImplemented: true,
         },
 
@@ -919,6 +920,8 @@ const data = {
         player1: [], // Array of hero IDs that have used ultimate
         player2: [],
     },
+    // Track the last ultimate ability used for Echo's Duplicate
+    lastUltimateUsed: null, // { heroId, heroName, abilityName, playerNum, rowId, cost }
     rows: {
         player1hand: {
             id: 'player1hand',
