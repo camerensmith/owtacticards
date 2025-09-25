@@ -54,7 +54,7 @@ export async function onEnter({ playerHeroId, rowId }) {
 
         // Then: deal 2 damage to the target (respects shields)
         const damageRow = pushToRow || currentRowId; // if pushed, damage from new row context
-        dealDamage(target.cardId, damageRow, 2);
+        dealDamage(target.cardId, damageRow, 2, false, playerHeroId);
 
         try { playAudioByKey('doomfist-punch'); } catch {}
         showToast('Doomfist: Rocket Punch resolved');
@@ -84,7 +84,7 @@ async function handleRocketPunch(playerHeroId, rowId, playerNum) {
             
             // Deal 2 damage to target (respects shields)
             const originalRowId = target.rowId;
-            dealDamage(target.cardId, originalRowId, 2);
+            dealDamage(target.cardId, originalRowId, 2, false, playerHeroId);
             
             // Play punch sound after damage
             try {
@@ -112,7 +112,7 @@ async function handleRocketPunch(playerHeroId, rowId, playerNum) {
                 const rowCards = window.__ow_getRow?.(originalRowId)?.cardIds || [];
                 for (const cardId of rowCards) {
                     if (cardId !== target.cardId) {
-                        dealDamage(cardId, originalRowId, 1);
+                        dealDamage(cardId, originalRowId, 1, false, playerHeroId);
                         effectsBus.publish(Effects.showDamage(cardId, 1));
                     }
                 }
@@ -151,7 +151,7 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
         }
         
         // Deal 3 damage to primary target
-        dealDamage(target.cardId, target.rowId, 3);
+        dealDamage(target.cardId, target.rowId, 3, false, playerHeroId);
         effectsBus.publish(Effects.showDamage(target.cardId, 3));
         
         // Deal 1 damage to adjacent enemies
@@ -187,7 +187,7 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
         for (const adjacentRow of adjacentPositions) {
             const rowCards = window.__ow_getRow?.(adjacentRow)?.cardIds || [];
             for (const cardId of rowCards) {
-                dealDamage(cardId, adjacentRow, 1);
+                dealDamage(cardId, adjacentRow, 1, false, playerHeroId);
                 effectsBus.publish(Effects.showDamage(cardId, 1));
                 totalTargets++;
             }
@@ -195,12 +195,12 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
         
         // Damage left and right adjacent cards in same row
         if (leftCard) {
-            dealDamage(leftCard, targetRow, 1);
+            dealDamage(leftCard, targetRow, 1, false, playerHeroId);
             effectsBus.publish(Effects.showDamage(leftCard, 1));
             totalTargets++;
         }
         if (rightCard) {
-            dealDamage(rightCard, targetRow, 1);
+            dealDamage(rightCard, targetRow, 1, false, playerHeroId);
             effectsBus.publish(Effects.showDamage(rightCard, 1));
             totalTargets++;
         }

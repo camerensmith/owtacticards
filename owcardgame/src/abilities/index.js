@@ -13,6 +13,7 @@ import dva from './heroes/dva';
 import dvameka from './heroes/dvameka';
 import echo from './heroes/echo';
 import genji from './heroes/genji';
+import hanzo from './heroes/hanzo';
 
 export const abilities = {
     ashe,
@@ -26,6 +27,7 @@ export const abilities = {
     dvameka,
     echo,
     genji,
+    hanzo,
 };
 
 export default abilities;

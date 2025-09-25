@@ -34,7 +34,7 @@ function playAbilitySound(abilityNumber) {
 
 // Ashe modular onEnter implementation
 // doDamage(targetCardId, targetRowId, amount, ignoreShields)
-export function onEnter({ playerNum, rowId }) {
+export function onEnter({ playerHeroId, playerNum, rowId }) {
     const onEnter1 = { name: 'The Viper', description: 'Deal 2 damage to one enemy ignoring shields.' };
     const onEnter2 = { name: 'The Viper (Split Fire)', description: 'Deal 1 damage to two enemies in the same row ignoring shields.' };
 
@@ -55,7 +55,7 @@ export function onEnter({ playerNum, rowId }) {
                 }
                 
                 console.log('Ashe Ability 1 - Applying damage:', { targetCardId, targetRow, amount: 2, ignoreShields: true });
-                dealDamage(targetCardId, targetRow, 2, true);
+                dealDamage(targetCardId, targetRow, 2, true, playerHeroId);
                 playAbilitySound(1); // voice line
                 playAudioByKey('ashe-shoot1');
                 setTargetingCursor(false);
@@ -81,8 +81,8 @@ export function onEnter({ playerNum, rowId }) {
                     selected.push({ targetCardId, targetRow });
                     $('.card').off('click', handler);
                     // Apply damage to both targets
-                    dealDamage(selected[0].targetCardId, selected[0].targetRow, 1, true);
-                    dealDamage(selected[1].targetCardId, selected[1].targetRow, 1, true);
+                    dealDamage(selected[0].targetCardId, selected[0].targetRow, 1, true, playerHeroId);
+                    dealDamage(selected[1].targetCardId, selected[1].targetRow, 1, true, playerHeroId);
                     playAbilitySound(2); // voice line
                     playAudioByKey('ashe-shoot2');
                     setTargetingCursor(false);

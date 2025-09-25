@@ -62,7 +62,7 @@ export async function onEnter({ playerHeroId, rowId }) {
                 const enemyCard = window.__ow_getCard?.(enemyCardId);
                 
                 if (enemyCard && enemyCard.health > 0) {
-                    dealDamage(enemyCardId, enemyRowId, 1);
+                    dealDamage(enemyCardId, enemyRowId, 1, false, playerHeroId);
                     effectsBus.publish(Effects.showDamage(enemyCardId, 1));
                     targetsHit++;
                 }
@@ -117,7 +117,7 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
             }
 
             // Defeat the target (set health to 0, ignores shields)
-            dealDamage(target.cardId, target.rowId, currentHealth, true); // ignoreShields = true
+            dealDamage(target.cardId, target.rowId, currentHealth, true, playerHeroId); // ignoreShields = true
             effectsBus.publish(Effects.showDamage(target.cardId, currentHealth));
 
             // Play ultimate strike resolve sound after execution

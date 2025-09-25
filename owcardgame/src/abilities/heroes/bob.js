@@ -8,7 +8,7 @@ import { getAudioFile } from '../../assets/imageImports';
 // BOB: special unit spawned by Ashe. Non-drawable (special: true), may have onEnter and ultimate.
 
 // onEnter example: immediately deal 1 damage to all enemies in opposing row (placeholder, adjust later)
-export function onEnter({ playerNum, rowId }) {
+export function onEnter({ playerHeroId, playerNum, rowId }) {
     try {
         // Play BOB enter sound (handled globally on placement as well)
         try {
@@ -92,7 +92,7 @@ export function onUltimate({ playerHeroId, rowId, cost = 1 }) {
             await ask('Pick Final Adjacent Row Hero');
 
             for (const p of picks) {
-                dealDamage(p.cardId, p.rowId, 1, false);
+                dealDamage(p.cardId, p.rowId, 1, false, playerHeroId);
                 if (window.__ow_updateSynergy) window.__ow_updateSynergy(p.rowId, -1);
             }
             // Play smash sound after all damage applied

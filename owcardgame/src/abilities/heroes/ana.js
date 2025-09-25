@@ -12,7 +12,7 @@ export function onDraw() {
     try { const s = getAudioFile('ana-intro'); if (s) new Audio(s).play().catch(()=>{}); } catch {}
 }
 
-export function onEnter({ playerNum, rowId }) {
+export function onEnter({ playerHeroId, playerNum, rowId }) {
     try { const s = getAudioFile('ana-enter'); if (s) new Audio(s).play().catch(()=>{}); } catch {}
 }
 
@@ -110,7 +110,7 @@ export async function onEnterAbility1({ playerNum, playerHeroId }) {
         const damageEnemies = (row) => {
             const cards = window.__ow_getRow?.(row)?.cardIds || [];
             for (const pid of cards) {
-                dealDamage(pid, row, 1, false);
+                dealDamage(pid, row, 1, false, playerHeroId);
                 // show -1 overlay
                 effectsBus.publish(Effects.showDamage(pid, 1));
             }

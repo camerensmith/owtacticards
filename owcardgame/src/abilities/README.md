@@ -44,7 +44,7 @@ import { showMessage as showToast, clearMessage as clearToast } from '../engine/
 showToast('Hero: Select target enemy');
 const target = await selectCardTarget();
 if (target) {
-    dealDamage(target.cardId, target.rowId, amount);
+    dealDamage(target.cardId, target.rowId, amount, false, playerHeroId);
 }
 
 // For row targeting  
@@ -73,7 +73,7 @@ showOnEnterChoice('Hero', opt1, opt2, async (choiceIndex) => {
     
     const target = await selectCardTarget();
     if (target) {
-        dealDamage(target.cardId, target.rowId, amount);
+        dealDamage(target.cardId, target.rowId, amount, false, playerHeroId);
         // Sound effect when ability resolves
         try {
             playAudioByKey('hero-gunshot');
@@ -84,7 +84,7 @@ showOnEnterChoice('Hero', opt1, opt2, async (choiceIndex) => {
 // Example 2: Audio only on resolve (confirmation)
 const target = await selectCardTarget();
 if (target) {
-    dealDamage(target.cardId, target.rowId, amount);
+    dealDamage(target.cardId, target.rowId, amount, false, playerHeroId);
     // Confirmation sound after damage
     try {
         playAudioByKey('hero-ability1');
@@ -192,10 +192,16 @@ When converting existing heroes from `HeroAbilities.js` to modular system:
 
 ### engine/damageBus.js
 Centralized damage application system with invulnerability support.
-- `dealDamage(cardId, rowId, amount, ignoreShields=false)` - Apply damage to a card
+- `dealDamage(cardId, rowId, amount, ignoreShields=false, sourceCardId=null)` - Apply damage to a card
 - `subscribe(listener)` - Listen for damage events (used by HeroAbilities)
 - **Invulnerability Check**: Automatically blocks damage to invulnerable slots
+- **Damage Reduction**: Supports row-based damage reduction (e.g., Hanzo token)
 - **Debug Logging**: Shows invulnerability checks and damage blocking
+
+**⚠️ CRITICAL: Source Card ID Requirement**
+- **MUST PASS** `playerHeroId` as the 5th parameter (`sourceCardId`) for ALL damage dealing abilities
+- **REQUIRED FOR**: Damage reduction systems (Hanzo token), damage tracking, and future effects
+- **PATTERN**: `dealDamage(target.cardId, target.rowId, amount, false, playerHeroId)`
 
 ### engine/targetingBus.js
 Manages targeting UI state and interactions.
@@ -564,7 +570,7 @@ Implementing Steps
 - Use Promise-based targeting functions for clean async flow
 
 ### Damage Application
-- Use `dealDamage(cardId, rowId, amount, ignoreShields)` for all damage
+- Use `dealDamage(cardId, rowId, amount, ignoreShields, sourceCardId)` for all damage
 - Never call UI internals directly from hero modules
 - Subscribe to `damageBus` for centralized damage handling
 
@@ -1110,6 +1116,39 @@ const cardObject = {
 
 **Critical**: Never create cards without `enemyEffects: []` and `allyEffects: []` - these are required by `CardEffects` component.
 
+### Damage Dealing Requirements
+
+**Problem**: Damage reduction systems (like Hanzo token) not working because source card ID is missing.
+
+**Solution**: ALWAYS pass `playerHeroId` as the source when dealing damage:
+
+```javascript
+// ❌ WRONG - Missing source card ID
+dealDamage(target.cardId, target.rowId, amount);
+
+// ✅ CORRECT - Includes source card ID
+dealDamage(target.cardId, target.rowId, amount, false, playerHeroId);
+```
+
+**Why This Matters**:
+- Damage reduction systems need to know which card is dealing damage
+- Hanzo token reduces damage from enemies in the affected row
+- Future effects may depend on damage source tracking
+- Required for proper damage bus functionality
+
+**Pattern for All Heroes**:
+```javascript
+export function onEnter({ playerHeroId, rowId }) {
+    // ... targeting logic ...
+    dealDamage(target.cardId, target.rowId, amount, false, playerHeroId);
+}
+
+export function onUltimate({ playerHeroId, rowId }) {
+    // ... targeting logic ...
+    dealDamage(target.cardId, target.rowId, amount, false, playerHeroId);
+}
+```
+
 ### Special Card Creation
 
 **Problem**: Special cards (like D.Va+MEKA) not draggable or missing properties.
@@ -1318,6 +1357,8 @@ Before considering any hero implementation complete:
 - [ ] Ultimate tracking added to App.js
 - [ ] Column targeting works correctly (if applicable)
 - [ ] Edge cases handled (invalid targets, empty columns, etc.)
+- [ ] **Source card ID passed to all damage calls** (`playerHeroId` as 5th parameter)
+- [ ] Damage reduction systems work correctly (if applicable)
 
 ## Example: Complete Hero Implementation
 

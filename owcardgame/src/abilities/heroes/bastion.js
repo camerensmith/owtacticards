@@ -47,7 +47,7 @@ async function handleOption1(playerHeroId, rowId, playerNum) {
     try {
         const target = await selectCardTarget();
         if (target) {
-            dealDamage(target.cardId, target.rowId, 1);
+            dealDamage(target.cardId, target.rowId, 1, false, playerHeroId);
             // Play audio after damage is dealt
             try {
                 playAudioByKey('bastion-ability1');
@@ -121,7 +121,7 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
         }
         
         // Deal 2 damage to primary target
-        dealDamage(primaryTarget.cardId, primaryTarget.rowId, 2);
+        dealDamage(primaryTarget.cardId, primaryTarget.rowId, 2, false, playerHeroId);
         
         showToast('Bastion: Select up to 2 additional targets');
         
@@ -132,7 +132,7 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
                 const target = await selectCardTarget();
                 if (target) {
                     additionalTargets.push(target);
-                    dealDamage(target.cardId, target.rowId, 2);
+                    dealDamage(target.cardId, target.rowId, 2, false, playerHeroId);
                 } else {
                     break; // User cancelled, stop selecting
                 }

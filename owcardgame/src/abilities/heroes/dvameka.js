@@ -47,13 +47,13 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
         
         // Damage all cards in current row (including D.Va+MEKA)
         for (const cardId of currentRowCards) {
-            dealDamage(cardId, rowId, 4);
+            dealDamage(cardId, rowId, 4, false, playerHeroId);
             effectsBus.publish(Effects.showDamage(cardId, 4));
         }
         
         // Damage all cards in opposing row
         for (const cardId of opposingRowCards) {
-            dealDamage(cardId, opposingRowId, 4);
+            dealDamage(cardId, opposingRowId, 4, false, playerHeroId);
             effectsBus.publish(Effects.showDamage(cardId, 4));
         }
         

@@ -41,7 +41,7 @@ export async function onEnter({ playerHeroId, rowId }) {
             }
 
             // Deal damage (respects shields, does not pierce)
-            dealDamage(target.cardId, target.rowId, damageAmount);
+            dealDamage(target.cardId, target.rowId, damageAmount, false, playerHeroId);
             effectsBus.publish(Effects.showDamage(target.cardId, damageAmount));
 
             // Play ability sound after damage

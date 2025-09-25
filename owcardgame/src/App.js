@@ -764,6 +764,11 @@ function checkOnEnterAbilities(playerHeroId, rowId, playerNum) {
         return;
     }
 
+    if (heroId === 'hanzo' && abilitiesIndex?.hanzo?.onEnter) {
+        abilitiesIndex.hanzo.onEnter({ playerHeroId, rowId });
+        return;
+    }
+
     if (heroId === 'dvameka' && abilitiesIndex?.dvameka?.onEnter) {
         abilitiesIndex.dvameka.onEnter({ playerHeroId, rowId });
         return;
@@ -959,7 +964,7 @@ export default function App() {
         window.__ow_dealDamage = (cardId, rowId, amount) => {
             // Import and use the damage bus
             import('./abilities/engine/damageBus').then(({ dealDamage }) => {
-                dealDamage(cardId, rowId, amount);
+                dealDamage(cardId, rowId, amount, false, null);
             }).catch(err => {
                 console.error('Failed to import damageBus:', err);
             });
@@ -1545,6 +1550,14 @@ export default function App() {
                             abilitiesIndex.genji.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
                         } catch (e) {
                             console.log('Error executing GENJI ultimate:', e);
+                        }
+                    } else if (heroId === 'hanzo' && abilitiesIndex?.hanzo?.onUltimate) {
+                        try {
+                            // Track ultimate usage for Echo's Duplicate
+                            window.__ow_trackUltimateUsed?.(heroId, 'Hanzo', 'Dragonstrike', playerNum, rowId, adjustedCost);
+                            abilitiesIndex.hanzo.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
+                        } catch (e) {
+                            console.log('Error executing HANZO ultimate:', e);
                         }
                     } else {
                         console.log(`Executing ultimate for ${playerHeroId} in ${rowId} (cost: ${adjustedCost})`);

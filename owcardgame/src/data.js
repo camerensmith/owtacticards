@@ -349,6 +349,7 @@ const data = {
                 m: 1,
                 b: 2,
             },
+            ultimate: 'Dragonstrike (3): Deal 3 damage to all enemies in target column.',
             isImplemented: true,
         },
 

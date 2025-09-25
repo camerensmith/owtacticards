@@ -163,8 +163,10 @@ import genjiEnter from './audio/genji-enter.mp3';
 import genjiAbility1 from './audio/genji-ability1.mp3';
 import genjiUltimate from './audio/genji-ultimate.mp3';
 import genjiUltimateStrikeResolve from './audio/genji-ultimate-strike-resolve.mp3';
-import hanzoMarked from './audio/hanzo-marked.mp3';
-import hanzoUlt from './audio/hanzo-ult.mp3';
+import hanzoIntro from './audio/hanzo-intro.mp3';
+import hanzoEnter from './audio/hanzo-enter.mp3';
+import hanzoAbility1 from './audio/hanzo-ability1.mp3';
+import hanzoUltimate from './audio/hanzo-ultimate.mp3';
 import junkratLaugh from './audio/junkrat-laugh.mp3';
 import junkratUlt from './audio/junkrat-ult.mp3';
 import lucioAmpitup from './audio/lucio-ampitup.mp3';
@@ -299,8 +301,10 @@ export const abilityAudioFiles = {
     'genji-ability1': genjiAbility1,
     'genji-ultimate': genjiUltimate,
     'genji-ultimate-strike-resolve': genjiUltimateStrikeResolve,
-    'hanzo-marked': hanzoMarked,
-    'hanzo-ult': hanzoUlt,
+    'hanzo-intro': hanzoIntro,
+    'hanzo-enter': hanzoEnter,
+    'hanzo-ability1': hanzoAbility1,
+    'hanzo-ultimate': hanzoUltimate,
     'junkrat-laugh': junkratLaugh,
     'junkrat-ult': junkratUlt,
     'lucio-ampitup': lucioAmpitup,
