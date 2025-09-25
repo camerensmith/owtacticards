@@ -50,9 +50,9 @@
     "middle_synergy": 2,
     "back_power": 3,
     "back_synergy": 1,
-    "on_enter1": "Sentinel — Deal 2 damage to target enemy",
+    "on_enter1": "Sentinel — Deal 1 damage to target enemy",
     "on_enter2": "Sentinel — Place Bastion Token next to an enemy row. Any enemy Heroes that move or deploy into this row take 1 damage.",
-    "ultimate": "Tank Mode (4): Bastion deals 2 damage to one enemy and 2 damage to up to 2 adjacent enemy heroes."
+    "ultimate": "Tank Mode (3): Bastion deals 2 damage to one enemy and 2 damage to up to 2 enemy heroes in any row."
   },
   {
     "name": "B.O.B.",
@@ -330,7 +330,7 @@
     "back_power": 1,
     "back_synergy": 3,
     "on_enter1": "Chain Hook — Move target enemy to first row and deal 2 damage.",
-    "ultimate": "Whole Hog (3): Deal (+1 per enemy) damage spread as evenly as possible between all enemy Heroes."
+    "ultimate": "Whole Hog (3): Deal (+2 per enemy) damage spread randomly between each and all enemy targets."
   },
   {
     "name": "Sigma",

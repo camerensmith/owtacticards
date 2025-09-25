@@ -6,12 +6,14 @@ import ashe from './heroes/ashe';
 import bob from './heroes/bob';
 import ana from './heroes/ana';
 import baptiste from './heroes/baptiste';
+import bastion from './heroes/bastion';
 
 export const abilities = {
     ashe,
     bob,
     ana,
     baptiste,
+    bastion,
 };
 
 export default abilities;

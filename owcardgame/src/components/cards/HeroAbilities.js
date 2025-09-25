@@ -7,6 +7,7 @@ import { ACTIONS } from 'App';
 import { getAudioFile } from '../../assets/imageImports';
 import getRandInt from 'helper';
 import targetingBus from '../../abilities/engine/targetingBus';
+import abilities from '../../abilities';
 
 export default function HeroAbilities(props) {
     // Context
@@ -199,6 +200,15 @@ export default function HeroAbilities(props) {
                     targetHealth -= 1;
                 } else if (targetHealth === 0) {
                     console.log('target health is 0');
+                    // Trigger onDeath for modular heroes
+                    const heroId = targetCardId.slice(1);
+                    if (abilities[heroId]?.onDeath) {
+                        try {
+                            abilities[heroId].onDeath({ playerHeroId: targetCardId, rowId: targetRow });
+                        } catch (error) {
+                            console.error(`Error in ${heroId} onDeath:`, error);
+                        }
+                    }
                 } else {
                     throw new Error(
                         `${targetCardId} is at ${targetHealth} health`
@@ -513,61 +523,6 @@ export default function HeroAbilities(props) {
             ability2: {
                 synergyCost: 3,
                 audioFile: 'baptiste-immortality',
-            },
-        },
-        bastion: {
-            ability1: {},
-            ability2: {
-                synergyCost: 3,
-                audioFile: 'bastion-ult',
-                run() {
-                    return new Promise((resolve, reject) => {
-                        $('.card').on('click', (e) => {
-                            const targetCardId = $(e.target)
-                                .closest('.card')
-                                .attr('id');
-                            const targetCardIndex = $(e.target)
-                                .closest('li')
-                                .index();
-                            const enemyPlayer = parseInt(targetCardId[0]);
-                            const targetCardRow = $(e.target)
-                                .closest('.row')
-                                .attr('id');
-
-                            $('.card').off('click');
-
-                            // Check target is valid
-                            if (
-                                targetCardRow[0] === 'p' ||
-                                parseInt(targetCardRow[0]) === playerTurn
-                            ) {
-                                reject('Incorrect target row');
-                                return;
-                            }
-
-                            // Get adjacent enemy target info
-                            const adjacentEnemy1 =
-                                gameState.rows[targetCardRow].cardIds[
-                                    targetCardIndex - 1
-                                ];
-                            const adjacentEnemy2 =
-                                gameState.rows[targetCardRow].cardIds[
-                                    targetCardIndex + 1
-                                ];
-
-                            // Apply 3 damage to target, and 1 damage to enemies adjacent to target
-                            applyDamage(3, targetCardId, targetCardRow);
-                            if (adjacentEnemy1 !== undefined) {
-                                applyDamage(1, adjacentEnemy1, targetCardRow);
-                            }
-                            if (adjacentEnemy2 !== undefined) {
-                                applyDamage(1, adjacentEnemy2, targetCardRow);
-                            }
-
-                            resolve();
-                        });
-                    });
-                },
             },
         },
         bob: {

@@ -43,6 +43,8 @@ export const ACTIONS = {
     SET_SYNERGY: 'set-synergy',
     UPDATE_CARD: 'update-card',
     UPDATE_POWER: 'update-power',
+    MARK_ULTIMATE_USED: 'mark-ultimate-used',
+    RESET_ULTIMATE_USAGE: 'reset-ultimate-usage',
     UPDATE_ROW: 'update-row',
     UPDATE_SYNERGY: 'update-synergy',
     DEDUCT_SYNERGY: 'deduct-synergy',
@@ -277,6 +279,24 @@ function reducer(gameState, action) {
             const newFinishRowCardIds = Array.from(finishRow.cardIds);
             newFinishRowCardIds.splice(finishIndex, 0, targetCardId);
 
+            // Check for Bastion token damage when moving to any row (not hand)
+            if (finishRowId[0] !== 'p') {
+                const targetPlayerNum = parseInt(targetCardId[0]);
+                const finishRowPlayerNum = parseInt(finishRowId[0]);
+                
+                // Check if the target row has Bastion tokens
+                const bastionTokens = gameState.rows[finishRowId]?.enemyEffects?.filter(
+                    effect => effect.id === 'bastion-token' && effect.hero === 'bastion'
+                ) || [];
+                
+                if (bastionTokens.length > 0) {
+                    // Apply 1 damage to the moving card
+                    setTimeout(() => {
+                        window.__ow_dealDamage?.(targetCardId, finishRowId, 1);
+                    }, 100);
+                }
+            }
+
             return produce(gameState, (draft) => {
                 draft.rows[startRowId].cardIds = newStartRowCardIds;
                 draft.rows[finishRowId].cardIds = newFinishRowCardIds;
@@ -428,6 +448,25 @@ function reducer(gameState, action) {
             });
         }
 
+        // Mark ultimate as used for a hero
+        case ACTIONS.MARK_ULTIMATE_USED: {
+            const { playerNum, heroId } = action.payload;
+            return produce(gameState, (draft) => {
+                const playerKey = `player${playerNum}`;
+                if (draft.ultimateUsage[playerKey] && !draft.ultimateUsage[playerKey].includes(heroId)) {
+                    draft.ultimateUsage[playerKey].push(heroId);
+                }
+            });
+        }
+
+        // Reset ultimate usage for all heroes (start of new round)
+        case ACTIONS.RESET_ULTIMATE_USAGE: {
+            return produce(gameState, (draft) => {
+                draft.ultimateUsage.player1 = [];
+                draft.ultimateUsage.player2 = [];
+            });
+        }
+
         default:
             return gameState;
     }
@@ -463,6 +502,11 @@ function checkOnEnterAbilities(playerHeroId, rowId, playerNum) {
 
     if (heroId === 'baptiste' && abilitiesIndex?.baptiste?.onEnter) {
         abilitiesIndex.baptiste.onEnter({ playerNum, rowId });
+        return;
+    }
+
+    if (heroId === 'bastion' && abilitiesIndex?.bastion?.onEnter) {
+        abilitiesIndex.bastion.onEnter({ playerHeroId, rowId });
         return;
     }
 
@@ -653,7 +697,15 @@ export default function App() {
             });
             console.log(`Manual cleanup: Immortality Field cleared for row ${rowId}`);
         };
-        return () => { window.__ow_appendRowEffect = null; window.__ow_getRow = null; window.__ow_setRowArray = null; window.__ow_updateSynergy = null; window.__ow_getCard = null; window.__ow_getMaxHealth = null; window.__ow_setCardHealth = null; window.__ow_isSpecial = null; window.__ow_setRowPower = null; window.__ow_setInvulnerableSlots = null; window.__ow_clearInvulnerableSlots = null; window.__ow_isSlotInvulnerable = null; window.__ow_removeRowEffect = null; window.__ow_cleanupImmortalityField = null; };
+        window.__ow_dealDamage = (cardId, rowId, amount) => {
+            // Import and use the damage bus
+            import('./abilities/engine/damageBus').then(({ dealDamage }) => {
+                dealDamage(cardId, rowId, amount);
+            }).catch(err => {
+                console.error('Failed to import damageBus:', err);
+            });
+        };
+        return () => { window.__ow_appendRowEffect = null; window.__ow_getRow = null; window.__ow_setRowArray = null; window.__ow_updateSynergy = null; window.__ow_getCard = null; window.__ow_getMaxHealth = null; window.__ow_setCardHealth = null; window.__ow_isSpecial = null; window.__ow_setRowPower = null; window.__ow_setInvulnerableSlots = null; window.__ow_clearInvulnerableSlots = null; window.__ow_isSlotInvulnerable = null; window.__ow_removeRowEffect = null; window.__ow_cleanupImmortalityField = null; window.__ow_dealDamage = null; };
     }, [gameState]);
     // Game logic state
     const [gameLogic, setGameLogic] = useState({
@@ -927,6 +979,21 @@ export default function App() {
                 } catch {}
 
                 if (currentSynergy >= adjustedCost) {
+                    // Check if hero has already used ultimate this round
+                    const playerKey = `player${playerNum}`;
+                    if (gameState.ultimateUsage[playerKey]?.includes(heroId)) {
+                        console.log(`Ultimate blocked: ${heroId} has already used ultimate this round.`);
+                        showToast(`${heroId} has already used their ultimate this round!`);
+                        setTimeout(() => clearToast(), 2000);
+                        return;
+                    }
+
+                    // Mark ultimate as used
+                    dispatch({
+                        type: ACTIONS.MARK_ULTIMATE_USED,
+                        payload: { playerNum, heroId }
+                    });
+
                     // Deduct synergy and execute ultimate
                     dispatch({
                         type: ACTIONS.DEDUCT_SYNERGY,
@@ -991,6 +1058,12 @@ export default function App() {
                             abilitiesIndex.baptiste.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
                         } catch (e) {
                             console.log('Error executing BAPTISTE ultimate:', e);
+                        }
+                    } else if (heroId === 'bastion' && abilitiesIndex?.bastion?.onUltimate) {
+                        try {
+                            abilitiesIndex.bastion.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
+                        } catch (e) {
+                            console.log('Error executing BASTION ultimate:', e);
                         }
                     } else {
                         console.log(`Executing ultimate for ${playerHeroId} in ${rowId} (cost: ${adjustedCost})`);
@@ -1061,6 +1134,11 @@ export default function App() {
                 matchRef.current.wonLastRound = winningPlayer;
                 alert(`Player ${winningPlayer} wins the round!`);
             }
+
+            // Reset ultimate usage for new round
+            dispatch({
+                type: ACTIONS.RESET_ULTIMATE_USAGE
+            });
 
             // Update game logic for round tracking
             setGameLogic(prev => ({

@@ -52,9 +52,18 @@ export default function Card(props) {
         e.preventDefault();
         if (turnState.playerTurn !== playerNum) return;
         const items = [];
+        
+        // Check if hero has already used ultimate this round
+        const heroId = playerHeroId.slice(1);
+        const playerKey = `player${playerNum}`;
+        const hasUsedUltimate = gameState.ultimateUsage?.[playerKey]?.includes(heroId);
+        
         items.push({
-            label: 'Ultimate',
+            label: hasUsedUltimate ? 'Ultimate (Used)' : 'Ultimate',
+            disabled: hasUsedUltimate,
             onClick: () => {
+                if (hasUsedUltimate) return; // Don't allow if already used
+                
                 // Get current row synergy and ultimate cost
                 const currentRow = gameState.rows[rowId];
                 const currentSynergy = currentRow ? currentRow.synergy : 0;

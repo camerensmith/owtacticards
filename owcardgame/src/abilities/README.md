@@ -1,6 +1,193 @@
 Modular Ability System Architecture
 ====================================
 
+## ⚠️ CRITICAL: Hero Implementation Consistency Requirements
+
+**ALL NEW HERO IMPLEMENTATIONS MUST FOLLOW THESE ESTABLISHED PATTERNS:**
+
+### 1. **Modal System Requirements**
+- **MUST USE**: `showOnEnterChoice()` from `modalController.js` for onEnter abilities
+- **NEVER**: Create custom modals or DOM manipulation for choice interfaces
+- **PATTERN**: Follow Ashe and Baptiste implementations exactly
+
+```javascript
+import { showOnEnterChoice } from '../engine/modalController';
+
+export function onEnter({ playerHeroId, rowId }) {
+    const playerNum = parseInt(playerHeroId[0]);
+    
+    const opt1 = { 
+        name: 'Ability Name', 
+        description: 'Clear description of what this ability does' 
+    };
+    const opt2 = { 
+        name: 'Ability Name 2', 
+        description: 'Clear description of what this ability does' 
+    };
+
+    showOnEnterChoice('HeroName', opt1, opt2, async (choiceIndex) => {
+        // Handle choice logic here
+    });
+}
+```
+
+### 2. **Targeting System Requirements**
+- **MUST USE**: `selectCardTarget()` and `selectRowTarget()` from `targeting.js`
+- **NEVER**: Use custom jQuery click handlers or DOM manipulation for targeting
+- **PATTERN**: Follow established targeting patterns from Ashe and Baptiste
+
+```javascript
+import { selectCardTarget, selectRowTarget } from '../engine/targeting';
+import { showMessage as showToast, clearMessage as clearToast } from '../engine/targetingBus';
+
+// For card targeting
+showToast('Hero: Select target enemy');
+const target = await selectCardTarget();
+if (target) {
+    dealDamage(target.cardId, target.rowId, amount);
+}
+
+// For row targeting  
+showToast('Hero: Select enemy row');
+const target = await selectRowTarget();
+if (target) {
+    // Place token or effect on target.rowId
+}
+```
+
+### 3. **Audio Integration Requirements**
+- **MUST USE**: `playAudioByKey()` from `imageImports.js`
+- **NEVER**: Create custom audio handling or direct Audio() constructors
+- **TIMING**: Flexible based on ability design - voice lines, sound effects, and confirmations can play at different times
+- **PATTERN**: Consistent audio integration with proper error handling
+
+```javascript
+import { playAudioByKey } from '../../assets/imageImports';
+
+// Example 1: Voice line on selection, sound effect on resolve
+showOnEnterChoice('Hero', opt1, opt2, async (choiceIndex) => {
+    // Voice line when option is selected
+    try {
+        playAudioByKey('hero-voice-line');
+    } catch {}
+    
+    const target = await selectCardTarget();
+    if (target) {
+        dealDamage(target.cardId, target.rowId, amount);
+        // Sound effect when ability resolves
+        try {
+            playAudioByKey('hero-gunshot');
+        } catch {}
+    }
+});
+
+// Example 2: Audio only on resolve (confirmation)
+const target = await selectCardTarget();
+if (target) {
+    dealDamage(target.cardId, target.rowId, amount);
+    // Confirmation sound after damage
+    try {
+        playAudioByKey('hero-ability1');
+    } catch {}
+}
+
+// Example 3: Audio on targeting start (preparation)
+showToast('Hero: Select target');
+try {
+    playAudioByKey('hero-targeting-start');
+} catch {}
+const target = await selectCardTarget();
+```
+
+**Audio Design Considerations:**
+- **Voice Lines**: Play when abilities are selected or activated (character personality)
+- **Sound Effects**: Play when abilities resolve (gunshots, explosions, etc.)
+- **Confirmations**: Play after successful ability execution (feedback)
+- **Preparation**: Play when targeting begins (UI feedback)
+- **Multiple Audio**: Can layer different sounds for complex abilities
+
+### 4. **Integration Requirements**
+- **MUST ADD**: Hero to `checkOnEnterAbilities()` in `App.js`
+- **MUST ADD**: Hero to ultimate handling in `App.js`
+- **MUST ADD**: Hero to `abilities/index.js`
+- **MUST REMOVE**: Any old logic from `HeroAbilities.js`
+
+### 5. **Function Signature Requirements**
+- **onEnter**: `({ playerHeroId, rowId })` - Extract `playerNum` inside function
+- **onUltimate**: `({ playerHeroId, rowId, cost })` - Extract `playerNum` inside function
+- **onDraw**: `({ playerHeroId })` - Optional, for intro sounds
+- **onDeath**: `({ playerHeroId, rowId })` - Optional, for cleanup when hero dies
+
+### 6. **Error Handling Requirements**
+- **MUST**: Use try/catch blocks around all async operations
+- **MUST**: Provide user feedback via toast messages
+- **MUST**: Clean up targeting state on errors
+- **PATTERN**: Follow established error handling from existing heroes
+
+### 7. **Code Organization Requirements**
+- **MUST**: Place hero in `src/abilities/heroes/heroName.js`
+- **MUST**: Export functions as named exports: `{ onEnter, onUltimate, onDraw }`
+- **MUST**: Use default export with all functions: `export default { onEnter, onUltimate, onDraw }`
+
+### 8. **Testing Checklist**
+Before considering a hero implementation complete:
+- [ ] Modal appears when hero is deployed
+- [ ] Both onEnter options work correctly
+- [ ] Ultimate triggers with proper cost
+- [ ] Audio plays at correct times
+- [ ] Targeting works for all abilities
+- [ ] Error handling works (cancellation, invalid targets)
+- [ ] No old logic remains in HeroAbilities.js
+- [ ] Integration points added to App.js
+
+**FAILURE TO FOLLOW THESE PATTERNS WILL RESULT IN INCONSISTENT BEHAVIOR AND TECHNICAL DEBT.**
+
+### 9. **Migration Process for Existing Heroes**
+When converting existing heroes from `HeroAbilities.js` to modular system:
+
+1. **Create new hero file** in `src/abilities/heroes/heroName.js`
+2. **Copy ability logic** from `HeroAbilities.js` abilities object
+3. **Convert to proper patterns**:
+   - Replace custom modals with `showOnEnterChoice()`
+   - Replace jQuery click handlers with `selectCardTarget()`/`selectRowTarget()`
+   - Replace custom audio with `playAudioByKey()`
+   - Add proper error handling and toast messages
+4. **Add to integration points**:
+   - Add to `abilities/index.js`
+   - Add to `checkOnEnterAbilities()` in `App.js`
+   - Add to ultimate handling in `App.js`
+5. **Remove old logic** from `HeroAbilities.js`
+6. **Test thoroughly** using the testing checklist above
+
+### 10. **Reference Implementations**
+- **Ashe**: Perfect example of modal choice + targeting patterns
+- **Baptiste**: Good example of row targeting + effects system
+- **Bastion**: Complete implementation following all requirements
+
+**Use these as templates for all future hero implementations.**
+
+### 11. **Current Migration Status**
+**✅ COMPLETED (Modular System):**
+- Ashe - Complete implementation with modal choice + targeting
+- Baptiste - Complete implementation with row targeting + effects
+- Bastion - Complete implementation following all requirements
+- BOB - Basic implementation (needs review for consistency)
+
+**🔄 NEEDS MIGRATION (Still in HeroAbilities.js):**
+- All other heroes in the abilities object need to be migrated
+- Each hero should follow the established patterns above
+- Priority: Heroes with complex abilities or modal choices
+
+**📋 MIGRATION PRIORITY:**
+1. Heroes with onEnter1 + onEnter2 (modal choices)
+2. Heroes with complex targeting requirements
+3. Heroes with special effects or tokens
+4. Heroes with simple abilities (can be done last)
+
+**🎯 GOAL:** All heroes should use the modular system for consistency, maintainability, and proper integration with the game's targeting, modal, and audio systems.
+
+---
+
 ## Core Engine Modules
 
 ### engine/damageBus.js
@@ -544,6 +731,162 @@ Custom React components for visual effects that follow heroes.
     }
     return null;
 })}
+```
+
+## Ultimate Usage Tracking System
+
+### Overview
+The game enforces that **each hero can only use their ultimate once per round**. This system tracks usage and provides visual feedback.
+
+### Implementation Details
+- **Game State**: `ultimateUsage: { player1: [], player2: [] }` - Arrays of hero IDs that have used ultimate
+- **Array Methods**: Use `array.includes(heroId)` to check usage, `array.push(heroId)` to mark as used
+- **Why Arrays**: Uses arrays instead of Sets for Immer compatibility (Sets require `enableMapSet()` plugin)
+- **Reset**: Cleared at the start of each round via `RESET_ULTIMATE_USAGE` action
+- **Prevention**: Ultimate activation checks `ultimateUsage` before allowing execution
+- **Visual Feedback**: Context menu shows "Ultimate (Used)" with strikethrough when disabled
+
+### Code Pattern
+```javascript
+// Check if hero has used ultimate
+const hasUsedUltimate = gameState.ultimateUsage?.[playerKey]?.includes(heroId);
+
+// Mark ultimate as used
+dispatch({
+    type: ACTIONS.MARK_ULTIMATE_USED,
+    payload: { playerNum, heroId }
+});
+
+// Reset at round start
+dispatch({ type: ACTIONS.RESET_ULTIMATE_USAGE });
+```
+
+## Death Cleanup System
+
+### Overview
+Heroes can define an `onDeath` function that automatically triggers when they reach 0 health, allowing for cleanup of persistent effects.
+
+### Implementation Details
+- **Trigger**: Automatically called when a hero's health reaches 0 during damage application
+- **Function Signature**: `onDeath({ playerHeroId, rowId })` - receives the dying hero's ID and current row
+- **Cleanup**: Use `window.__ow_removeRowEffect()` to clean up persistent effects
+- **Error Handling**: Wrapped in try/catch to prevent death cleanup errors from breaking the game
+
+### Code Pattern
+```javascript
+// In hero module
+export function onDeath({ playerHeroId, rowId }) {
+    // Remove all persistent effects created by this hero
+    const rowIds = ['1b', '1m', '1f', '2b', '2m', '2f'];
+    rowIds.forEach(rowId => {
+        window.__ow_removeRowEffect?.(rowId, 'enemyEffects', 'hero-token');
+    });
+    console.log(`${playerHeroId} died - effects cleaned up`);
+}
+```
+
+### Examples
+- **Bastion**: Removes all Bastion tokens from all rows when Bastion dies
+- **Bob**: Removes Bob token from the row when Bob dies
+- **Baptiste**: Clears invulnerability effects when Baptiste dies
+
+## Token Cleanup Strategies
+
+### Overview
+Heroes can create persistent effects (tokens, icons, etc.) that may need cleanup. The cleanup strategy depends on the effect's design and gameplay requirements.
+
+### Cleanup Strategies
+
+#### 1. **Death-Based Cleanup** (Recommended for most cases)
+Remove effects when the source hero dies. This prevents "orphaned" effects and maintains game balance.
+
+```javascript
+export function onDeath({ playerHeroId, rowId }) {
+    // Remove all effects created by this hero
+    const rowIds = ['1b', '1m', '1f', '2b', '2m', '2f'];
+    rowIds.forEach(rowId => {
+        window.__ow_removeRowEffect?.(rowId, 'enemyEffects', 'hero-token');
+    });
+}
+```
+
+**Use when:**
+- Effects are directly tied to the hero's presence
+- Effects would be meaningless without the hero
+- Game balance requires cleanup (e.g., Bastion tokens, Bob tokens)
+
+#### 2. **Persistent Effects** (Use sparingly)
+Keep effects active even after the hero dies. Useful for environmental or lasting effects.
+
+```javascript
+// No onDeath function = effect persists
+export function onEnter({ playerHeroId, rowId }) {
+    window.__ow_appendRowEffect?.(rowId, 'enemyEffects', {
+        id: 'environmental-hazard',
+        hero: 'heroName',
+        type: 'environmental',
+        persistent: true, // Mark as persistent
+        tooltip: 'Environmental effect that persists'
+    });
+}
+```
+
+**Use when:**
+- Effects represent environmental changes
+- Effects should outlast the hero (e.g., terrain modifications)
+- Game design specifically requires persistence
+
+#### 3. **Conditional Cleanup**
+Clean up based on specific conditions rather than just death.
+
+```javascript
+export function onDeath({ playerHeroId, rowId }) {
+    // Only clean up if specific conditions are met
+    const gameState = window.__ow_getGameState?.();
+    if (gameState?.roundNumber > 2) {
+        // Clean up only in later rounds
+        window.__ow_removeRowEffect?.(rowId, 'enemyEffects', 'conditional-token');
+    }
+}
+```
+
+### Design Considerations
+
+**Choose Death-Based Cleanup when:**
+- Effects are hero-specific abilities
+- Effects provide ongoing benefits that should end with the hero
+- Game balance requires cleanup
+- Effects are clearly tied to the hero's presence
+
+**Choose Persistent Effects when:**
+- Effects represent environmental changes
+- Effects should create lasting strategic impact
+- Game design specifically calls for persistence
+- Effects are meant to outlast the hero
+
+### Implementation Pattern
+```javascript
+// Always include cleanup in onDeath for most effects
+export function onDeath({ playerHeroId, rowId }) {
+    // Remove all effects created by this hero
+    const allRows = ['1b', '1m', '1f', '2b', '2m', '2f'];
+    allRows.forEach(rowId => {
+        window.__ow_removeRowEffect?.(rowId, 'enemyEffects', 'hero-token');
+        window.__ow_removeRowEffect?.(rowId, 'allyEffects', 'hero-buff');
+    });
+    console.log(`${playerHeroId} died - effects cleaned up`);
+}
+
+// For persistent effects, document the decision
+export function onEnter({ playerHeroId, rowId }) {
+    window.__ow_appendRowEffect?.(rowId, 'enemyEffects', {
+        id: 'persistent-effect',
+        hero: 'heroName',
+        type: 'environmental',
+        persistent: true, // Document that this persists
+        tooltip: 'This effect persists even after hero death'
+    });
+}
 ```
 
 ## Example: Complete Hero Implementation

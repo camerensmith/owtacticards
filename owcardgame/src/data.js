@@ -912,6 +912,11 @@ const data = {
             cards: {},
         },
     },
+    // Track which heroes have used their ultimate this round
+    ultimateUsage: {
+        player1: [], // Array of hero IDs that have used ultimate
+        player2: [],
+    },
     rows: {
         player1hand: {
             id: 'player1hand',
