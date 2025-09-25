@@ -45,6 +45,7 @@ export const ACTIONS = {
     UPDATE_POWER: 'update-power',
     MARK_ULTIMATE_USED: 'mark-ultimate-used',
     RESET_ULTIMATE_USAGE: 'reset-ultimate-usage',
+    CLEANUP_SHIELD_BASH: 'cleanup-shield-bash',
     UPDATE_ROW: 'update-row',
     UPDATE_SYNERGY: 'update-synergy',
     DEDUCT_SYNERGY: 'deduct-synergy',
@@ -467,6 +468,25 @@ function reducer(gameState, action) {
             });
         }
 
+        // Clean up Shield Bash effects at round end
+        case ACTIONS.CLEANUP_SHIELD_BASH: {
+            return produce(gameState, (draft) => {
+                // Remove Shield Bash effects from all cards
+                const playerKeys = ['player1cards', 'player2cards'];
+                playerKeys.forEach(playerKey => {
+                    const playerCards = draft.playerCards[playerKey];
+                    if (playerCards && playerCards.cards) {
+                        Object.keys(playerCards.cards).forEach(cardId => {
+                            const card = playerCards.cards[cardId];
+                            if (card && Array.isArray(card.effects)) {
+                                card.effects = card.effects.filter(effect => effect?.id !== 'shield-bash');
+                            }
+                        });
+                    }
+                });
+            });
+        }
+
         default:
             return gameState;
     }
@@ -507,6 +527,11 @@ function checkOnEnterAbilities(playerHeroId, rowId, playerNum) {
 
     if (heroId === 'bastion' && abilitiesIndex?.bastion?.onEnter) {
         abilitiesIndex.bastion.onEnter({ playerHeroId, rowId });
+        return;
+    }
+
+    if (heroId === 'brigitte' && abilitiesIndex?.brigitte?.onEnter) {
+        abilitiesIndex.brigitte.onEnter({ playerHeroId, rowId });
         return;
     }
 
@@ -705,7 +730,38 @@ export default function App() {
                 console.error('Failed to import damageBus:', err);
             });
         };
-        return () => { window.__ow_appendRowEffect = null; window.__ow_getRow = null; window.__ow_setRowArray = null; window.__ow_updateSynergy = null; window.__ow_getCard = null; window.__ow_getMaxHealth = null; window.__ow_setCardHealth = null; window.__ow_isSpecial = null; window.__ow_setRowPower = null; window.__ow_setInvulnerableSlots = null; window.__ow_clearInvulnerableSlots = null; window.__ow_isSlotInvulnerable = null; window.__ow_removeRowEffect = null; window.__ow_cleanupImmortalityField = null; window.__ow_dealDamage = null; };
+        window.__ow_dispatchShieldUpdate = (cardId, newShield) => {
+            const playerNum = parseInt(cardId[0]);
+            dispatch({
+                type: ACTIONS.EDIT_CARD,
+                payload: {
+                    playerNum: playerNum,
+                    targetCardId: cardId,
+                    editKeys: ['shield'],
+                    editValues: [newShield]
+                }
+            });
+        };
+        window.__ow_appendCardEffect = (cardId, effect) => {
+            // Add effect to card (similar to row effects but for individual cards)
+            const playerNum = parseInt(cardId[0]);
+            const playerKey = `player${playerNum}cards`;
+            const currentCard = gameState.playerCards[playerKey]?.cards?.[cardId];
+            
+            if (currentCard) {
+                const currentEffects = Array.isArray(currentCard.effects) ? currentCard.effects : [];
+                dispatch({
+                    type: ACTIONS.EDIT_CARD,
+                    payload: {
+                        playerNum: playerNum,
+                        targetCardId: cardId,
+                        editKeys: ['effects'],
+                        editValues: [[...currentEffects, effect]]
+                    }
+                });
+            }
+        };
+        return () => { window.__ow_appendRowEffect = null; window.__ow_getRow = null; window.__ow_setRowArray = null; window.__ow_updateSynergy = null; window.__ow_getCard = null; window.__ow_getMaxHealth = null; window.__ow_setCardHealth = null; window.__ow_isSpecial = null; window.__ow_setRowPower = null; window.__ow_setInvulnerableSlots = null; window.__ow_clearInvulnerableSlots = null; window.__ow_isSlotInvulnerable = null; window.__ow_removeRowEffect = null; window.__ow_cleanupImmortalityField = null; window.__ow_dealDamage = null; window.__ow_dispatchShieldUpdate = null; window.__ow_appendCardEffect = null; };
     }, [gameState]);
     // Game logic state
     const [gameLogic, setGameLogic] = useState({
@@ -1065,6 +1121,12 @@ export default function App() {
                         } catch (e) {
                             console.log('Error executing BASTION ultimate:', e);
                         }
+                    } else if (heroId === 'brigitte' && abilitiesIndex?.brigitte?.onUltimate) {
+                        try {
+                            abilitiesIndex.brigitte.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
+                        } catch (e) {
+                            console.log('Error executing BRIGITTE ultimate:', e);
+                        }
                     } else {
                         console.log(`Executing ultimate for ${playerHeroId} in ${rowId} (cost: ${adjustedCost})`);
                     }
@@ -1138,6 +1200,11 @@ export default function App() {
             // Reset ultimate usage for new round
             dispatch({
                 type: ACTIONS.RESET_ULTIMATE_USAGE
+            });
+            
+            // Clean up Shield Bash effects at round end
+            dispatch({
+                type: ACTIONS.CLEANUP_SHIELD_BASH
             });
 
             // Update game logic for round tracking

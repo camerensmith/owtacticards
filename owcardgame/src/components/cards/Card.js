@@ -5,6 +5,7 @@ import turnContext from 'context/turnContext';
 import CardEffects from 'components/cards/CardEffects';
 import HealthCounter from 'components/counters/HealthCounter';
 import ShieldCounter from 'components/counters/ShieldCounter';
+import ShieldBashOverlay from '../effects/ShieldBashOverlay';
 import { heroCardImages } from '../../assets/imageImports';
 import ContextMenu from './ContextMenu';
 import actionsBus, { Actions } from '../../abilities/engine/actionsBus';
@@ -58,11 +59,15 @@ export default function Card(props) {
         const playerKey = `player${playerNum}`;
         const hasUsedUltimate = gameState.ultimateUsage?.[playerKey]?.includes(heroId);
         
+        // Check if hero is affected by Shield Bash (cannot use ultimate)
+        const card = gameState.playerCards[`player${playerNum}cards`]?.cards?.[playerHeroId];
+        const hasShieldBash = Array.isArray(card?.effects) && card.effects.some(effect => effect?.id === 'shield-bash');
+        
         items.push({
-            label: hasUsedUltimate ? 'Ultimate (Used)' : 'Ultimate',
-            disabled: hasUsedUltimate,
+            label: hasUsedUltimate ? 'Ultimate (Used)' : hasShieldBash ? 'Ultimate (Shield Bashed)' : 'Ultimate',
+            disabled: hasUsedUltimate || hasShieldBash,
             onClick: () => {
-                if (hasUsedUltimate) return; // Don't allow if already used
+                if (hasUsedUltimate || hasShieldBash) return; // Don't allow if already used or shield bashed
                 
                 // Get current row synergy and ultimate cost
                 const currentRow = gameState.rows[rowId];
@@ -133,6 +138,7 @@ export default function Card(props) {
                             }}
                         >
                             <EffectBadges playerHeroId={playerHeroId} />
+                            <ShieldBashOverlay playerHeroId={playerHeroId} rowId={rowId} />
                             {imageLoaded === playerHeroId &&
                                 (turnState.playerTurn === playerNum ||
                                 isPlayed ? (

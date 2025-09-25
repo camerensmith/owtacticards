@@ -790,6 +790,163 @@ export function onDeath({ playerHeroId, rowId }) {
 - **Bob**: Removes Bob token from the row when Bob dies
 - **Baptiste**: Clears invulnerability effects when Baptiste dies
 
+## Shield System
+
+### Overview
+The game features a comprehensive shield system that protects heroes from damage and provides visual feedback through shield counters.
+
+### Shield Mechanics
+- **Shield Tokens**: Visual representation using `shieldcounter.png/webp` images
+- **Shield Values**: Stored as `shield` number property on cards (0-3, except Wrecking Ball)
+- **Shield Priority**: Shields take damage before health
+- **Shield Persistence**: Row shields persist even if source hero dies
+- **Shield Cleanup**: Individual hero shields are cleared when hero dies
+
+### Shield Implementation
+```javascript
+// Update shield value
+window.__ow_dispatchShieldUpdate(cardId, newShieldValue);
+
+// Check current shield
+const currentShield = window.__ow_getCard?.(cardId)?.shield || 0;
+
+// Shield overflow from healing
+const maxShield = heroId === 'wreckingball' ? 999 : 3; // Wrecking Ball exception
+const newShield = Math.min(currentShield + shieldToAdd, maxShield);
+```
+
+### Shield Visual Components
+- **ShieldCounter**: React component that displays shield value
+- **Shield Images**: `shieldcounter.png` and `shieldcounter.webp` assets
+- **Shield Display**: Shows on hero cards when `shield > 0`
+
+### Shield Examples
+- **Brigitte Repair Pack**: Heals allies, excess healing becomes shields
+- **Sigma Void Barrier**: Places shield tokens on rows (persistent)
+- **Wrecking Ball Adaptive Shield**: Can exceed normal 3-shield limit
+
+## Visual Overlay System
+
+### Overview
+Custom React components provide visual feedback for hero abilities and effects, enhancing gameplay clarity.
+
+### Overlay Implementation Pattern
+```javascript
+// 1. Create overlay component
+export default function EffectOverlay({ playerHeroId, rowId }) {
+    const { gameState } = useContext(gameContext);
+    
+    // Check for effect condition
+    const hasEffect = checkEffectCondition(gameState, playerHeroId);
+    if (!hasEffect) return null;
+    
+    return (
+        <div className="effect-overlay" style={{ /* positioning */ }}>
+            {/* Visual effect content */}
+        </div>
+    );
+}
+
+// 2. Add to Card component
+import EffectOverlay from '../effects/EffectOverlay';
+
+// In Card render:
+<EffectOverlay playerHeroId={playerHeroId} rowId={rowId} />
+```
+
+### Shield Bash Overlay Example
+```javascript
+// ShieldBashOverlay.js - Shows "SHIELD BASHED" with mirror effect
+export default function ShieldBashOverlay({ playerHeroId, rowId }) {
+    const { gameState } = useContext(gameContext);
+    
+    // Check if card has Shield Bash effect
+    const playerNum = parseInt(playerHeroId[0]);
+    const card = gameState.playerCards[`player${playerNum}cards`]?.cards?.[playerHeroId];
+    const hasShieldBash = Array.isArray(card?.effects) && 
+        card.effects.some(effect => effect?.id === 'shield-bash');
+    
+    if (!hasShieldBash) return null;
+    
+    return (
+        <div className="shield-bash-overlay" style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%) scaleY(-1)', // Mirror effect
+            zIndex: 10,
+            pointerEvents: 'none'
+        }}>
+            <div>SHIELD BASHED</div>
+        </div>
+    );
+}
+```
+
+### Overlay Design Principles
+- **Non-Intrusive**: `pointerEvents: 'none'` to avoid blocking interactions
+- **Conditional Rendering**: Only show when effect is active
+- **Proper Z-Index**: Ensure overlays appear above cards but below modals
+- **Context Integration**: Use `gameContext` to check effect states
+- **Array Safety**: Always check if arrays exist before using `.some()`, `.filter()`, etc.
+
+### Overlay Types
+1. **Status Overlays**: Show ongoing effects (Shield Bash, invulnerability)
+2. **Action Overlays**: Show temporary effects (damage, healing numbers)
+3. **Token Overlays**: Show persistent tokens (Bastion tokens, shield tokens)
+4. **Debuff Overlays**: Show negative effects (ultimate lock, stat reductions)
+
+### Overlay Integration
+- **Card Component**: Add overlay imports and render calls
+- **Effect Detection**: Use game state to determine when to show overlays
+- **Cleanup**: Overlays automatically hide when effects are removed
+- **Performance**: Only render when effect is active to avoid unnecessary renders
+
+## Ultimate Blocking System
+
+### Overview
+The game supports blocking ultimate abilities through debuff effects, preventing heroes from using their ultimate for the remainder of the round.
+
+### Implementation
+```javascript
+// 1. Apply ultimate block effect
+window.__ow_appendCardEffect(targetCardId, {
+    id: 'shield-bash',
+    hero: 'brigitte',
+    type: 'debuff',
+    sourceCardId: playerHeroId,
+    sourceRowId: rowId,
+    tooltip: 'Shield Bash: Cannot use ultimate this round',
+    visual: 'mirror' // For 180° turn effect
+});
+
+// 2. Check for ultimate block in context menu
+const hasShieldBash = Array.isArray(card?.effects) && 
+    card.effects.some(effect => effect?.id === 'shield-bash');
+
+// 3. Update context menu display
+items.push({
+    label: hasUsedUltimate ? 'Ultimate (Used)' : 
+           hasShieldBash ? 'Ultimate (Shield Bashed)' : 'Ultimate',
+    disabled: hasUsedUltimate || hasShieldBash,
+    onClick: () => {
+        if (hasUsedUltimate || hasShieldBash) return;
+        // ... ultimate activation logic
+    }
+});
+```
+
+### Ultimate Block Features
+- **Visual Feedback**: Context menu shows "Ultimate (Shield Bashed)" when blocked
+- **Persistent Effect**: Block persists even if source hero dies
+- **Round Cleanup**: Effects are automatically cleared at round end
+- **Array Safety**: Proper checks for effect arrays before using `.some()`
+
+### Ultimate Block Examples
+- **Brigitte Shield Bash**: Turns enemy 180° and blocks ultimate
+- **Future Heroes**: Can implement similar blocking mechanics
+- **Custom Effects**: Easy to add new ultimate-blocking abilities
+
 ## Token Cleanup Strategies
 
 ### Overview

@@ -135,6 +135,12 @@ import bastionAbility1 from './audio/bastion-ability1.mp3';
 import bastionAbility2 from './audio/bastion-ability2.mp3';
 import bastionUltimate from './audio/bastion-ultimate.mp3';
 import bastionUltEnd from './audio/bastion-ultend.mp3';
+import brigitteIntro from './audio/brigitte-intro.mp3';
+import brigitteEnter from './audio/brigitte-enter.mp3';
+import brigitteAbility1 from './audio/brigitte-ability1.mp3';
+import brigitteUltimate from './audio/brigitte-ultimate.mp3';
+import brigitteBash from './audio/brigitte-bash.mp3';
+import brigitteArmor from './audio/brigitte-armor.mp3';
 import genjiCutting from './audio/genji-cutting.mp3';
 import genjiUlt from './audio/genji-ult.mp3';
 import hanzoMarked from './audio/hanzo-marked.mp3';
@@ -244,6 +250,12 @@ export const abilityAudioFiles = {
     'bastion-ability2': bastionAbility2,
     'bastion-ultimate': bastionUltimate,
     'bastion-ultend': bastionUltEnd,
+    'brigitte-intro': brigitteIntro,
+    'brigitte-enter': brigitteEnter,
+    'brigitte-ability1': brigitteAbility1,
+    'brigitte-ultimate': brigitteUltimate,
+    'brigitte-bash': brigitteBash,
+    'brigitte-armor': brigitteArmor,
     'bastion-ult': bastionUlt,
     'genji-cutting': genjiCutting,
     'genji-ult': genjiUlt,
