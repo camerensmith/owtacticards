@@ -164,3 +164,15 @@ body {
     }
 }
 
+/* Orisa Protective Barrier Animation */
+@keyframes orisaBarrierPulse {
+    0%, 100% { 
+        opacity: 0.2;
+        border-color: #FFD700;
+    }
+    50% { 
+        opacity: 0.4;
+        border-color: #FFA500;
+    }
+}
+

@@ -6,6 +6,7 @@ import CounterArea from 'components/layout/CounterArea';
 import CardDisplay from 'components/layout/CardDisplay';
 import ImmortalityFieldOverlay from 'components/effects/ImmortalityFieldOverlay';
 import CryoFreezeOverlay from 'components/effects/CryoFreezeOverlay';
+import OrisaBarrierOverlay from 'components/effects/OrisaBarrierOverlay';
 import CardFocusLite from 'components/cards/CardFocusLite';
 import { ACTIONS } from 'App';
 import { isOverflown } from 'helper';
@@ -136,6 +137,9 @@ export default function BoardRow(props) {
                         }
                         return null;
                     })}
+                    
+                    {/* Render Orisa Protective Barrier overlay for this row */}
+                    <OrisaBarrierOverlay rowId={rowId} />
                     
                 </div>
                 <CardFocusLite focus={props.cardFocus && props.cardFocus.playerHeroId ? props.cardFocus : null} onClose={() => props.setCardFocus('invisible')} />

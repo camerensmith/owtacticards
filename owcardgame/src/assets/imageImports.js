@@ -19,6 +19,7 @@ import mei from './heroes/cards/mei.webp';
 import mercy from './heroes/cards/mercy.webp';
 import moira from './heroes/cards/moira.webp';
 import orisa from './heroes/cards/orisa.webp';
+import protectiveBarrier from './heroes/cards/protectivebarrier.png';
 import pharah from './heroes/cards/pharah.webp';
 import reaper from './heroes/cards/reaper.webp';
 import reinhardt from './heroes/cards/reinhardt.webp';
@@ -197,8 +198,9 @@ import moiraEnter from './audio/moira-enter.mp3';
 import moiraAbility1 from './audio/moira-ability1.mp3';
 import moiraUltimate from './audio/moira-ultimate.mp3';
 import moiraUltimateResolve from './audio/moira-ultimate-resolve.mp3';
-import orisaBarrier from './audio/orisa-barrier.mp3';
-import orisaUlt from './audio/orisa-ult.mp3';
+import orisaEnter from './audio/orisa-enter.mp3';
+import orisaUltimate from './audio/orisa-ultimate.mp3';
+import orisaIntro from './audio/orisa-intro.mp3';
 import pharahClear from './audio/pharah-clear.mp3';
 import pharahUlt from './audio/pharah-ult.mp3';
 import reaperLastwords from './audio/reaper-lastwords.mp3';
@@ -234,7 +236,7 @@ export const heroCardImages = {
 };
 
 export const heroIconImages = {
-    'ana-icon': anaIcon, 'baptiste-icon': baptisteIcon, 'bastion-icon': bastionIcon, 'bob-icon': bobIcon, 'hanzo-icon': hanzoIcon, 'lucio-icon': lucioIcon, 'mei-icon': meiIcon, 'mercy-icon': mercyIcon, 'orisa-icon': orisaIcon, 'sigma-icon': sigmaIcon, 'torbjorn-icon': torbjornIcon, 'widowmaker-icon': widowmakerIcon, 'wreckingball-icon': wreckingballIcon, 'zarya-icon': zaryaIcon, 'zenyatta-icon': zenyattaIcon
+    'ana-icon': anaIcon, 'baptiste-icon': baptisteIcon, 'bastion-icon': bastionIcon, 'bob-icon': bobIcon, 'hanzo-icon': hanzoIcon, 'lucio-icon': lucioIcon, 'mei-icon': meiIcon, 'mercy-icon': mercyIcon, 'orisa-icon': orisaIcon, 'protectivebarrier-icon': protectiveBarrier, 'sigma-icon': sigmaIcon, 'torbjorn-icon': torbjornIcon, 'widowmaker-icon': widowmakerIcon, 'wreckingball-icon': wreckingballIcon, 'zarya-icon': zaryaIcon, 'zenyatta-icon': zenyattaIcon
 };
 
 export const heroCardFocusImages = {
@@ -353,8 +355,9 @@ export const abilityAudioFiles = {
     'moira-ability1': moiraAbility1,
     'moira-ultimate': moiraUltimate,
     'moira-ultimate-resolve': moiraUltimateResolve,
-    'orisa-barrier': orisaBarrier,
-    'orisa-ult': orisaUlt,
+    'orisa-enter': orisaEnter,
+    'orisa-ultimate': orisaUltimate,
+    'orisa-intro': orisaIntro,
     'pharah-clear': pharahClear,
     'pharah-ult': pharahUlt,
     'reaper-lastwords': reaperLastwords,

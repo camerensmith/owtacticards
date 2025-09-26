@@ -310,6 +310,28 @@ function reducer(gameState, action) {
                 }
             }
 
+            // Check if Orisa is moving and handle her effects
+            const heroId = targetCardId.slice(1);
+            if (heroId === 'orisa' && startRowId !== finishRowId && startRowId[0] !== 'p') {
+                // Remove Supercharger token from the old row
+                if (window.__ow_removeRowEffect) {
+                    window.__ow_removeRowEffect(startRowId, 'allyEffects', 'orisa-supercharger');
+                }
+                
+                // Move Protective Barrier to new row
+                if (abilitiesIndex?.orisa?.onMove) {
+                    try {
+                        abilitiesIndex.orisa.onMove({ 
+                            playerHeroId: targetCardId, 
+                            fromRowId: startRowId, 
+                            toRowId: finishRowId 
+                        });
+                    } catch (e) {
+                        console.log('Error executing ORISA onMove:', e);
+                    }
+                }
+            }
+
             return produce(gameState, (draft) => {
                 draft.rows[startRowId].cardIds = newStartRowCardIds;
                 draft.rows[finishRowId].cardIds = newFinishRowCardIds;
@@ -787,6 +809,10 @@ function checkOnEnterAbilities(playerHeroId, rowId, playerNum) {
 
     if (heroId === 'moira' && abilitiesIndex?.moira?.onEnter) {
         abilitiesIndex.moira.onEnter({ playerHeroId, rowId });
+        return;
+    }
+    if (heroId === 'orisa' && abilitiesIndex?.orisa?.onEnter) {
+        abilitiesIndex.orisa.onEnter({ playerHeroId, rowId });
         return;
     }
 
@@ -1666,14 +1692,21 @@ export default function App() {
                         } catch (e) {
                             console.log('Error executing MERCY ultimate:', e);
                         }
-                    } else if (heroId === 'moira' && abilitiesIndex?.moira?.onUltimate) {
-                        try {
-                            window.__ow_trackUltimateUsed?.(heroId, 'Moira', 'Coalescence', playerNum, rowId, adjustedCost);
-                            abilitiesIndex.moira.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
-                        } catch (e) {
-                            console.log('Error executing MOIRA ultimate:', e);
-                        }
-                    } else {
+    } else if (heroId === 'moira' && abilitiesIndex?.moira?.onUltimate) {
+        try {
+            window.__ow_trackUltimateUsed?.(heroId, 'Moira', 'Coalescence', playerNum, rowId, adjustedCost);
+            abilitiesIndex.moira.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
+        } catch (e) {
+            console.log('Error executing MOIRA ultimate:', e);
+        }
+    } else if (heroId === 'orisa' && abilitiesIndex?.orisa?.onUltimate) {
+        try {
+            window.__ow_trackUltimateUsed?.(heroId, 'Orisa', 'Supercharger', playerNum, rowId, adjustedCost);
+            abilitiesIndex.orisa.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
+        } catch (e) {
+            console.log('Error executing ORISA ultimate:', e);
+        }
+    } else {
                         console.log(`Executing ultimate for ${playerHeroId} in ${rowId} (cost: ${adjustedCost})`);
                     }
                 } else {

@@ -86,6 +86,22 @@ export function dealDamage(targetCardId, targetRow, amount, ignoreShields = fals
         }
     }
     
+    // Check for Orisa Protective Barrier damage reduction
+    if (window.__ow_getRow) {
+        const targetRowData = window.__ow_getRow(targetRow);
+        if (targetRowData && targetRowData.allyEffects) {
+            const barrierEffect = targetRowData.allyEffects.find(effect => 
+                effect?.id === 'orisa-barrier' && effect?.type === 'damageReduction'
+            );
+            if (barrierEffect) {
+                // Apply damage reduction with minimum of 1
+                const originalAmount = finalAmount;
+                finalAmount = Math.max(1, finalAmount - barrierEffect.value);
+                console.log(`DamageBus - Orisa Protective Barrier reduced damage from ${originalAmount} to ${finalAmount} (minimum 1)`);
+            }
+        }
+    }
+    
     const damageEvent = { type: 'damage', targetCardId, targetRow, amount: finalAmount, ignoreShields, sourceCardId };
     console.log('DamageBus - Publishing damage event:', damageEvent);
     publish(damageEvent);

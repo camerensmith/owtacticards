@@ -84,6 +84,11 @@ export default function TurnEffectsRunner() {
                             if (abilities[effect.hero]?.lucioTokenShuffle) {
                                 abilities[effect.hero].lucioTokenShuffle(rowId);
                             }
+                        } else if (effect.id === 'orisa-supercharger' && effect.hero === 'orisa') {
+                            console.log(`TurnEffectsRunner: Found Orisa Supercharger, updating synergy for row ${rowId}`);
+                            if (abilities[effect.hero]?.updateSuperchargerSynergy) {
+                                abilities[effect.hero].updateSuperchargerSynergy(rowId);
+                            }
                         } else if (abilities[effect.hero]?.[effect.id]?.run) {
                             abilities[effect.hero][effect.id].run(rowId);
                         }
