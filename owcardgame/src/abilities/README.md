@@ -1558,3 +1558,445 @@ if (!isEnemyRow) {
 - Extract player number from row ID
 - Compare with current player number
 - Provide clear error feedback
+
+## Mei Implementation Patterns
+
+### Ultimate Cost Modification
+Mei's Blizzard demonstrates how to modify ultimate costs:
+
+```javascript
+// Place Mei token on enemy row
+window.__ow_appendRowEffect?.(targetRow.rowId, 'enemyEffects', {
+    id: 'mei-token',
+    hero: 'mei',
+    type: 'ultimateCostModifier',
+    value: 2, // Double the cost
+    sourceCardId: playerHeroId,
+    sourceRowId: rowId,
+    tooltip: 'Blizzard: Ultimate abilities cost double synergy from this row',
+    visual: 'mei-icon'
+});
+```
+
+**Key Points:**
+- Use `ultimateCostModifier` type for cost changes
+- Use multiplication (`*`) not addition (`+`) for doubling
+- App.js handles the cost calculation automatically
+
+### Card Effect Immunity System
+Mei's Cryo Freeze demonstrates card effect immunity:
+
+```javascript
+// Apply immunity effect to target card
+window.__ow_appendCardEffect?.(target.cardId, {
+    id: 'cryo-freeze',
+    hero: 'mei',
+    type: 'immunity',
+    sourceCardId: playerHeroId,
+    sourceRowId: rowId,
+    tooltip: 'Cryo Freeze: Immune to damage and abilities for remainder of round',
+    visual: 'frozen'
+});
+```
+
+**Key Points:**
+- Use `type: 'immunity'` for immunity effects
+- Damage bus automatically checks for immunity
+- Targeting system automatically blocks frozen cards
+- Visual overlays show immunity status
+
+### Visual Overlay System
+Mei's Cryo Freeze demonstrates visual overlays:
+
+```javascript
+// 1. Create overlay component
+export default function CryoFreezeOverlay({ playerHeroId, rowId }) {
+    const { gameState } = useContext(gameContext);
+    
+    // Check for effect condition
+    const hasEffect = checkEffectCondition(gameState, playerHeroId);
+    if (!hasEffect) return null;
+    
+    return (
+        <div className="effect-overlay" style={{ /* positioning */ }}>
+            {/* Visual effect content */}
+        </div>
+    );
+}
+
+// 2. Add to BoardRow.js
+{gameState.rows[rowId].cardIds.map(cardId => {
+    const card = gameState.playerCards[`player${playerNum}cards`]?.cards?.[cardId];
+    if (card && Array.isArray(card.effects) && 
+        card.effects.some(effect => effect?.id === 'cryo-freeze')) {
+        return (
+            <CryoFreezeOverlay
+                key={`cryo-freeze-${cardId}`}
+                playerHeroId={cardId}
+                rowId={rowId}
+            />
+        );
+    }
+    return null;
+})}
+```
+
+**Key Points:**
+- Use `position: absolute` for overlays
+- Check effect conditions in overlay component
+- Add to BoardRow.js for each affected card
+- Use unique keys for React rendering
+
+### Card Styling for Effects
+Mei's Cryo Freeze demonstrates card styling:
+
+```javascript
+// In Card.js - check for effect
+const isFrozen = Array.isArray(effects) && 
+    effects.some(effect => effect?.id === 'cryo-freeze' && effect?.type === 'immunity');
+
+// Apply CSS class
+className={`card ${isFrozen ? 'frozen' : ''}`}
+
+// In Card.css - style the effect
+.frozen {
+    filter: hue-rotate(180deg) brightness(0.7) saturate(1.2);
+    opacity: 0.8;
+    pointer-events: none;
+    cursor: not-allowed;
+}
+```
+
+**Key Points:**
+- Check effects array for specific effect ID and type
+- Apply CSS classes conditionally
+- Use `pointer-events: none` to disable interaction
+- Use visual filters to indicate status
+
+## Mercy Implementation Patterns
+
+### Card Effect System
+Mercy's Caduceus Staff demonstrates card effect management:
+
+```javascript
+// Apply healing effect to target card
+window.__ow_appendCardEffect?.(target.cardId, {
+    id: 'mercy-heal',
+    hero: 'mercy',
+    type: 'healing',
+    sourceCardId: playerHeroId,
+    sourceRowId: rowId,
+    tooltip: 'Mercy Healing: Heals 1 HP at start of each turn',
+    visual: 'mercyheal.png'
+});
+
+// Apply damage boost effect to target card
+window.__ow_appendCardEffect?.(target.cardId, {
+    id: 'mercy-damage',
+    hero: 'mercy',
+    type: 'damageBoost',
+    value: 1,
+    sourceCardId: playerHeroId,
+    sourceRowId: rowId,
+    tooltip: 'Mercy Damage Boost: +1 damage to all abilities',
+    visual: 'mercydamage.png'
+});
+```
+
+**Key Points:**
+- Use `type: 'healing'` for healing effects
+- Use `type: 'damageBoost'` for damage modifications
+- Card effects persist until source or target dies
+- Visual overlays show effect status
+
+### Turn-Based Healing System
+Mercy's healing demonstrates persistent turn effects:
+
+```javascript
+// Function to handle turn-based healing
+export function mercyTokenHealing(cardId) {
+    const card = window.__ow_getCard?.(cardId);
+    if (!card || card.health <= 0) return;
+    
+    const hasMercyHeal = Array.isArray(card.effects) && 
+        card.effects.some(effect => effect.id === 'mercy-heal' && effect.hero === 'mercy');
+    
+    if (hasMercyHeal) {
+        const currentHealth = card.health;
+        const newHealth = Math.min(currentHealth + 1, card.maxHealth || 4);
+        const healingAmount = newHealth - currentHealth;
+        
+        if (healingAmount > 0) {
+            window.__ow_setCardHealth?.(cardId, newHealth);
+            
+            // Show floating text
+            if (window.effectsBus) {
+                window.effectsBus.publish({
+                    type: 'fx:heal',
+                    cardId: cardId,
+                    amount: healingAmount,
+                    text: `+${healingAmount}`
+                });
+            }
+        }
+    }
+}
+```
+
+**Key Points:**
+- Check for effect existence before applying
+- Respect maximum health limits
+- Show floating text for visual feedback
+- Use `window.effectsBus` for UI updates
+
+### Damage Boost Integration
+Mercy's damage boost demonstrates damage modification:
+
+```javascript
+// In damageBus.js - Check for Mercy damage boost on source card
+if (sourceCardId) {
+    const sourceCard = window.__ow_getCard?.(sourceCardId);
+    if (sourceCard && Array.isArray(sourceCard.effects)) {
+        const mercyDamageBoost = sourceCard.effects.find(effect => 
+            effect?.id === 'mercy-damage' && effect?.type === 'damageBoost'
+        );
+        if (mercyDamageBoost) {
+            finalAmount += mercyDamageBoost.value || 1;
+            console.log(`DamageBus - Mercy damage boost added ${mercyDamageBoost.value || 1} damage (total: ${finalAmount})`);
+        }
+    }
+}
+```
+
+**Key Points:**
+- Check source card effects for damage boosts
+- Apply boost to all damage calculations
+- Use `finalAmount` for final damage calculation
+- Log damage modifications for debugging
+
+### Resurrection System
+Mercy's Guardian Angel demonstrates hero resurrection:
+
+```javascript
+// Resurrect the hero
+const baseHealth = targetCard.maxHealth || 4;
+window.__ow_setCardHealth?.(target.cardId, baseHealth);
+
+// Remove any negative effects
+if (Array.isArray(targetCard.effects)) {
+    const negativeEffects = targetCard.effects.filter(effect => 
+        effect.type === 'debuff' || effect.type === 'damage' || effect.type === 'damageBoost'
+    );
+    negativeEffects.forEach(effect => {
+        window.__ow_removeCardEffect?.(target.cardId, effect.id);
+    });
+}
+
+// Show floating resurrection effect
+if (window.effectsBus) {
+    window.effectsBus.publish({
+        type: 'fx:resurrect',
+        cardId: target.cardId,
+        text: 'RESURRECTED',
+        icon: 'mercyrez.png'
+    });
+}
+```
+
+**Key Points:**
+- Restore to base health from hero.json
+- Clean up negative effects on resurrection
+- Use floating effects for visual feedback
+- Play audio on successful resurrection
+
+### Visual Overlay System
+Mercy's effects demonstrate card-specific overlays:
+
+```javascript
+// 1. Create overlay component
+export default function MercyHealOverlay({ playerHeroId, rowId }) {
+    const { gameState } = useContext(gameContext);
+    
+    const playerNum = parseInt(playerHeroId[0]);
+    const card = gameState.playerCards[`player${playerNum}cards`]?.cards?.[playerHeroId];
+    const hasMercyHeal = Array.isArray(card?.effects) &&
+        card.effects.some(effect => effect?.id === 'mercy-heal' && effect?.type === 'healing');
+
+    if (!hasMercyHeal) return null;
+
+    return (
+        <div className="mercy-heal-overlay">
+            <div className="mercy-heal-icon">
+                <img src="/src/assets/mercyheal.png" alt="Mercy Heal" />
+            </div>
+        </div>
+    );
+}
+
+// 2. Add to BoardRow.js
+{gameState.rows[rowId].cardIds.map(cardId => {
+    const card = gameState.playerCards[`player${playerNum}cards`]?.cards?.[cardId];
+    if (card && Array.isArray(card.effects) && 
+        card.effects.some(effect => effect?.id === 'mercy-heal' && effect?.type === 'healing')) {
+        return (
+            <MercyHealOverlay
+                key={`mercy-heal-${cardId}`}
+                playerHeroId={cardId}
+                rowId={rowId}
+            />
+        );
+    }
+    return null;
+})}
+```
+
+**Key Points:**
+- Check for specific effect ID and type
+- Use conditional rendering for overlays
+- Add to BoardRow.js for each affected card
+- Use unique keys for React rendering
+
+## Advanced Implementation Patterns
+
+### Damage Source Tracking
+Junkrat's Total Mayhem demonstrates damage source tracking:
+
+```javascript
+import { dealDamage, subscribe as subscribeToDamage } from '../engine/damageBus';
+
+let lastDamageSource = null;
+
+function trackDamageSource(event) {
+    if (event.type === 'damage' && event.targetCardId && event.sourceCardId) {
+        const targetCard = window.__ow_getCard?.(event.targetCardId);
+        if (targetCard && targetCard.id === 'junkrat') {
+            // Find which row the source card is in
+            const allRows = ['1f', '1m', '1b', '2f', '2m', '2b'];
+            for (const rowId of allRows) {
+                const row = window.__ow_getRow?.(rowId);
+                if (row && row.cardIds.includes(event.sourceCardId)) {
+                    lastDamageSource = {
+                        cardId: event.sourceCardId,
+                        rowId: rowId
+                    };
+                    break;
+                }
+            }
+        }
+    }
+}
+
+// Subscribe to damage events
+subscribeToDamage(trackDamageSource);
+
+// Use in onDeath
+export function onDeath({ playerHeroId, rowId }) {
+    if (!lastDamageSource) return;
+    
+    const killerCardId = lastDamageSource.cardId;
+    const killerRowId = lastDamageSource.rowId;
+    
+    // Deal damage to killer
+    dealDamage(killerCardId, killerRowId, 2, false, playerHeroId);
+}
+```
+
+**Key Points:**
+- Subscribe to damage bus to track sources
+- Store last damage source for death abilities
+- Always pass `sourceCardId` in damage calls
+- Use tracked source in onDeath abilities
+
+### Turn Effects and Token Cleanup
+Lúcio's abilities demonstrate turn effects and cleanup:
+
+```javascript
+// Place token with turn effect
+window.__ow_appendRowEffect?.(targetRow.rowId, 'enemyEffects', {
+    id: 'lucio-shuffle-token',
+    hero: 'lucio',
+    type: 'shuffle',
+    sourceCardId: playerHeroId,
+    sourceRowId: rowId,
+    on: 'turnstart',
+    tooltip: 'Lúcio Shuffle: Randomly shuffle positions of all heroes in this row at start of turn',
+    visual: 'token'
+});
+
+// Cleanup on death
+export function onDeath({ playerHeroId, rowId }) {
+    const allRows = ['1f', '1m', '1b', '2f', '2m', '2b'];
+    allRows.forEach(rowId => {
+        window.__ow_removeRowEffect?.(rowId, 'enemyEffects', 'lucio-shuffle-token');
+        window.__ow_removeRowEffect?.(rowId, 'allyEffects', 'lucio-token');
+    });
+}
+```
+
+**Key Points:**
+- Use `on: 'turnstart'` for turn-based effects
+- TurnEffectsRunner processes these automatically
+- Clean up tokens in onDeath function
+- Use `window.__ow_removeRowEffect` for cleanup
+
+### Audio Implementation Best Practices
+Based on Lúcio and Mei implementations:
+
+```javascript
+// 1. Import audio files
+import heroEnter from './audio/hero-enter.mp3';
+import heroIntro from './audio/hero-intro.mp3';
+import heroAbility1 from './audio/hero-ability1.mp3';
+import heroUltimate from './audio/hero-ultimate.mp3';
+
+// 2. Add to abilityAudioFiles
+'hero-enter': heroEnter,
+'hero-intro': heroIntro,
+'hero-ability1': heroAbility1,
+'hero-ultimate': heroUltimate,
+
+// 3. Play at appropriate times
+export function onEnter({ playerHeroId, rowId }) {
+    try {
+        playAudioByKey('hero-enter'); // On activation
+    } catch {}
+    
+    // ... ability logic ...
+    
+    try {
+        playAudioByKey('hero-ability1'); // On resolve
+    } catch {}
+}
+
+export async function onUltimate({ playerHeroId, rowId, cost }) {
+    // ... targeting logic ...
+    
+    try {
+        playAudioByKey('hero-ultimate'); // On resolve
+    } catch {}
+}
+```
+
+**Key Points:**
+- Play enter sounds on activation
+- Play ability sounds on resolve
+- Play ultimate sounds on resolve (not activation)
+- Always wrap in try/catch blocks
+- System handles player ID conversion automatically
+
+### Common Implementation Mistakes to Avoid
+
+1. **Wrong Synergy Property**: Use `targetRowData.synergy` not `targetRowData.totalSynergy`
+2. **Missing Source Card ID**: Always pass `playerHeroId` as 5th parameter to `dealDamage`
+3. **Wrong Import Syntax**: Use `import gameContext` not `import { gameContext }`
+4. **Missing Audio Mappings**: Import audio files AND add to `abilityAudioFiles`
+5. **Incorrect Cost Modification**: Use multiplication for doubling, not addition
+6. **Missing Effect Cleanup**: Always clean up effects in `onDeath` function
+7. **Wrong Effect Type**: Use `type: 'immunity'` for immunity effects
+8. **Missing Visual Feedback**: Add overlays and CSS classes for status effects
+9. **Wrong Toast Import**: Use `targetingBus` not `toastController` for toast functions
+10. **Missing Default Export**: Always include default export in hero modules
+11. **Wrong Effect Type Names**: Use `type: 'healing'` for healing, `type: 'damageBoost'` for damage boosts
+12. **Missing Turn Effect Integration**: Add turn-based effects to TurnEffectsRunner
+13. **Incorrect Damage Boost Logic**: Apply boosts in damageBus.js, not individual abilities
+14. **Missing Resurrection Cleanup**: Remove negative effects when resurrecting heroes

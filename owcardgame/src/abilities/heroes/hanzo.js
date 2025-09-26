@@ -59,11 +59,7 @@ export async function onEnter({ playerHeroId, rowId }) {
 // Dragonstrike (3): Deal 3 damage to all enemies in target column
 export async function onUltimate({ playerHeroId, rowId, cost }) {
     const playerNum = parseInt(playerHeroId[0]);
-
-    try {
-        playAudioByKey('hanzo-ultimate');
-    } catch {}
-
+    // Play ultimate sound upon resolve only (after targets are validated and damage is applied)
     showToast('Hanzo: Select target enemy for Dragonstrike');
 
     try {
@@ -115,9 +111,9 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
                 }
             }
 
-            // Play ability sound after damage
+            // Play ability sound after damage (on resolve)
             try {
-                playAudioByKey('hanzo-ability1');
+                playAudioByKey('hanzo-ultimate');
             } catch {}
 
             showToast(`Hanzo: Dragonstrike hit ${targetsHit} enemies in column`);

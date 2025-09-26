@@ -118,6 +118,18 @@ export default function TurnEffectsRunner() {
                             abilities[effect.hero][effect.id].run(cardId);
                         }
                     }
+                    
+                    // Check for Mercy healing effects on individual cards
+                    const card = gameState.playerCards[`player${playerTurn}cards`]?.cards?.[cardId];
+                    if (card && Array.isArray(card.effects)) {
+                        const hasMercyHeal = card.effects.some(effect => 
+                            effect.id === 'mercy-heal' && effect.hero === 'mercy'
+                        );
+                        if (hasMercyHeal && abilities.mercy?.mercyTokenHealing) {
+                            console.log(`TurnEffectsRunner: Found Mercy healing effect on card ${cardId}, calling healing`);
+                            abilities.mercy.mercyTokenHealing(cardId);
+                        }
+                    }
                 }
 
                 // Enemy row effects

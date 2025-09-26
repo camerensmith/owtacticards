@@ -136,6 +136,7 @@ export default function BoardRow(props) {
                         }
                         return null;
                     })}
+                    
                 </div>
                 <CardFocusLite focus={props.cardFocus && props.cardFocus.playerHeroId ? props.cardFocus : null} onClose={() => props.setCardFocus('invisible')} />
             </div>

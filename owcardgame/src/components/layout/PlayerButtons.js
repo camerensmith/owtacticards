@@ -1,11 +1,13 @@
-import React, { useContext, useEffect } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import gameContext from 'context/gameContext';
 import turnContext from 'context/turnContext';
 import data from 'data';
 import getRandInt from 'helper';
 import { ACTIONS } from 'App';
 import { playGameEvent } from '../../abilities/engine/soundController';
+import { cancelTargeting } from '../../abilities/engine/targeting';
 import { getAudioFile } from '../../assets/imageImports';
+import targetingBus from '../../abilities/engine/targetingBus';
 
 export default function PlayerHand(props) {
     // Context
@@ -22,6 +24,13 @@ export default function PlayerHand(props) {
     const setCardFocus = props.setCardFocus;
     const gameLogic = props.gameLogic;
     const trackDrawnHero = props.trackDrawnHero;
+
+    // Track whether a targeting flow is active (disables End Turn)
+    const [isTargeting, setIsTargeting] = useState(false);
+    useEffect(() => {
+        const unsub = targetingBus.subscribe((msg) => setIsTargeting(!!msg));
+        return unsub;
+    }, []);
 
     // Draw a card at the start of the player's turn (except for the very first turn)
     useEffect(() => {
@@ -138,12 +147,13 @@ export default function PlayerHand(props) {
                     Hand ({handCards.length}/{gameLogic.maxHandSize})
                 </div>
                 <button
-                    disabled={!(turnState.playerTurn === playerNum)}
+                    disabled={!(turnState.playerTurn === playerNum) || isTargeting}
                     className='endturnbutton'
                     onClick={
                         turnState.playerTurn === 1
                             ? () => {
                                   playGameEvent('endturn');
+                                  try { cancelTargeting(); } catch {}
                                   setTurnState((prevState) => ({
                                       ...prevState,
                                       turnCount: prevState.turnCount + 1,
@@ -152,6 +162,7 @@ export default function PlayerHand(props) {
                               }
                             : () => {
                                   playGameEvent('endturn');
+                                  try { cancelTargeting(); } catch {}
                                   setTurnState((prevState) => ({
                                       ...prevState,
                                       turnCount: prevState.turnCount + 1,
@@ -159,6 +170,7 @@ export default function PlayerHand(props) {
                                   }));
                               }
                     }
+                    title={isTargeting ? 'Finish or cancel the current ability first' : ''}
                 >
                     End Turn
                 </button>

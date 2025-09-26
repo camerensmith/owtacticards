@@ -5,9 +5,21 @@
 import $ from 'jquery';
 import { playWithOverlay } from './soundController';
 
+// Simple cancellation flag and API so other parts of the app (e.g. End Turn)
+// can abort in-progress targeting flows gracefully
+let isCancelled = false;
+export function cancelTargeting() {
+    try { isCancelled = true; } catch {}
+    // Also emit a DOM event so any attached handlers can listen if needed
+    try { document.dispatchEvent(new CustomEvent('ow:targeting:cancel')); } catch {}
+}
+// Expose on window for legacy callers
+try { window.__ow_cancelTargeting = cancelTargeting; } catch {}
+
 // Resolves with an object: { cardId, rowId, liIndex }
 export function selectCardTarget() {
     return new Promise((resolve) => {
+        isCancelled = false;
         const handler = (e) => {
             const $target = $(e.target);
             const cardId = $target.closest('.card').attr('id');
@@ -29,13 +41,20 @@ export function selectCardTarget() {
             $('.card').off('click', handler);
             resolve({ cardId, rowId, liIndex });
         };
+        const cancelHandler = () => {
+            $('.card').off('click', handler);
+            document.removeEventListener('ow:targeting:cancel', cancelHandler);
+            resolve(null);
+        };
         $('.card').on('click', handler);
+        document.addEventListener('ow:targeting:cancel', cancelHandler);
     });
 }
 
 // Resolves with an object: { rowId, rowPosition }
 export function selectRowTarget() {
     return new Promise((resolve) => {
+        isCancelled = false;
         const handler = (e) => {
             try { e.preventDefault(); e.stopPropagation(); } catch {}
             const $target = $(e.target);
@@ -56,10 +75,18 @@ export function selectRowTarget() {
             for (const rid of rowIds) { $(document).off('click', handler, `#${rid}`); }
             resolve({ rowId, rowPosition });
         };
+        const cancelHandler = () => {
+            $('.row').off('click', handler);
+            const rowIds = ['1f','1m','1b','2f','2m','2b','player1hand','player2hand'];
+            for (const rid of rowIds) { $(document).off('click', handler, `#${rid}`); }
+            document.removeEventListener('ow:targeting:cancel', cancelHandler);
+            resolve(null);
+        };
         // Attach to generic row containers and specific ids as fallback
         $('.row').on('click', handler);
         const rowIds = ['1f','1m','1b','2f','2m','2b','player1hand','player2hand'];
         for (const rid of rowIds) { $(`#${rid}`).on('click', handler); }
+        document.addEventListener('ow:targeting:cancel', cancelHandler);
     });
 }
 

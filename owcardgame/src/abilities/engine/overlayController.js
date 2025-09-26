@@ -16,6 +16,7 @@ export function hideDeath(cardId) { publishBus(Effects.hideDeath(cardId)); }
 // FX shortcuts
 export function muzzleFlash(cardId) { publishBus(Effects.muzzleFlash(cardId)); }
 export function rowBarrier(rowId, durationMs) { publishBus(Effects.rowBarrier(rowId, durationMs)); }
+export function resurrect(cardId, text, icon) { publishBus(Effects.resurrect(cardId, text, icon)); }
 
 export default {
     subscribe,
@@ -25,6 +26,7 @@ export default {
     hideDeath,
     muzzleFlash,
     rowBarrier,
+    resurrect,
 };
 
 

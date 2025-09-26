@@ -72,6 +72,20 @@ export function dealDamage(targetCardId, targetRow, amount, ignoreShields = fals
         }
     }
     
+    // Check for Mercy damage boost on source card
+    if (sourceCardId) {
+        const sourceCard = window.__ow_getCard?.(sourceCardId);
+        if (sourceCard && Array.isArray(sourceCard.effects)) {
+            const mercyDamageBoost = sourceCard.effects.find(effect => 
+                effect?.id === 'mercy-damage' && effect?.type === 'damageBoost'
+            );
+            if (mercyDamageBoost) {
+                finalAmount += mercyDamageBoost.value || 1;
+                console.log(`DamageBus - Mercy damage boost added ${mercyDamageBoost.value || 1} damage (total: ${finalAmount})`);
+            }
+        }
+    }
+    
     const damageEvent = { type: 'damage', targetCardId, targetRow, amount: finalAmount, ignoreShields, sourceCardId };
     console.log('DamageBus - Publishing damage event:', damageEvent);
     publish(damageEvent);

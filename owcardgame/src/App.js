@@ -785,6 +785,11 @@ function checkOnEnterAbilities(playerHeroId, rowId, playerNum) {
         return;
     }
 
+    if (heroId === 'mercy' && abilitiesIndex?.mercy?.onEnter) {
+        abilitiesIndex.mercy.onEnter({ playerHeroId, rowId });
+        return;
+    }
+
     if (heroId === 'dvameka' && abilitiesIndex?.dvameka?.onEnter) {
         abilitiesIndex.dvameka.onEnter({ playerHeroId, rowId });
         return;
@@ -892,7 +897,11 @@ export default function App() {
     useEffect(() => {
         window.__ow_appendRowEffect = (rowId, arrayKey, effect) => {
             try {
-                const currentArr = gameState.rows[rowId]?.[arrayKey] || [];
+                if (!rowId || !gameState.rows[rowId]) {
+                    console.warn('appendRowEffect aborted: invalid rowId', rowId, arrayKey, effect);
+                    return;
+                }
+                const currentArr = Array.isArray(gameState.rows[rowId][arrayKey]) ? gameState.rows[rowId][arrayKey] : [];
                 dispatch({
                     type: ACTIONS.EDIT_ROW,
                     payload: {
@@ -901,14 +910,20 @@ export default function App() {
                         editValues: [[...currentArr, effect]],
                     },
                 });
-            } catch (e) {}
+            } catch (e) { console.error('appendRowEffect failed', e); }
         };
         window.__ow_getRow = (rowId) => gameState.rows[rowId];
         window.__ow_setRowArray = (rowId, arrayKey, nextArr) => {
-            dispatch({
-                type: ACTIONS.EDIT_ROW,
-                payload: { targetRow: rowId, editKeys: [arrayKey], editValues: [nextArr] }
-            });
+            try {
+                if (!rowId || !gameState.rows[rowId]) {
+                    console.warn('setRowArray aborted: invalid rowId', rowId, arrayKey);
+                    return;
+                }
+                dispatch({
+                    type: ACTIONS.EDIT_ROW,
+                    payload: { targetRow: rowId, editKeys: [arrayKey], editValues: [nextArr] }
+                });
+            } catch (e) { console.error('setRowArray failed', e); }
         };
         window.__ow_updateSynergy = (rowId, delta) => {
             dispatch({
@@ -959,10 +974,16 @@ export default function App() {
             return isInvuln;
         };
         window.__ow_removeRowEffect = (rowId, effectType, effectId) => {
-            dispatch({
-                type: ACTIONS.REMOVE_ROW_EFFECT,
-                payload: { rowId, effectType, effectId }
-            });
+            try {
+                if (!rowId || !gameState.rows[rowId]) {
+                    console.warn('removeRowEffect aborted: invalid rowId', rowId, effectType, effectId);
+                    return;
+                }
+                dispatch({
+                    type: ACTIONS.REMOVE_ROW_EFFECT,
+                    payload: { rowId, effectType, effectId }
+                });
+            } catch (e) { console.error('removeRowEffect failed', e); }
         };
         window.__ow_cleanupImmortalityField = (rowId) => {
             // Clear invulnerable slots
@@ -1631,6 +1652,14 @@ export default function App() {
                             abilitiesIndex.mei.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
                         } catch (e) {
                             console.log('Error executing MEI ultimate:', e);
+                        }
+                    } else if (heroId === 'mercy' && abilitiesIndex?.mercy?.onUltimate) {
+                        try {
+                            // Track ultimate usage for Echo's Duplicate
+                            window.__ow_trackUltimateUsed?.(heroId, 'Mercy', 'Guardian Angel', playerNum, rowId, adjustedCost);
+                            abilitiesIndex.mercy.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
+                        } catch (e) {
+                            console.log('Error executing MERCY ultimate:', e);
                         }
                     } else {
                         console.log(`Executing ultimate for ${playerHeroId} in ${rowId} (cost: ${adjustedCost})`);

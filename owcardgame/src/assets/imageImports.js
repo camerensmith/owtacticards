@@ -187,7 +187,11 @@ import meiUltimate from './audio/mei-ultimate.mp3';
 import meiIntro from './audio/mei-intro.mp3';
 import meiGoticed from './audio/mei-goticed.mp3';
 import meiUlt from './audio/mei-ult.mp3';
-import mercyDamageboost from './audio/mercy-damageboost.mp3';
+import mercyEnter from './audio/mercy-enter.mp3';
+import mercyAbility1 from './audio/mercy-ability1.mp3';
+import mercyAbility2 from './audio/mercy-ability2.mp3';
+import mercyUltimateResolve from './audio/mercy-ultimate-resolve.mp3';
+import mercyIntro from './audio/mercy-intro.mp3';
 import mercyUlt from './audio/mercy-ult.mp3';
 import moiraGrasp from './audio/moira-grasp.mp3';
 import moiraUlt from './audio/moira-ult.mp3';
@@ -337,7 +341,11 @@ export const abilityAudioFiles = {
     'mei-intro': meiIntro,
     'mei-goticed': meiGoticed,
     'mei-ult': meiUlt,
-    'mercy-damageboost': mercyDamageboost,
+    'mercy-enter': mercyEnter,
+    'mercy-ability1': mercyAbility1,
+    'mercy-ability2': mercyAbility2,
+    'mercy-ultimate-resolve': mercyUltimateResolve,
+    'mercy-intro': mercyIntro,
     'mercy-ult': mercyUlt,
     'moira-grasp': moiraGrasp,
     'moira-ult': moiraUlt,

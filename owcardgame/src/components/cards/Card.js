@@ -7,6 +7,8 @@ import HealthCounter from 'components/counters/HealthCounter';
 import ShieldCounter from 'components/counters/ShieldCounter';
 import ShieldBashOverlay from '../effects/ShieldBashOverlay';
 import SuitedUpOverlay from '../effects/SuitedUpOverlay';
+import MercyHealOverlay from '../effects/MercyHealOverlay';
+import MercyDamageOverlay from '../effects/MercyDamageOverlay';
 import { heroCardImages } from '../../assets/imageImports';
 import ContextMenu from './ContextMenu';
 import actionsBus, { Actions } from '../../abilities/engine/actionsBus';
@@ -102,6 +104,20 @@ export default function Card(props) {
     const isFrozen = Array.isArray(effects) && 
         effects.some(effect => effect?.id === 'cryo-freeze' && effect?.type === 'immunity');
 
+    const [isResurrectOverlayVisible, setIsResurrectOverlayVisible] = useState(false);
+
+    useEffect(() => {
+        const unsub = effectsBus.subscribe((event) => {
+            if (!event || !event.type) return;
+            // Only show resurrection overlay for the specific card that was resurrected
+            if (event.type === 'fx:resurrect' && event.cardId === playerHeroId) {
+                setIsResurrectOverlayVisible(true);
+                setTimeout(() => setIsResurrectOverlayVisible(false), 1500);
+            }
+        });
+        return unsub;
+    }, [playerHeroId]);
+
     return isDiscarded ? null : (
         <Draggable
             draggableId={playerHeroId}
@@ -152,6 +168,29 @@ export default function Card(props) {
                             <EffectBadges playerHeroId={playerHeroId} />
                             <ShieldBashOverlay playerHeroId={playerHeroId} rowId={rowId} />
                             <SuitedUpOverlay effects={effects} />
+                            {isResurrectOverlayVisible && (
+                                <div style={{
+                                    position: 'absolute',
+                                    top: '50%',
+                                    left: '50%',
+                                    transform: 'translate(-50%, -50%)',
+                                    zIndex: 120,
+                                    pointerEvents: 'none'
+                                }}>
+                                    <img
+                                        src={require('../../assets/mercyrez.png')}
+                                        alt="Resurrected"
+                                        style={{ width: '80px', height: '80px', objectFit: 'contain' }}
+                                    />
+                                </div>
+                            )}
+                            {/* Mercy overlays rendered inside the card so they follow position */}
+                            {health > 0 && Array.isArray(effects) && effects.some(e => e?.id === 'mercy-heal') && (
+                                <MercyHealOverlay playerHeroId={playerHeroId} rowId={rowId} />
+                            )}
+                            {health > 0 && Array.isArray(effects) && effects.some(e => e?.id === 'mercy-damage') && (
+                                <MercyDamageOverlay playerHeroId={playerHeroId} rowId={rowId} />
+                            )}
                             {imageLoaded === playerHeroId &&
                                 (turnState.playerTurn === playerNum ||
                                 isPlayed ? (
@@ -226,6 +265,15 @@ function EffectBadges({ playerHeroId }) {
                 setBadge({ text: `-${event.payload.amount || 1}`, color: '#e74c3c' });
                 setTimeout(() => setBadge(null), 900);
             }
+            if (event.type === 'fx:resurrect' && event.payload.cardId === playerHeroId) {
+                setBadge({ 
+                    text: event.payload.text || 'RESURRECTED', 
+                    color: '#f39c12',
+                    icon: event.payload.icon,
+                    fontSize: '16px'
+                });
+                setTimeout(() => setBadge(null), 2000);
+            }
         });
         return unsub;
     }, [playerHeroId]);
@@ -236,11 +284,20 @@ function EffectBadges({ playerHeroId }) {
         top: '-10px',
         right: '-10px',
         fontWeight: '800',
-        fontSize: '24px',
+        fontSize: badge.fontSize || '24px',
         color: badge.color,
         textShadow: '0 0 4px rgba(0,0,0,0.7)',
         zIndex: 3,
         pointerEvents: 'none',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '4px'
     };
-    return <div style={style}>{badge.text}</div>;
+    
+    return (
+        <div style={style}>
+            {badge.icon && <img src={require('../../assets/mercyrez.png')} alt="" style={{ width: '20px', height: '20px' }} />}
+            {badge.text}
+        </div>
+    );
 }

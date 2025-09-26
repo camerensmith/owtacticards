@@ -428,7 +428,7 @@
   {
     "name": "Widowmaker",
     "class": "defense",
-    "hp": 4,
+    "hp": 3,
     "front_power": 2,
     "front_synergy": 2,
     "middle_power": 1,
