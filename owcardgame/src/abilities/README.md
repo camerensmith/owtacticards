@@ -163,6 +163,9 @@ When converting existing heroes from `HeroAbilities.js` to modular system:
 - **Ashe**: Perfect example of modal choice + targeting patterns
 - **Baptiste**: Good example of row targeting + effects system
 - **Bastion**: Complete implementation following all requirements
+- **Junkrat**: Example of onDeath abilities with damage source tracking
+- **Lúcio**: Example of token-based abilities with turn effects
+- **McCree**: Example of synergy manipulation and damage distribution
 
 **Use these as templates for all future hero implementations.**
 
@@ -172,6 +175,9 @@ When converting existing heroes from `HeroAbilities.js` to modular system:
 - Baptiste - Complete implementation with row targeting + effects
 - Bastion - Complete implementation following all requirements
 - BOB - Basic implementation (needs review for consistency)
+- Junkrat - Complete implementation with onDeath ability + damage source tracking
+- Lúcio - Complete implementation with token-based abilities + turn effects
+- McCree - Complete implementation with synergy manipulation + damage distribution
 
 **🔄 NEEDS MIGRATION (Still in HeroAbilities.js):**
 - All other heroes in the abilities object need to be migrated
@@ -1458,3 +1464,67 @@ See `src/abilities/heroes/ashe.js` for a complete implementation example with:
 - Single and multi-target damage
 - Targeting UI integration
 - Event handling best practices
+
+## McCree Implementation Patterns
+
+### Synergy Manipulation
+McCree's Flashbang demonstrates how to manipulate row synergy:
+
+```javascript
+// Get current synergy from row data
+const currentSynergy = targetRowData.synergy || 0;
+
+// Calculate amount to remove (with bounds checking)
+const synergyToRemove = Math.min(enemyCount, currentSynergy);
+
+// Update synergy using the bridge function
+if (synergyToRemove > 0) {
+    window.__ow_updateSynergy?.(targetRow.rowId, -synergyToRemove);
+}
+```
+
+**Key Points:**
+- Use `targetRowData.synergy` (not `totalSynergy`)
+- Always check bounds (minimum 0)
+- Use negative delta for removal
+
+### Damage Distribution
+McCree's Dead Eye demonstrates even damage distribution:
+
+```javascript
+// Calculate base damage per target
+const totalDamage = 7;
+const enemyCount = livingEnemies.length;
+const baseDamage = Math.floor(totalDamage / enemyCount);
+const remainder = totalDamage % enemyCount;
+
+// Distribute damage with remainder handling
+const damageDistribution = livingEnemies.map((cardId, index) => {
+    const damage = baseDamage + (index < remainder ? 1 : 0);
+    return { cardId, damage };
+});
+```
+
+**Key Points:**
+- Use `Math.floor()` for base distribution
+- Handle remainder by adding 1 to first N targets
+- Only target living enemies (`health > 0`)
+
+### Enemy-Only Targeting
+Both abilities validate enemy rows:
+
+```javascript
+const targetPlayerNum = parseInt(targetRow.rowId[0]);
+const isEnemyRow = targetPlayerNum !== playerNum;
+
+if (!isEnemyRow) {
+    showToast('McCree: Ability can only target enemy rows');
+    setTimeout(() => clearToast(), 1500);
+    return;
+}
+```
+
+**Key Points:**
+- Extract player number from row ID
+- Compare with current player number
+- Provide clear error feedback

@@ -775,6 +775,11 @@ function checkOnEnterAbilities(playerHeroId, rowId, playerNum) {
         return;
     }
 
+    if (heroId === 'mccree' && abilitiesIndex?.mccree?.onEnter) {
+        abilitiesIndex.mccree.onEnter({ playerHeroId, rowId });
+        return;
+    }
+
     if (heroId === 'dvameka' && abilitiesIndex?.dvameka?.onEnter) {
         abilitiesIndex.dvameka.onEnter({ playerHeroId, rowId });
         return;
@@ -1596,6 +1601,14 @@ export default function App() {
                             abilitiesIndex.lucio.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
                         } catch (e) {
                             console.log('Error executing LÚCIO ultimate:', e);
+                        }
+                    } else if (heroId === 'mccree' && abilitiesIndex?.mccree?.onUltimate) {
+                        try {
+                            // Track ultimate usage for Echo's Duplicate
+                            window.__ow_trackUltimateUsed?.(heroId, 'McCree', 'Dead Eye', playerNum, rowId, adjustedCost);
+                            abilitiesIndex.mccree.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
+                        } catch (e) {
+                            console.log('Error executing MCCREE ultimate:', e);
                         }
                     } else {
                         console.log(`Executing ultimate for ${playerHeroId} in ${rowId} (cost: ${adjustedCost})`);

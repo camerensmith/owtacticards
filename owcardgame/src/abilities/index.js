@@ -16,6 +16,7 @@ import genji from './heroes/genji';
 import hanzo from './heroes/hanzo';
 import junkrat from './heroes/junkrat';
 import lucio from './heroes/lucio';
+import mccree from './heroes/mccree';
 
 export const abilities = {
     ashe,
@@ -32,6 +33,7 @@ export const abilities = {
     hanzo,
     junkrat,
     lucio,
+    mccree,
 };
 
 export default abilities;

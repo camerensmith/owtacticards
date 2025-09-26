@@ -175,8 +175,11 @@ import lucioEnter from './audio/lucio-enter.mp3';
 import lucioAbility1 from './audio/lucio-ability1.mp3';
 import lucioAbility2 from './audio/lucio-ability2.mp3';
 import lucioUltimate from './audio/lucio-ultimate.mp3';
+import mccreeEnter from './audio/mccree-enter.mp3';
+import mccreeAbility1 from './audio/mccree-ability1.mp3';
+import mccreeUltimate from './audio/mccree-ultimate.mp3';
+import mccreeUltimateFiring from './audio/mecree-ultimate-firing.mp3';
 import mccreeFishinabarrel from './audio/mccree-fishinabarrel.mp3';
-import mccreeUlt from './audio/mccree-ult.mp3';
 import meiGoticed from './audio/mei-goticed.mp3';
 import meiUlt from './audio/mei-ult.mp3';
 import mercyDamageboost from './audio/mercy-damageboost.mp3';
@@ -317,8 +320,11 @@ export const abilityAudioFiles = {
     'lucio-ability1': lucioAbility1,
     'lucio-ability2': lucioAbility2,
     'lucio-ultimate': lucioUltimate,
+    'mccree-enter': mccreeEnter,
+    'mccree-ability1': mccreeAbility1,
+    'mccree-ultimate': mccreeUltimate,
+    'mccree-ultimate-firing': mccreeUltimateFiring,
     'mccree-fishinabarrel': mccreeFishinabarrel,
-    'mccree-ult': mccreeUlt,
     'mei-goticed': meiGoticed,
     'mei-ult': meiUlt,
     'mercy-damageboost': mercyDamageboost,
