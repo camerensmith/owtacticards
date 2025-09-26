@@ -13,6 +13,19 @@ export function selectCardTarget() {
             const cardId = $target.closest('.card').attr('id');
             const rowId = $target.closest('.row').attr('id');
             const liIndex = $target.closest('li').index();
+            
+            // Check if target card is frozen (has immunity effect)
+            const targetCard = window.__ow_getCard?.(cardId);
+            if (targetCard && Array.isArray(targetCard.effects)) {
+                const isFrozen = targetCard.effects.some(effect => 
+                    effect?.id === 'cryo-freeze' && effect?.type === 'immunity'
+                );
+                if (isFrozen) {
+                    console.log(`Targeting: Cannot target frozen card ${cardId}`);
+                    return; // Don't resolve, keep listening for valid targets
+                }
+            }
+            
             $('.card').off('click', handler);
             resolve({ cardId, rowId, liIndex });
         };

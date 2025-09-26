@@ -780,6 +780,11 @@ function checkOnEnterAbilities(playerHeroId, rowId, playerNum) {
         return;
     }
 
+    if (heroId === 'mei' && abilitiesIndex?.mei?.onEnter) {
+        abilitiesIndex.mei.onEnter({ playerHeroId, rowId });
+        return;
+    }
+
     if (heroId === 'dvameka' && abilitiesIndex?.dvameka?.onEnter) {
         abilitiesIndex.dvameka.onEnter({ playerHeroId, rowId });
         return;
@@ -1436,6 +1441,15 @@ export default function App() {
                     const bobMod = enemyEffects.find(e => e?.type === 'ultCost' && e?.value);
                     if (bobMod) adjustedCost += bobMod.value;
                 } catch {}
+                // Adjust cost if Mei token is on the row (enemyEffects include {type:'ultimateCostModifier', value:2})
+                try {
+                    const enemyEffects = gameState.rows[rowId]?.enemyEffects || [];
+                    const meiMod = enemyEffects.find(e => e?.type === 'ultimateCostModifier' && e?.value);
+                    if (meiMod) {
+                        console.log(`Mei Blizzard: Ultimate cost doubled from ${adjustedCost} to ${adjustedCost * meiMod.value}`);
+                        adjustedCost *= meiMod.value;
+                    }
+                } catch {}
 
                 if (currentSynergy >= adjustedCost) {
                     // Check if hero has already used ultimate this round
@@ -1609,6 +1623,14 @@ export default function App() {
                             abilitiesIndex.mccree.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
                         } catch (e) {
                             console.log('Error executing MCCREE ultimate:', e);
+                        }
+                    } else if (heroId === 'mei' && abilitiesIndex?.mei?.onUltimate) {
+                        try {
+                            // Track ultimate usage for Echo's Duplicate
+                            window.__ow_trackUltimateUsed?.(heroId, 'Mei', 'Cryo Freeze', playerNum, rowId, adjustedCost);
+                            abilitiesIndex.mei.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
+                        } catch (e) {
+                            console.log('Error executing MEI ultimate:', e);
                         }
                     } else {
                         console.log(`Executing ultimate for ${playerHeroId} in ${rowId} (cost: ${adjustedCost})`);

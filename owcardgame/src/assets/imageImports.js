@@ -175,11 +175,16 @@ import lucioEnter from './audio/lucio-enter.mp3';
 import lucioAbility1 from './audio/lucio-ability1.mp3';
 import lucioAbility2 from './audio/lucio-ability2.mp3';
 import lucioUltimate from './audio/lucio-ultimate.mp3';
+import lucioIntro from './audio/lucio-intro.mp3';
 import mccreeEnter from './audio/mccree-enter.mp3';
 import mccreeAbility1 from './audio/mccree-ability1.mp3';
 import mccreeUltimate from './audio/mccree-ultimate.mp3';
 import mccreeUltimateFiring from './audio/mecree-ultimate-firing.mp3';
 import mccreeFishinabarrel from './audio/mccree-fishinabarrel.mp3';
+import meiEnter from './audio/mei-enter.mp3';
+import meiAbility1 from './audio/mei-ability1.mp3';
+import meiUltimate from './audio/mei-ultimate.mp3';
+import meiIntro from './audio/mei-intro.mp3';
 import meiGoticed from './audio/mei-goticed.mp3';
 import meiUlt from './audio/mei-ult.mp3';
 import mercyDamageboost from './audio/mercy-damageboost.mp3';
@@ -320,11 +325,16 @@ export const abilityAudioFiles = {
     'lucio-ability1': lucioAbility1,
     'lucio-ability2': lucioAbility2,
     'lucio-ultimate': lucioUltimate,
+    'lucio-intro': lucioIntro,
     'mccree-enter': mccreeEnter,
     'mccree-ability1': mccreeAbility1,
     'mccree-ultimate': mccreeUltimate,
     'mccree-ultimate-firing': mccreeUltimateFiring,
     'mccree-fishinabarrel': mccreeFishinabarrel,
+    'mei-enter': meiEnter,
+    'mei-ability1': meiAbility1,
+    'mei-ultimate': meiUltimate,
+    'mei-intro': meiIntro,
     'mei-goticed': meiGoticed,
     'mei-ult': meiUlt,
     'mercy-damageboost': mercyDamageboost,
@@ -389,6 +399,15 @@ export const getAudioFile = (audioFileName) => {
     // Then try the general audio files (like placement, overwatch-theme)
     if (audioFiles[audioFileName]) {
         return audioFiles[audioFileName];
+    }
+    
+    // Special handling for intro sounds with player numbers (e.g., "1lucio-intro" -> "lucio-intro")
+    if (audioFileName.endsWith('-intro')) {
+        const heroId = audioFileName.slice(1, -6); // Remove first character (player num) and "-intro"
+        const heroIntroKey = `${heroId}-intro`;
+        if (abilityAudioFiles[heroIntroKey]) {
+            return abilityAudioFiles[heroIntroKey];
+        }
     }
     
     // Fallback to dynamic require for intro sounds and other files

@@ -5,6 +5,7 @@ import ShieldCounter from 'components/counters/ShieldCounter';
 import CounterArea from 'components/layout/CounterArea';
 import CardDisplay from 'components/layout/CardDisplay';
 import ImmortalityFieldOverlay from 'components/effects/ImmortalityFieldOverlay';
+import CryoFreezeOverlay from 'components/effects/CryoFreezeOverlay';
 import CardFocusLite from 'components/cards/CardFocusLite';
 import { ACTIONS } from 'App';
 import { isOverflown } from 'helper';
@@ -112,6 +113,22 @@ export default function BoardRow(props) {
                             return (
                                 <ImmortalityFieldOverlay
                                     key={`immortality-${cardId}`}
+                                    playerHeroId={cardId}
+                                    rowId={rowId}
+                                />
+                            );
+                        }
+                        return null;
+                    })}
+                    
+                    {/* Render Cryo Freeze overlays for each frozen hero in this row */}
+                    {gameState.rows[rowId].cardIds.map(cardId => {
+                        const card = gameState.playerCards[`player${playerNum}cards`]?.cards?.[cardId];
+                        if (card && Array.isArray(card.effects) && 
+                            card.effects.some(effect => effect?.id === 'cryo-freeze')) {
+                            return (
+                                <CryoFreezeOverlay
+                                    key={`cryo-freeze-${cardId}`}
                                     playerHeroId={cardId}
                                     rowId={rowId}
                                 />

@@ -117,3 +117,11 @@ ul.cardlist.overflown {
 
 .handlist .cardcontainer {
 }
+
+/* Frozen card styling (Mei Cryo Freeze) */
+.frozen {
+    filter: hue-rotate(180deg) brightness(0.7) saturate(1.2);
+    opacity: 0.8;
+    pointer-events: none;
+    cursor: not-allowed;
+}

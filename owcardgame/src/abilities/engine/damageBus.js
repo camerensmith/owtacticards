@@ -35,6 +35,18 @@ export function dealDamage(targetCardId, targetRow, amount, ignoreShields = fals
         }
     }
     
+    // Check for card effect immunity (Mei Cryo Freeze)
+    const targetCard = window.__ow_getCard?.(targetCardId);
+    if (targetCard && Array.isArray(targetCard.effects)) {
+        const hasImmunity = targetCard.effects.some(effect => 
+            effect?.id === 'cryo-freeze' && effect?.type === 'immunity'
+        );
+        if (hasImmunity) {
+            console.log(`DamageBus - Target ${targetCardId} has immunity effect, damage blocked`);
+            return; // Block damage if card has immunity effect
+        }
+    }
+    
     // Check for Hanzo token damage reduction
     let finalAmount = amount;
     if (sourceCardId && window.__ow_getRow) {

@@ -19,6 +19,18 @@
     src: url('./assets/fonts/big_noodle_titling.ttf');
 }
 
+/* Cryo Freeze Animation */
+@keyframes frozenPulse {
+    0%, 100% {
+        opacity: 0.8;
+        transform: translate(-50%, -50%) rotate(-15deg) scale(1);
+    }
+    50% {
+        opacity: 1;
+        transform: translate(-50%, -50%) rotate(-15deg) scale(1.05);
+    }
+}
+
 @font-face {
     font-family: KeepCalm-Medium;
     src: url('./assets/fonts/KeepCalm-Medium.ttf');

@@ -130,15 +130,10 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
         const opposingRow = window.__ow_getRow?.(opposingRowId);
         if (!opposingRow) return;
         
-        // Calculate total synergy of the opposing row
-        let totalSynergy = 0;
-        opposingRow.cardIds.forEach(cardId => {
-            const card = window.__ow_getCard?.(cardId);
-            if (card) {
-                const synergy = card.synergy?.[rowPosition] || 0;
-                totalSynergy += synergy;
-            }
-        });
+        // Get the total synergy of the opposing row
+        const totalSynergy = opposingRow.synergy || 0;
+        
+        console.log(`Junkrat RIP-Tire: Opposing row ${opposingRowId} has ${totalSynergy} synergy`);
         
         // Deal damage equal to synergy to ALL enemies in the opposing row
         opposingRow.cardIds.forEach(cardId => {

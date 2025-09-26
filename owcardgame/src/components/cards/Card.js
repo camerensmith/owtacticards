@@ -97,6 +97,10 @@ export default function Card(props) {
 
     // Check if D.Va is in "Suited Up" state (not draggable)
     const isSuitedUp = Array.isArray(effects) && effects.some(effect => effect?.id === 'suited-up');
+    
+    // Check if card is frozen (Mei Cryo Freeze)
+    const isFrozen = Array.isArray(effects) && 
+        effects.some(effect => effect?.id === 'cryo-freeze' && effect?.type === 'immunity');
 
     return isDiscarded ? null : (
         <Draggable
@@ -134,7 +138,7 @@ export default function Card(props) {
                         )}
                         <div
                             id={`${playerHeroId}`}
-                            className={`card ${health > 0 ? 'alive' : 'dead'} ${isSuitedUp ? 'suited-up' : ''}`}
+                            className={`card ${health > 0 ? 'alive' : 'dead'} ${isSuitedUp ? 'suited-up' : ''} ${isFrozen ? 'frozen' : ''}`}
                             onClick={(e) => {
                                 // SHIFT + LEFT CLICK should always open focus preview, regardless of turn
                                 if (e.shiftKey) {

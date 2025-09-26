@@ -623,7 +623,6 @@ console.log(AvailableAudio.heroAbilities.mercy);   // ['mercy-heal', 'mercy-dama
 When a hero is deployed to a row, the system automatically plays:
 1. **General placement sound** (`placement.mp3`) - the "drop in" sound effect
 2. **Hero-specific enter sound** (`{heroId}-enter.mp3`) - the hero's voice line (if available)
-3. **Hero intro sound** (`{heroId}-intro.mp3`) - the hero's intro voice line
 
 #### Hero-Specific Intro Sounds
 When a hero is automatically drawn during gameplay (NOT during initial setup), the system plays:
@@ -631,15 +630,46 @@ When a hero is automatically drawn during gameplay (NOT during initial setup), t
 
 **Important**: Intro sounds are NOT played during the initial 4-card setup to avoid audio overload.
 
-To add enter/intro/ability sounds for new heroes:
-1. Create audio files: 
-   - `src/assets/audio/{heroId}-enter.mp3` (deployment voice line)
-   - `src/assets/audio/{heroId}-intro.mp3` (draw voice line)
-   - `src/assets/audio/{heroId}-ability1.mp3` (first ability voice line)
-   - `src/assets/audio/{heroId}-ability2.mp3` (second ability voice line)
-2. Add imports to `src/assets/imageImports.js`
-3. Add mappings to `abilityAudioFiles` object
-4. The system will automatically play them at the appropriate times
+### Audio Implementation Requirements
+
+**CRITICAL**: All hero audio files must be properly imported and mapped to work correctly.
+
+#### Required Audio Files for Each Hero:
+- `{heroId}-enter.mp3` - Plays when hero is deployed to a row
+- `{heroId}-intro.mp3` - Plays when hero is drawn from deck
+- `{heroId}-ability1.mp3` - Plays when first ability is used
+- `{heroId}-ability2.mp3` - Plays when second ability is used (if applicable)
+- `{heroId}-ultimate.mp3` - Plays when ultimate is activated
+
+#### Implementation Steps:
+1. **Add Audio Imports** to `src/assets/imageImports.js`:
+   ```javascript
+   import heroEnter from './audio/hero-enter.mp3';
+   import heroIntro from './audio/hero-intro.mp3';
+   import heroAbility1 from './audio/hero-ability1.mp3';
+   import heroUltimate from './audio/hero-ultimate.mp3';
+   ```
+
+2. **Add Audio Mappings** to `abilityAudioFiles` object:
+   ```javascript
+   'hero-enter': heroEnter,
+   'hero-intro': heroIntro,
+   'hero-ability1': heroAbility1,
+   'hero-ultimate': heroUltimate,
+   ```
+
+3. **System Handles Player IDs Automatically**: The `getAudioFile()` function automatically converts player-specific IDs (e.g., `1lucio-intro`) to hero-specific keys (e.g., `lucio-intro`).
+
+#### Common Mistakes:
+- ❌ **Missing Imports**: Audio files imported but not mapped
+- ❌ **Missing Mappings**: Audio files mapped but not imported
+- ❌ **Wrong File Names**: Using incorrect naming convention
+- ❌ **Player ID Confusion**: The system handles this automatically - don't worry about player numbers
+
+#### Testing Audio:
+- Check console for "Playing {heroId} intro sound..." messages
+- Verify audio files exist in `src/assets/audio/` directory
+- Ensure all imports and mappings are added correctly
 
 #### Hero-Specific Ability Sounds
 When a hero uses their abilities, the system can play specific voice lines:
