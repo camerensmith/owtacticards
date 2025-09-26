@@ -51,6 +51,7 @@ export const ACTIONS = {
     REPLACE_WITH_DVA: 'replace-with-dva',
     CLEANUP_DVA_SUITED_UP: 'cleanup-dva-suited-up',
     REMOVE_SPECIAL_CARD: 'remove-special-card',
+    REMOVE_DEAD_CARD: 'remove-dead-card',
     UPDATE_ROW: 'update-row',
     UPDATE_SYNERGY: 'update-synergy',
     DEDUCT_SYNERGY: 'deduct-synergy',
@@ -586,6 +587,32 @@ function reducer(gameState, action) {
             });
         }
 
+        case ACTIONS.REMOVE_DEAD_CARD: {
+            const { cardId } = action.payload;
+            const playerNum = parseInt(cardId[0]);
+            const playerKey = `player${playerNum}cards`;
+
+            return produce(gameState, (draft) => {
+                // Find and remove from all rows
+                const allRows = ['1f', '1m', '1b', '2f', '2m', '2b'];
+                for (const rowId of allRows) {
+                    const row = draft.rows[rowId];
+                    if (row && Array.isArray(row.cardIds)) {
+                        const cardIndex = row.cardIds.indexOf(cardId);
+                        if (cardIndex !== -1) {
+                            row.cardIds.splice(cardIndex, 1);
+                            break; // Card found and removed, exit loop
+                        }
+                    }
+                }
+                
+                // Remove from player cards
+                if (draft.playerCards[playerKey]?.cards?.[cardId]) {
+                    delete draft.playerCards[playerKey].cards[cardId];
+                }
+            });
+        }
+
         case ACTIONS.REPLACE_WITH_DVA: {
             const { mechCardId, rowId, playerNum } = action.payload;
             const playerKey = `player${playerNum}cards`;
@@ -813,6 +840,10 @@ function checkOnEnterAbilities(playerHeroId, rowId, playerNum) {
     }
     if (heroId === 'orisa' && abilitiesIndex?.orisa?.onEnter) {
         abilitiesIndex.orisa.onEnter({ playerHeroId, rowId });
+        return;
+    }
+    if (heroId === 'pharah' && abilitiesIndex?.pharah?.onEnter) {
+        abilitiesIndex.pharah.onEnter({ playerHeroId, rowId });
         return;
     }
 
@@ -1705,6 +1736,13 @@ export default function App() {
             abilitiesIndex.orisa.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
         } catch (e) {
             console.log('Error executing ORISA ultimate:', e);
+        }
+    } else if (heroId === 'pharah' && abilitiesIndex?.pharah?.onUltimate) {
+        try {
+            window.__ow_trackUltimateUsed?.(heroId, 'Pharah', 'Barrage', playerNum, rowId, adjustedCost);
+            abilitiesIndex.pharah.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
+        } catch (e) {
+            console.log('Error executing PHARAH ultimate:', e);
         }
     } else {
                         console.log(`Executing ultimate for ${playerHeroId} in ${rowId} (cost: ${adjustedCost})`);

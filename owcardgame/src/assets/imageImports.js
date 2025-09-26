@@ -20,6 +20,7 @@ import mercy from './heroes/cards/mercy.webp';
 import moira from './heroes/cards/moira.webp';
 import orisa from './heroes/cards/orisa.webp';
 import protectiveBarrier from './heroes/cards/protectivebarrier.png';
+import clearDead from './cleardead.png';
 import pharah from './heroes/cards/pharah.webp';
 import reaper from './heroes/cards/reaper.webp';
 import reinhardt from './heroes/cards/reinhardt.webp';
@@ -201,8 +202,11 @@ import moiraUltimateResolve from './audio/moira-ultimate-resolve.mp3';
 import orisaEnter from './audio/orisa-enter.mp3';
 import orisaUltimate from './audio/orisa-ultimate.mp3';
 import orisaIntro from './audio/orisa-intro.mp3';
-import pharahClear from './audio/pharah-clear.mp3';
-import pharahUlt from './audio/pharah-ult.mp3';
+import pharahEnter from './audio/pharah-enter.mp3';
+import pharahAbility1 from './audio/pharah-ability1.mp3';
+import pharahUltimate from './audio/pharah-ultimate.mp3';
+import pharahUltimateResolve from './audio/pharah-ultimate-resolve.mp3';
+import pharahIntro from './audio/pharah-intro.mp3';
 import reaperLastwords from './audio/reaper-lastwords.mp3';
 import reaperUlt from './audio/reaper-ult.mp3';
 import reinhardtBarrier from './audio/reinhardt-barrier.mp3';
@@ -234,6 +238,8 @@ import zenyattaUlt from './audio/zenyatta-ult.mp3';
 export const heroCardImages = {
     ana, ashe, baptiste, bastion, bob, brigitte, doomfist, dva, dvameka, echo, genji, hanzo, junkrat, lucio, mccree, mei, mercy, moira, orisa, pharah, reaper, reinhardt, roadhog, sigma, soldier, sombra, symmetra, torbjorn, tracer, widowmaker, winston, wreckingball, zarya, zenyatta, ramattra, nemesis, turret, 'card-back': cardBack
 };
+
+export const clearDeadCursor = clearDead;
 
 export const heroIconImages = {
     'ana-icon': anaIcon, 'baptiste-icon': baptisteIcon, 'bastion-icon': bastionIcon, 'bob-icon': bobIcon, 'hanzo-icon': hanzoIcon, 'lucio-icon': lucioIcon, 'mei-icon': meiIcon, 'mercy-icon': mercyIcon, 'orisa-icon': orisaIcon, 'protectivebarrier-icon': protectiveBarrier, 'sigma-icon': sigmaIcon, 'torbjorn-icon': torbjornIcon, 'widowmaker-icon': widowmakerIcon, 'wreckingball-icon': wreckingballIcon, 'zarya-icon': zaryaIcon, 'zenyatta-icon': zenyattaIcon
@@ -358,8 +364,11 @@ export const abilityAudioFiles = {
     'orisa-enter': orisaEnter,
     'orisa-ultimate': orisaUltimate,
     'orisa-intro': orisaIntro,
-    'pharah-clear': pharahClear,
-    'pharah-ult': pharahUlt,
+    'pharah-enter': pharahEnter,
+    'pharah-ability1': pharahAbility1,
+    'pharah-ultimate': pharahUltimate,
+    'pharah-ultimate-resolve': pharahUltimateResolve,
+    'pharah-intro': pharahIntro,
     'reaper-lastwords': reaperLastwords,
     'reaper-ult': reaperUlt,
     'reinhardt-barrier': reinhardtBarrier,

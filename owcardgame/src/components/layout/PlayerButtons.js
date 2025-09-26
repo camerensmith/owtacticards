@@ -5,8 +5,9 @@ import data from 'data';
 import getRandInt from 'helper';
 import { ACTIONS } from 'App';
 import { playGameEvent } from '../../abilities/engine/soundController';
-import { cancelTargeting } from '../../abilities/engine/targeting';
-import { getAudioFile } from '../../assets/imageImports';
+import { cancelTargeting, selectCardTarget } from '../../abilities/engine/targeting';
+import { getAudioFile, clearDeadCursor } from '../../assets/imageImports';
+import { showMessage as showToast, clearMessage as clearToast } from '../../abilities/engine/targetingBus';
 import targetingBus from '../../abilities/engine/targetingBus';
 
 export default function PlayerHand(props) {
@@ -31,6 +32,83 @@ export default function PlayerHand(props) {
         const unsub = targetingBus.subscribe((msg) => setIsTargeting(!!msg));
         return unsub;
     }, []);
+
+    // Track whether we're in clear mode (for custom cursor)
+    const [isClearMode, setIsClearMode] = useState(false);
+
+    // Apply custom cursor when in clear mode
+    useEffect(() => {
+        if (isClearMode) {
+            document.body.style.cursor = `url(${clearDeadCursor}) 16 16, auto`;
+        } else {
+            document.body.style.cursor = 'default';
+        }
+
+        // Cleanup on unmount
+        return () => {
+            document.body.style.cursor = 'default';
+        };
+    }, [isClearMode]);
+
+    // Handle Clear button click - remove dead heroes from board
+    const handleClearButtonClick = async () => {
+        // If already in clear mode, exit it
+        if (isClearMode) {
+            setIsClearMode(false);
+            clearToast();
+            showToast('Exited clear mode');
+            setTimeout(() => clearToast(), 1500);
+            return;
+        }
+
+        setIsClearMode(true);
+        showToast('Clear: Click on a dead hero to remove it from the board');
+        
+        try {
+            const target = await selectCardTarget();
+            if (!target) { 
+                clearToast(); 
+                setIsClearMode(false);
+                return; 
+            }
+            
+            const targetCard = gameState.playerCards[`player${parseInt(target.cardId[0])}cards`]?.cards?.[target.cardId];
+            const targetPlayerNum = parseInt(target.cardId[0]);
+            
+            // Check if target is on the current player's side
+            if (targetPlayerNum !== playerNum) {
+                showToast('Clear: You can only clear dead heroes on your own side');
+                setTimeout(() => clearToast(), 2000);
+                return; // Stay in clear mode to try again
+            }
+            
+            // Check if target is dead (health <= 0)
+            if (!targetCard || targetCard.health > 0) {
+                showToast('Clear: Target must be a dead hero (health <= 0)');
+                setTimeout(() => clearToast(), 2000);
+                return; // Stay in clear mode to try again
+            }
+            
+            // Remove the dead card
+            dispatch({
+                type: ACTIONS.REMOVE_DEAD_CARD,
+                payload: { cardId: target.cardId }
+            });
+            
+            clearToast();
+            showToast(`Cleared ${targetCard.name || 'dead hero'} from the board`);
+            setTimeout(() => clearToast(), 2000);
+            
+            // Ask if user wants to clear another dead hero
+            showToast('Clear: Click another dead hero or right-click to exit clear mode');
+            
+        } catch (error) {
+            console.error('Clear button error:', error);
+            showToast('Clear cancelled');
+            setTimeout(() => clearToast(), 1500);
+            setIsClearMode(false);
+        }
+    };
 
     // Draw a card at the start of the player's turn (except for the very first turn)
     useEffect(() => {
@@ -176,21 +254,12 @@ export default function PlayerHand(props) {
                 </button>
             </div>
             <button
-                disabled={
-                    !(
-                        gameState.rows[`player${playerNum}hand`].cardsPlayed >=
-                        6
-                    ) || turnState[`player${playerNum}Passed`] === true
-                }
-                className='passbutton'
+                className={`clearbutton ${isClearMode ? 'clearbutton-active' : ''}`}
                 onClick={() => {
-                    setTurnState((prevState) => ({
-                        ...prevState,
-                        [`player${playerNum}Passed`]: true,
-                    }));
+                    handleClearButtonClick();
                 }}
             >
-                Pass
+                {isClearMode ? 'Exit Clear' : 'Clear'}
             </button>
         </div>
     );

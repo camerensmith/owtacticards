@@ -28,14 +28,31 @@ button {
     color: #333333;
 }
 
-.passbutton {
-    background-color: #fa9c1e;
-    color: #333333;
+.clearbutton {
+    background-color: #dc3545;
+    color: white;
+    border-color: #dc3545;
 }
 
-.passbutton:active {
-    background-color: #333333;
-    color: white;
+.clearbutton:hover {
+    background-color: #c82333;
+    border-color: #bd2130;
+}
+
+.clearbutton:active {
+    background-color: #bd2130;
+    border-color: #b21f2d;
+}
+
+.clearbutton-active {
+    background-color: #28a745 !important;
+    border-color: #28a745 !important;
+    color: white !important;
+}
+
+.clearbutton-active:hover {
+    background-color: #218838 !important;
+    border-color: #1e7e34 !important;
 }
 
 .drawbutton {
