@@ -193,15 +193,21 @@ When converting existing heroes from `HeroAbilities.js` to modular system:
 ### engine/damageBus.js
 Centralized damage application system with invulnerability support.
 - `dealDamage(cardId, rowId, amount, ignoreShields=false, sourceCardId=null)` - Apply damage to a card
-- `subscribe(listener)` - Listen for damage events (used by HeroAbilities)
+- `subscribe(listener)` - Listen for damage events (used by App.js damage system)
 - **Invulnerability Check**: Automatically blocks damage to invulnerable slots
 - **Damage Reduction**: Supports row-based damage reduction (e.g., Hanzo token)
 - **Debug Logging**: Shows invulnerability checks and damage blocking
+- **Source Tracking**: Includes sourceCardId in published damage events for death-triggered abilities
 
 **⚠️ CRITICAL: Source Card ID Requirement**
 - **MUST PASS** `playerHeroId` as the 5th parameter (`sourceCardId`) for ALL damage dealing abilities
-- **REQUIRED FOR**: Damage reduction systems (Hanzo token), damage tracking, and future effects
+- **REQUIRED FOR**: Damage reduction systems (Hanzo token), damage tracking, and death-triggered abilities
 - **PATTERN**: `dealDamage(target.cardId, target.rowId, amount, false, playerHeroId)`
+
+**Damage System Architecture:**
+- **App.js**: Handles actual damage application and onDeath triggers
+- **HeroAbilities.js**: Legacy system (not used for modular heroes)
+- **damageBus.js**: Publishes damage events with source tracking
 
 ### engine/targetingBus.js
 Manages targeting UI state and interactions.
@@ -805,13 +811,14 @@ dispatch({ type: ACTIONS.RESET_ULTIMATE_USAGE });
 ## Death Cleanup System
 
 ### Overview
-Heroes can define an `onDeath` function that automatically triggers when they reach 0 health, allowing for cleanup of persistent effects.
+Heroes can define an `onDeath` function that automatically triggers when they reach 0 health, allowing for cleanup of persistent effects and death-triggered abilities.
 
 ### Implementation Details
 - **Trigger**: Automatically called when a hero's health reaches 0 during damage application
 - **Function Signature**: `onDeath({ playerHeroId, rowId })` - receives the dying hero's ID and current row
 - **Cleanup**: Use `window.__ow_removeRowEffect()` to clean up persistent effects
 - **Error Handling**: Wrapped in try/catch to prevent death cleanup errors from breaking the game
+- **Damage System**: onDeath triggers are handled in App.js damage system, not HeroAbilities.js
 
 ### Code Pattern
 ```javascript
@@ -826,10 +833,94 @@ export function onDeath({ playerHeroId, rowId }) {
 }
 ```
 
+### Death-Triggered Abilities
+Some heroes have abilities that trigger when they die, such as:
+- **Junkrat Total Mayhem**: Deals damage to the killer and adjacent enemies
+- **Future heroes**: Can implement similar death-triggered abilities
+
 ### Examples
 - **Bastion**: Removes all Bastion tokens from all rows when Bastion dies
 - **Bob**: Removes Bob token from the row when Bob dies
 - **Baptiste**: Clears invulnerability effects when Baptiste dies
+- **Junkrat**: Deals damage to killer and adjacent enemies (Total Mayhem)
+
+### Implementing Death-Triggered Abilities with Damage Source Tracking
+
+For heroes that need to track who killed them (like Junkrat's Total Mayhem), use the damage source tracking system:
+
+```javascript
+import { dealDamage, subscribe as subscribeToDamage } from '../engine/damageBus';
+
+// Track the last damage source for death abilities
+let lastDamageSource = null;
+
+// Function to track damage sources
+function trackDamageSource(event) {
+    if (event.type === 'damage' && event.targetCardId && event.sourceCardId) {
+        // Check if this is damage to this hero
+        const targetCard = window.__ow_getCard?.(event.targetCardId);
+        if (targetCard && targetCard.id === 'heroId') {
+            // Find which row the source card is in
+            const allRows = ['1f', '1m', '1b', '2f', '2m', '2b'];
+            for (const rowId of allRows) {
+                const row = window.__ow_getRow?.(rowId);
+                if (row && row.cardIds.includes(event.sourceCardId)) {
+                    lastDamageSource = {
+                        cardId: event.sourceCardId,
+                        rowId: rowId
+                    };
+                    console.log(`Hero: Tracked damage source ${event.sourceCardId} in row ${rowId}`);
+                    break;
+                }
+            }
+        }
+    }
+}
+
+// Subscribe to damage events to track sources
+subscribeToDamage(trackDamageSource);
+
+// onDeath: Use tracked damage source
+export function onDeath({ playerHeroId, rowId }) {
+    if (!lastDamageSource) {
+        console.log('Hero: No damage source tracked, cannot execute death ability');
+        return;
+    }
+    
+    const killerCardId = lastDamageSource.cardId;
+    const killerRowId = lastDamageSource.rowId;
+    
+    // Deal damage to killer
+    dealDamage(killerCardId, killerRowId, 2, false, playerHeroId);
+    
+    // Deal damage to adjacent enemies
+    const killerRow = window.__ow_getRow?.(killerRowId);
+    if (killerRow) {
+        const killerIndex = killerRow.cardIds.indexOf(killerCardId);
+        
+        // Target left neighbor
+        if (killerIndex > 0) {
+            const leftCardId = killerRow.cardIds[killerIndex - 1];
+            dealDamage(leftCardId, killerRowId, 1, false, playerHeroId);
+        }
+        
+        // Target right neighbor
+        if (killerIndex < killerRow.cardIds.length - 1) {
+            const rightCardId = killerRow.cardIds[killerIndex + 1];
+            dealDamage(rightCardId, killerRowId, 1, false, playerHeroId);
+        }
+    }
+    
+    // Clear the tracked damage source
+    lastDamageSource = null;
+}
+```
+
+**Key Points:**
+- **Damage Source Tracking**: Subscribe to damage bus to track who deals damage to your hero
+- **onDeath Implementation**: Use tracked source information in death abilities
+- **Source Card ID**: All damage calls must include `playerHeroId` as 5th parameter
+- **Error Handling**: Always check if damage source was tracked before using it
 
 ## Shield System
 

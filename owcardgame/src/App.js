@@ -708,29 +708,25 @@ function checkOnEnterAbilities(playerHeroId, rowId, playerNum) {
     
     // Delegate modular heroes
     if (heroId === 'ashe' && abilitiesIndex?.ashe?.onEnter) {
-        const doDamage = (targetCardId, targetRow, amount, ignoreShields) => {
-            // TODO: expose a central damage bus; for now log intent
-            console.log('modular Ashe damage', { targetCardId, targetRow, amount, ignoreShields });
-        };
-        abilitiesIndex.ashe.onEnter({ playerNum, rowId, doDamage });
+        abilitiesIndex.ashe.onEnter({ playerHeroId, rowId });
         return;
     }
 
     if (heroId === 'bob' && abilitiesIndex?.bob?.onEnter) {
-        abilitiesIndex.bob.onEnter({ playerNum, rowId });
+        abilitiesIndex.bob.onEnter({ playerHeroId, rowId });
         return;
     }
 
     if (heroId === 'ana' && abilitiesIndex?.ana?.onEnter) {
         // Play placement via module
-        abilitiesIndex.ana.onEnter({ playerNum, rowId });
+        abilitiesIndex.ana.onEnter({ playerHeroId, rowId });
         // Trigger onEnter ability 1 targeting/heal/damage
         if (abilitiesIndex.ana.onEnterAbility1) abilitiesIndex.ana.onEnterAbility1({ playerNum, playerHeroId });
         return;
     }
 
     if (heroId === 'baptiste' && abilitiesIndex?.baptiste?.onEnter) {
-        abilitiesIndex.baptiste.onEnter({ playerNum, rowId });
+        abilitiesIndex.baptiste.onEnter({ playerHeroId, rowId });
         return;
     }
 
@@ -766,6 +762,16 @@ function checkOnEnterAbilities(playerHeroId, rowId, playerNum) {
 
     if (heroId === 'hanzo' && abilitiesIndex?.hanzo?.onEnter) {
         abilitiesIndex.hanzo.onEnter({ playerHeroId, rowId });
+        return;
+    }
+
+    if (heroId === 'junkrat' && abilitiesIndex?.junkrat?.onEnter) {
+        abilitiesIndex.junkrat.onEnter({ playerHeroId, rowId });
+        return;
+    }
+
+    if (heroId === 'lucio' && abilitiesIndex?.lucio?.onEnter) {
+        abilitiesIndex.lucio.onEnter({ playerHeroId, rowId });
         return;
     }
 
@@ -1376,6 +1382,22 @@ export default function App() {
                         type: ACTIONS.EDIT_CARD,
                         payload: { playerNum: targetPlayerNum, targetCardId, editKeys: ['health'], editValues: [newHealth] }
                     });
+                    
+                    // Check if target died and trigger onDeath
+                    if (newHealth <= 0 && currentHealth > 0) {
+                        console.log(`Target ${targetCardId} died with health ${newHealth}`);
+                        const heroId = targetCardId.slice(1);
+                        if (abilitiesIndex[heroId]?.onDeath) {
+                            console.log(`Calling onDeath for ${heroId}`);
+                            try {
+                                abilitiesIndex[heroId].onDeath({ playerHeroId: targetCardId, rowId: targetRow });
+                            } catch (error) {
+                                console.error(`Error in ${heroId} onDeath:`, error);
+                            }
+                        } else {
+                            console.log(`No onDeath function found for ${heroId}`);
+                        }
+                    }
                 }
             } catch (e) {
                 // Silent fail-safe
@@ -1558,6 +1580,22 @@ export default function App() {
                             abilitiesIndex.hanzo.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
                         } catch (e) {
                             console.log('Error executing HANZO ultimate:', e);
+                        }
+                    } else if (heroId === 'junkrat' && abilitiesIndex?.junkrat?.onUltimate) {
+                        try {
+                            // Track ultimate usage for Echo's Duplicate
+                            window.__ow_trackUltimateUsed?.(heroId, 'Junkrat', 'RIP-Tire', playerNum, rowId, adjustedCost);
+                            abilitiesIndex.junkrat.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
+                        } catch (e) {
+                            console.log('Error executing JUNKRAT ultimate:', e);
+                        }
+                    } else if (heroId === 'lucio' && abilitiesIndex?.lucio?.onUltimate) {
+                        try {
+                            // Track ultimate usage for Echo's Duplicate
+                            window.__ow_trackUltimateUsed?.(heroId, 'Lúcio', 'Sound Barrier', playerNum, rowId, adjustedCost);
+                            abilitiesIndex.lucio.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
+                        } catch (e) {
+                            console.log('Error executing LÚCIO ultimate:', e);
                         }
                     } else {
                         console.log(`Executing ultimate for ${playerHeroId} in ${rowId} (cost: ${adjustedCost})`);

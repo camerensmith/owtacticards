@@ -8,7 +8,8 @@ import { getAudioFile } from '../../assets/imageImports';
 // BOB: special unit spawned by Ashe. Non-drawable (special: true), may have onEnter and ultimate.
 
 // onEnter example: immediately deal 1 damage to all enemies in opposing row (placeholder, adjust later)
-export function onEnter({ playerHeroId, playerNum, rowId }) {
+export function onEnter({ playerHeroId, rowId }) {
+    const playerNum = parseInt(playerHeroId[0]);
     try {
         // Play BOB enter sound (handled globally on placement as well)
         try {

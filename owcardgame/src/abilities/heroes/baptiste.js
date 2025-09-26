@@ -11,7 +11,8 @@ export function onDraw() {
     try { playAudioByKey('baptiste-intro'); } catch {}
 }
 
-export function onEnter({ playerHeroId, playerNum, rowId }) {
+export function onEnter({ playerHeroId, rowId }) {
+    const playerNum = parseInt(playerHeroId[0]);
     try { playAudioByKey('baptiste-enter'); } catch {}
     const opt1 = { name: 'Biotic Launcher (Damage)', description: 'Deal 1 damage to up to 3 adjacent enemies in target column (respects shields).' };
     const opt2 = { name: 'Biotic Launcher (Heal)', description: 'Heal 1 to up to 3 adjacent allies in target column (cap at max HP).' };

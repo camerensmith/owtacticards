@@ -12,7 +12,8 @@ export function onDraw() {
     try { const s = getAudioFile('ana-intro'); if (s) new Audio(s).play().catch(()=>{}); } catch {}
 }
 
-export function onEnter({ playerHeroId, playerNum, rowId }) {
+export function onEnter({ playerHeroId, rowId }) {
+    const playerNum = parseInt(playerHeroId[0]);
     try { const s = getAudioFile('ana-enter'); if (s) new Audio(s).play().catch(()=>{}); } catch {}
 }
 

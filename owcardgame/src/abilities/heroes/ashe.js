@@ -33,8 +33,8 @@ function playAbilitySound(abilityNumber) {
 }
 
 // Ashe modular onEnter implementation
-// doDamage(targetCardId, targetRowId, amount, ignoreShields)
-export function onEnter({ playerHeroId, playerNum, rowId }) {
+export function onEnter({ playerHeroId, rowId }) {
+    const playerNum = parseInt(playerHeroId[0]);
     const onEnter1 = { name: 'The Viper', description: 'Deal 2 damage to one enemy ignoring shields.' };
     const onEnter2 = { name: 'The Viper (Split Fire)', description: 'Deal 1 damage to two enemies in the same row ignoring shields.' };
 

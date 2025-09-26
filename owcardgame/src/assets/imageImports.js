@@ -167,10 +167,14 @@ import hanzoIntro from './audio/hanzo-intro.mp3';
 import hanzoEnter from './audio/hanzo-enter.mp3';
 import hanzoAbility1 from './audio/hanzo-ability1.mp3';
 import hanzoUltimate from './audio/hanzo-ultimate.mp3';
-import junkratLaugh from './audio/junkrat-laugh.mp3';
-import junkratUlt from './audio/junkrat-ult.mp3';
-import lucioAmpitup from './audio/lucio-ampitup.mp3';
-import lucioUlt from './audio/lucio-ult.mp3';
+import junkratEnter from './audio/junkrat-enter.mp3';
+import junkratAbility1 from './audio/junkrat-ability1.mp3';
+import junkratUltimate from './audio/junkrat-ultimate.mp3';
+import junkratExplosion from './audio/junkrat-explosion.mp3';
+import lucioEnter from './audio/lucio-enter.mp3';
+import lucioAbility1 from './audio/lucio-ability1.mp3';
+import lucioAbility2 from './audio/lucio-ability2.mp3';
+import lucioUltimate from './audio/lucio-ultimate.mp3';
 import mccreeFishinabarrel from './audio/mccree-fishinabarrel.mp3';
 import mccreeUlt from './audio/mccree-ult.mp3';
 import meiGoticed from './audio/mei-goticed.mp3';
@@ -305,10 +309,14 @@ export const abilityAudioFiles = {
     'hanzo-enter': hanzoEnter,
     'hanzo-ability1': hanzoAbility1,
     'hanzo-ultimate': hanzoUltimate,
-    'junkrat-laugh': junkratLaugh,
-    'junkrat-ult': junkratUlt,
-    'lucio-ampitup': lucioAmpitup,
-    'lucio-ult': lucioUlt,
+    'junkrat-enter': junkratEnter,
+    'junkrat-ability1': junkratAbility1,
+    'junkrat-ultimate': junkratUltimate,
+    'junkrat-explosion': junkratExplosion,
+    'lucio-enter': lucioEnter,
+    'lucio-ability1': lucioAbility1,
+    'lucio-ability2': lucioAbility2,
+    'lucio-ultimate': lucioUltimate,
     'mccree-fishinabarrel': mccreeFishinabarrel,
     'mccree-ult': mccreeUlt,
     'mei-goticed': meiGoticed,

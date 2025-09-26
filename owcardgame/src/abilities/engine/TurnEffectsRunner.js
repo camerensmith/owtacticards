@@ -64,7 +64,7 @@ export default function TurnEffectsRunner() {
                 const allyRowEffects = gameState.rows[rowId].allyEffects || [];
                 const enemyRowEffects = gameState.rows[rowId].enemyEffects || [];
 
-                console.log(`TurnEffectsRunner: Checking row ${rowId} with ${allyRowEffects.length} ally effects`);
+                console.log(`TurnEffectsRunner: Checking row ${rowId} with ${allyRowEffects.length} ally effects and ${enemyRowEffects.length} enemy effects`);
 
                 for (let effect of allyRowEffects) {
                     console.log(`TurnEffectsRunner: Processing effect:`, effect);
@@ -73,6 +73,36 @@ export default function TurnEffectsRunner() {
                             console.log(`TurnEffectsRunner: Found immortality field, calling cleanup for row ${rowId}`);
                             if (abilities[effect.hero]?.cleanupImmortalityField) {
                                 abilities[effect.hero].cleanupImmortalityField(rowId);
+                            }
+                        } else if (effect.id === 'lucio-token' && effect.hero === 'lucio') {
+                            console.log(`TurnEffectsRunner: Found Lúcio healing token, calling healing for row ${rowId}`);
+                            if (abilities[effect.hero]?.lucioTokenHealing) {
+                                abilities[effect.hero].lucioTokenHealing(rowId);
+                            }
+                        } else if (effect.id === 'lucio-shuffle-token' && effect.hero === 'lucio') {
+                            console.log(`TurnEffectsRunner: Found Lúcio shuffle token, calling shuffle for row ${rowId}`);
+                            if (abilities[effect.hero]?.lucioTokenShuffle) {
+                                abilities[effect.hero].lucioTokenShuffle(rowId);
+                            }
+                        } else if (abilities[effect.hero]?.[effect.id]?.run) {
+                            abilities[effect.hero][effect.id].run(rowId);
+                        }
+                    }
+                }
+
+                // Process enemy effects
+                for (let effect of enemyRowEffects) {
+                    console.log(`TurnEffectsRunner: Processing enemy effect:`, effect);
+                    if (effect.on === 'turnstart') {
+                        if (effect.id === 'lucio-token' && effect.hero === 'lucio') {
+                            console.log(`TurnEffectsRunner: Found Lúcio healing token on enemy row, calling healing for row ${rowId}`);
+                            if (abilities[effect.hero]?.lucioTokenHealing) {
+                                abilities[effect.hero].lucioTokenHealing(rowId);
+                            }
+                        } else if (effect.id === 'lucio-shuffle-token' && effect.hero === 'lucio') {
+                            console.log(`TurnEffectsRunner: Found Lúcio shuffle token on enemy row, calling shuffle for row ${rowId}`);
+                            if (abilities[effect.hero]?.lucioTokenShuffle) {
+                                abilities[effect.hero].lucioTokenShuffle(rowId);
                             }
                         } else if (abilities[effect.hero]?.[effect.id]?.run) {
                             abilities[effect.hero][effect.id].run(rowId);

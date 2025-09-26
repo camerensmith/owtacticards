@@ -60,7 +60,7 @@ export function dealDamage(targetCardId, targetRow, amount, ignoreShields = fals
         }
     }
     
-    const damageEvent = { type: 'damage', targetCardId, targetRow, amount: finalAmount, ignoreShields };
+    const damageEvent = { type: 'damage', targetCardId, targetRow, amount: finalAmount, ignoreShields, sourceCardId };
     console.log('DamageBus - Publishing damage event:', damageEvent);
     publish(damageEvent);
 }

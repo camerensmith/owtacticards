@@ -14,6 +14,8 @@ import dvameka from './heroes/dvameka';
 import echo from './heroes/echo';
 import genji from './heroes/genji';
 import hanzo from './heroes/hanzo';
+import junkrat from './heroes/junkrat';
+import lucio from './heroes/lucio';
 
 export const abilities = {
     ashe,
@@ -28,6 +30,8 @@ export const abilities = {
     echo,
     genji,
     hanzo,
+    junkrat,
+    lucio,
 };
 
 export default abilities;

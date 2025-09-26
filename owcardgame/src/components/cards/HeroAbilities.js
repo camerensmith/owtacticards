@@ -176,6 +176,7 @@ export default function HeroAbilities(props) {
         // *** APPLY DAMAGE ***
         // Track how much damage is done to the row's shields so it can be dispatched to state later
         let rowShieldDamage = 0;
+        console.log(`Applying ${damageValue} damage to ${targetCardId}, current health: ${targetHealth}, current shield: ${targetShield}`);
         try {
             // Decrement the target's health/shield/rowshield as needed
             for (let i = 0; i < damageValue; i++) {
@@ -198,23 +199,32 @@ export default function HeroAbilities(props) {
                     // Damage hero health and update ref
                 } else if (targetHealth > 0) {
                     targetHealth -= 1;
-                } else if (targetHealth === 0) {
-                    console.log('target health is 0');
-                    // Trigger onDeath for modular heroes
-                    const heroId = targetCardId.slice(1);
-                    if (abilities[heroId]?.onDeath) {
-                        try {
-                            abilities[heroId].onDeath({ playerHeroId: targetCardId, rowId: targetRow });
-                        } catch (error) {
-                            console.error(`Error in ${heroId} onDeath:`, error);
-                        }
-                    }
                 } else {
                     throw new Error(
                         `${targetCardId} is at ${targetHealth} health`
                     );
                 }
             }
+            
+            // Check if target died after all damage is applied
+            if (targetHealth <= 0) {
+                console.log(`Target ${targetCardId} died with health ${targetHealth}`);
+                // Trigger onDeath for modular heroes
+                const heroId = targetCardId.slice(1);
+                console.log(`Checking onDeath for heroId: ${heroId}, abilities:`, abilities);
+                console.log(`abilities[${heroId}]:`, abilities[heroId]);
+                if (abilities[heroId]?.onDeath) {
+                    console.log(`Calling onDeath for ${heroId}`);
+                    try {
+                        abilities[heroId].onDeath({ playerHeroId: targetCardId, rowId: targetRow });
+                    } catch (error) {
+                        console.error(`Error in ${heroId} onDeath:`, error);
+                    }
+                } else {
+                    console.log(`No onDeath function found for ${heroId}`);
+                }
+            }
+            console.log(`After damage: ${targetCardId} health: ${targetHealth}, shield: ${targetShield}`);
             targetRef.current[targetCardId]['health'] = targetHealth;
             targetRef.current[targetCardId]['shield'] = targetShield;
         } catch (err) {
