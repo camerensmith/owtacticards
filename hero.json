@@ -289,8 +289,8 @@
     "middle_synergy": 2,
     "back_power": 3,
     "back_synergy": 1,
-    "on_enter1": "Void Barrier — Place 1 Shield token on Ramattra or a friendly target in any row.",
-    "ultimate": "Ravenous Vortex (2): Shuffle positions of Heroes in the opposite row. Deal 1 damage to the Hero positioned opposite Ramattra."
+    "on_enter1": "Void Barrier — Place 1 Shield token on Ramattra and 1 Shield on an ally in any row.",
+    "ultimate": "Ravenous Vortex (2): Shuffle positions of Heroes in the opposite row. Deal 1 damage to the Hero positioned opposite Ramattra. After, remove and put Nemesis Ramattra into your hand."
   },
   {
     "name": "Reaper",
@@ -423,7 +423,8 @@
     "back_synergy": 0,
     "on_enter1": "Deployment — Immobile and cannot receive Shields or Healing effects. Deals 1 damage to a random unit in the opposite row at the start of the enemy turn.",
     "ultimate": "Deployment (0): Ongoing text as above.",
-    "special": true
+    "special": true,
+    "turret": true
   },
   {
     "name": "Widowmaker",

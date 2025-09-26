@@ -19,6 +19,7 @@ import lucio from './heroes/lucio';
 import mccree from './heroes/mccree';
 import mei from './heroes/mei';
 import mercy from './heroes/mercy';
+import moira from './heroes/moira';
 
 export const abilities = {
     ashe,
@@ -38,6 +39,7 @@ export const abilities = {
     mccree,
     mei,
     mercy,
+    moira,
 };
 
 export default abilities;

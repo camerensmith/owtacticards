@@ -785,6 +785,11 @@ function checkOnEnterAbilities(playerHeroId, rowId, playerNum) {
         return;
     }
 
+    if (heroId === 'moira' && abilitiesIndex?.moira?.onEnter) {
+        abilitiesIndex.moira.onEnter({ playerHeroId, rowId });
+        return;
+    }
+
     if (heroId === 'mercy' && abilitiesIndex?.mercy?.onEnter) {
         abilitiesIndex.mercy.onEnter({ playerHeroId, rowId });
         return;
@@ -1660,6 +1665,13 @@ export default function App() {
                             abilitiesIndex.mercy.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
                         } catch (e) {
                             console.log('Error executing MERCY ultimate:', e);
+                        }
+                    } else if (heroId === 'moira' && abilitiesIndex?.moira?.onUltimate) {
+                        try {
+                            window.__ow_trackUltimateUsed?.(heroId, 'Moira', 'Coalescence', playerNum, rowId, adjustedCost);
+                            abilitiesIndex.moira.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
+                        } catch (e) {
+                            console.log('Error executing MOIRA ultimate:', e);
                         }
                     } else {
                         console.log(`Executing ultimate for ${playerHeroId} in ${rowId} (cost: ${adjustedCost})`);

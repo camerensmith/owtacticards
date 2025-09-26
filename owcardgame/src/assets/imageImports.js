@@ -193,8 +193,10 @@ import mercyAbility2 from './audio/mercy-ability2.mp3';
 import mercyUltimateResolve from './audio/mercy-ultimate-resolve.mp3';
 import mercyIntro from './audio/mercy-intro.mp3';
 import mercyUlt from './audio/mercy-ult.mp3';
-import moiraGrasp from './audio/moira-grasp.mp3';
-import moiraUlt from './audio/moira-ult.mp3';
+import moiraEnter from './audio/moira-enter.mp3';
+import moiraAbility1 from './audio/moira-ability1.mp3';
+import moiraUltimate from './audio/moira-ultimate.mp3';
+import moiraUltimateResolve from './audio/moira-ultimate-resolve.mp3';
 import orisaBarrier from './audio/orisa-barrier.mp3';
 import orisaUlt from './audio/orisa-ult.mp3';
 import pharahClear from './audio/pharah-clear.mp3';
@@ -347,8 +349,10 @@ export const abilityAudioFiles = {
     'mercy-ultimate-resolve': mercyUltimateResolve,
     'mercy-intro': mercyIntro,
     'mercy-ult': mercyUlt,
-    'moira-grasp': moiraGrasp,
-    'moira-ult': moiraUlt,
+    'moira-enter': moiraEnter,
+    'moira-ability1': moiraAbility1,
+    'moira-ultimate': moiraUltimate,
+    'moira-ultimate-resolve': moiraUltimateResolve,
     'orisa-barrier': orisaBarrier,
     'orisa-ult': orisaUlt,
     'pharah-clear': pharahClear,

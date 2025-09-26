@@ -44,10 +44,16 @@ export function selectCardTarget() {
         const cancelHandler = () => {
             $('.card').off('click', handler);
             document.removeEventListener('ow:targeting:cancel', cancelHandler);
+            document.removeEventListener('contextmenu', contextCancel, true);
             resolve(null);
+        };
+        const contextCancel = (e) => {
+            try { e.preventDefault(); e.stopPropagation(); } catch {}
+            cancelHandler();
         };
         $('.card').on('click', handler);
         document.addEventListener('ow:targeting:cancel', cancelHandler);
+        document.addEventListener('contextmenu', contextCancel, true);
     });
 }
 
@@ -80,13 +86,19 @@ export function selectRowTarget() {
             const rowIds = ['1f','1m','1b','2f','2m','2b','player1hand','player2hand'];
             for (const rid of rowIds) { $(document).off('click', handler, `#${rid}`); }
             document.removeEventListener('ow:targeting:cancel', cancelHandler);
+            document.removeEventListener('contextmenu', contextCancel, true);
             resolve(null);
+        };
+        const contextCancel = (e) => {
+            try { e.preventDefault(); e.stopPropagation(); } catch {}
+            cancelHandler();
         };
         // Attach to generic row containers and specific ids as fallback
         $('.row').on('click', handler);
         const rowIds = ['1f','1m','1b','2f','2m','2b','player1hand','player2hand'];
         for (const rid of rowIds) { $(`#${rid}`).on('click', handler); }
         document.addEventListener('ow:targeting:cancel', cancelHandler);
+        document.addEventListener('contextmenu', contextCancel, true);
     });
 }
 
