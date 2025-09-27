@@ -26,6 +26,7 @@ export const Effects = {
     muzzleFlash: (cardId) => ({ type: 'fx:muzzleFlash', payload: { cardId } }),
     rowBarrier: (rowId, durationMs = 800) => ({ type: 'fx:rowBarrier', payload: { rowId, durationMs } }),
     resurrect: (cardId, text = 'RESURRECTED', icon = null) => ({ type: 'fx:resurrect', payload: { cardId, text, icon } }),
+    chainHook: (sourceCardId, targetCardId, duration = 1000) => ({ type: 'fx:chainHook', payload: { sourceCardId, targetCardId, duration } }),
 };
 
 export default { subscribe, publish, Effects };

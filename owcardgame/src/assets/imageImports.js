@@ -239,8 +239,10 @@ import nemesisUltimate from './audio/nemesis-ultimate.mp3';
 import nemesisIntro from './audio/nemesis-intro.mp3';
 import reaperUlt from './audio/reaper-ult.mp3';
 import reinhardtUlt from './audio/reinhardt-ult.mp3';
-import roadhogHook from './audio/roadhog-hook.mp3';
-import roadhogHogwild from './audio/roadhog-hogwild.mp3';
+import roadhogEnter from './audio/roadhog-enter.mp3';
+import roadhogAbility1 from './audio/roadhog-ability1.mp3';
+import roadhogUltimate from './audio/roadhog-ultimate.mp3';
+import roadhogIntro from './audio/roadhog-intro.mp3';
 import sigmaBarrier from './audio/sigma-barrier.mp3';
 import sigmaUlt from './audio/sigma-ult.mp3';
 import soldierTargetrich from './audio/soldier-targetrich.mp3';
@@ -424,8 +426,10 @@ export const abilityAudioFiles = {
     'nemesis-intro': nemesisIntro,
     'reaper-ult': reaperUlt,
     'reinhardt-ult': reinhardtUlt,
-    'roadhog-hook': roadhogHook,
-    'roadhog-hogwild': roadhogHogwild,
+    'roadhog-enter': roadhogEnter,
+    'roadhog-ability1': roadhogAbility1,
+    'roadhog-ultimate': roadhogUltimate,
+    'roadhog-intro': roadhogIntro,
     'sigma-barrier': sigmaBarrier,
     'sigma-ult': sigmaUlt,
     'soldier-targetrich': soldierTargetrich,

@@ -2360,3 +2360,282 @@ console.log(`HealthCounter for ${playerHeroId}:`, {
 - [ ] Add CSS styling for visual effects
 - [ ] Test UI re-rendering with dynamic keys
 - [ ] Verify player-specific cleanup timing
+
+## Roadhog Implementation Guide
+
+### Overview
+Roadhog demonstrates advanced patterns including movement mechanics, random damage distribution over time, visual effects, and proper floating damage text integration.
+
+### Key Abilities
+
+#### Chain Hook (onEnter1)
+- **Targeting**: Any enemy hero (excludes turret as immobile)
+- **Movement Logic**: 
+  - Front row → Middle row → Back row (if previous is full)
+  - If all rows full, just deals damage without movement
+- **Damage**: 2 damage dealt **immediately** with movement
+- **Edge Cases**: Can target dead heroes (they move but take no damage)
+
+#### Whole Hog (Ultimate, Cost 4)
+- **Damage Calculation**: `2 × number of living enemies`
+- **Distribution**: Randomly distributed over 4 seconds
+- **Visual**: Floating combat text shows individual damage instances
+- **Targeting**: Only living enemies
+
+### Random Damage Distribution System
+
+#### Core Concept
+Unlike McCree's mathematical distribution, Roadhog's Whole Hog uses true randomness where each damage instance is randomly assigned to any living enemy.
+
+#### Implementation Pattern
+```javascript
+// Calculate total damage (2 per enemy)
+const totalDamage = livingEnemies.length * 2;
+
+// Create damage instances (each = 1 damage)
+const damageInstances = [];
+for (let i = 0; i < totalDamage; i++) {
+    const randomEnemy = livingEnemies[Math.floor(Math.random() * livingEnemies.length)];
+    damageInstances.push(randomEnemy);
+}
+
+// Shuffle for more randomness
+for (let i = damageInstances.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [damageInstances[i], damageInstances[j]] = [damageInstances[j], damageInstances[i]];
+}
+
+// Apply damage over time
+const damageInterval = 4000 / totalDamage; // Spread over 4 seconds
+damageInstances.forEach((enemy, index) => {
+    setTimeout(() => {
+        const currentCard = window.__ow_getCard?.(enemy.cardId);
+        if (currentCard && currentCard.health > 0) {
+            dealDamage(enemy.cardId, enemy.rowId, 1, false, playerHeroId);
+            effectsBus.publish(Effects.showDamage(enemy.cardId, 1));
+        }
+    }, index * damageInterval);
+});
+```
+
+### Movement Mechanics with Row Capacity
+
+#### Problem
+Heroes need to move to specific rows but must handle cases where destination rows are full.
+
+#### Solution
+Implement fallback logic with row capacity checking:
+
+```javascript
+// Determine destination row (front -> middle -> back)
+const targetPlayerNum = parseInt(target.rowId[0]);
+const enemyPlayer = targetPlayerNum;
+const frontRow = `${enemyPlayer}f`;
+const middleRow = `${enemyPlayer}m`;
+const backRow = `${enemyPlayer}b`;
+
+let destinationRow = frontRow;
+
+// Check if front row is full
+if (window.__ow_isRowFull?.(frontRow)) {
+    // Check if middle row is full
+    if (window.__ow_isRowFull?.(middleRow)) {
+        // Check if back row is full
+        if (window.__ow_isRowFull?.(backRow)) {
+            // All rows full, just deal damage
+            destinationRow = null;
+        } else {
+            destinationRow = backRow;
+        }
+    } else {
+        destinationRow = middleRow;
+    }
+}
+
+// Move target if possible
+if (destinationRow && destinationRow !== target.rowId) {
+    window.__ow_moveCardToRow?.(target.cardId, destinationRow);
+}
+```
+
+### Floating Damage Text Integration
+
+#### Problem
+Floating damage text wasn't showing for Roadhog's ultimate damage.
+
+#### Solution
+Use the proper `Effects.showDamage()` method from effectsBus:
+
+```javascript
+// ❌ WRONG - Custom event structure
+window.effectsBus.publish({
+    type: 'fx:damage',
+    cardId: enemy.cardId,
+    amount: 1,
+    text: '-1'
+});
+
+// ✅ CORRECT - Use Effects helper
+effectsBus.publish(Effects.showDamage(enemy.cardId, 1));
+```
+
+#### Key Points
+- **Import effectsBus**: `import effectsBus, { Effects } from '../engine/effectsBus';`
+- **Use Effects helpers**: `Effects.showDamage(cardId, amount)` and `Effects.showHeal(cardId, amount)`
+- **Follow established patterns**: Look at Baptiste, Moira, or other heroes for reference
+
+### Visual Effects System
+
+#### Chain Hook Rope Animation
+```javascript
+// 1. Create overlay component (ChainHookOverlay.js)
+export default function ChainHookOverlay({ sourceCardId, targetCardId, duration = 1000 }) {
+    // SVG-based rope animation with chain pattern
+    return (
+        <div className="chain-hook-overlay">
+            <svg>
+                <defs>
+                    <pattern id="chainPattern" patternUnits="userSpaceOnUse" width="20" height="20">
+                        <circle cx="10" cy="10" r="2" fill="#8B4513" opacity="0.8"/>
+                    </pattern>
+                </defs>
+                <line stroke="url(#chainPattern)" strokeDasharray="10,5" className="chain-hook-line"/>
+            </svg>
+        </div>
+    );
+}
+
+// 2. Add to effectsBus
+export const Effects = {
+    chainHook: (sourceCardId, targetCardId, duration = 1000) => ({ 
+        type: 'fx:chainHook', 
+        payload: { sourceCardId, targetCardId, duration } 
+    }),
+};
+
+// 3. Publish effect from hero module
+if (window.effectsBus) {
+    window.effectsBus.publish({
+        type: 'fx:chainHook',
+        sourceCardId: playerHeroId,
+        targetCardId: target.cardId,
+        duration: 1000
+    });
+}
+
+// 4. Handle in Card component
+const [chainHookEffect, setChainHookEffect] = useState(null);
+
+useEffect(() => {
+    const unsub = effectsBus.subscribe((event) => {
+        if (event.type === 'fx:chainHook' && event.payload) {
+            if (event.payload.sourceCardId === playerHeroId || event.payload.targetCardId === playerHeroId) {
+                setChainHookEffect(event.payload);
+                setTimeout(() => setChainHookEffect(null), event.payload.duration || 1000);
+            }
+        }
+    });
+    return unsub;
+}, [playerHeroId]);
+
+// 5. Render overlay
+{chainHookEffect && (
+    <ChainHookOverlay 
+        sourceCardId={chainHookEffect.sourceCardId} 
+        targetCardId={chainHookEffect.targetCardId} 
+        duration={chainHookEffect.duration} 
+    />
+)}
+```
+
+#### CSS Animation
+```css
+@keyframes chainHookAnimation {
+    0% {
+        stroke-dashoffset: 0;
+        opacity: 0.8;
+    }
+    50% {
+        opacity: 1;
+    }
+    100% {
+        stroke-dashoffset: -30;
+        opacity: 0.6;
+    }
+}
+
+.chain-hook-line {
+    animation: chainHookAnimation 1s ease-in-out;
+}
+```
+
+### Key Learning Points
+
+#### 1. Floating Damage Text
+- **Problem**: Custom event structure doesn't work
+- **Solution**: Use `Effects.showDamage(cardId, amount)` from effectsBus
+- **Pattern**: Always use the Effects helpers, never custom event structures
+
+#### 2. Random Damage Distribution
+- **Problem**: Mathematical distribution (like McCree) doesn't fit all abilities
+- **Solution**: Create individual damage instances and randomly assign them
+- **Pattern**: True randomness over time with proper interval spacing
+
+#### 3. Movement with Row Capacity
+- **Problem**: Heroes can't move to full rows
+- **Solution**: Implement fallback logic with `window.__ow_isRowFull()`
+- **Pattern**: Check capacity before movement, provide alternatives
+
+#### 4. Visual Effects Integration
+- **Problem**: Custom visual effects need proper event system integration
+- **Solution**: Use effectsBus with proper event types and payload structure
+- **Pattern**: Create effect type → publish event → handle in components → render overlay
+
+#### 5. Time-Based Abilities
+- **Problem**: Abilities that happen over time need proper scheduling
+- **Solution**: Use `setTimeout` with calculated intervals
+- **Pattern**: Calculate total time, divide by instances, schedule each one
+
+### Debugging Techniques
+
+#### Console Logging for Damage Distribution
+```javascript
+console.log(`Hero Ability: ${enemyCount} enemies, total damage: ${totalDamage}`);
+console.log(`Hero Ability: Damage instances:`, damageInstances.map(d => d.cardId));
+```
+
+#### Health Counter Debugging
+```javascript
+// Track what HealthCounter receives
+console.log(`HealthCounter for ${playerHeroId}:`, { 
+    health, 
+    effects, 
+    effectsLength: effects?.length 
+});
+```
+
+### Common Pitfalls
+
+1. **Wrong Floating Text Method**: Use `Effects.showDamage()`, not custom events
+2. **Missing effectsBus Import**: Always import `effectsBus, { Effects }`
+3. **Incorrect Movement Logic**: Check row capacity before attempting moves
+4. **Poor Random Distribution**: Use proper shuffling and individual instances
+5. **Missing Visual Effect Handling**: Subscribe to effectsBus in Card component
+6. **Timing Issues**: Calculate intervals properly for time-based abilities
+
+### Integration Checklist
+
+- [ ] Add hero to `data.js` with correct stats
+- [ ] Create hero module with proper function signatures
+- [ ] Add to `abilities/index.js` exports
+- [ ] Add to `App.js` onEnter and ultimate handling
+- [ ] Add audio imports and mappings to `imageImports.js`
+- [ ] Add focus image for shift-click
+- [ ] Import `effectsBus, { Effects }` for floating text
+- [ ] Use `Effects.showDamage()` for damage text
+- [ ] Implement proper movement logic with row capacity checks
+- [ ] Add visual effects to effectsBus if needed
+- [ ] Handle visual effects in Card component
+- [ ] Add CSS animations for visual effects
+- [ ] Test random distribution and timing
+- [ ] Verify floating damage text appears

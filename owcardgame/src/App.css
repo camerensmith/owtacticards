@@ -187,3 +187,21 @@ body {
     }
 }
 
+@keyframes chainHookAnimation {
+    0% {
+        stroke-dashoffset: 0;
+        opacity: 0.8;
+    }
+    50% {
+        opacity: 1;
+    }
+    100% {
+        stroke-dashoffset: -30;
+        opacity: 0.6;
+    }
+}
+
+.chain-hook-line {
+    animation: chainHookAnimation 1s ease-in-out;
+}
+

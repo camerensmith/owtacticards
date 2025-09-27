@@ -943,6 +943,10 @@ function checkOnEnterAbilities(playerHeroId, rowId, playerNum) {
         abilitiesIndex.reinhardt.onEnter({ playerHeroId, rowId });
         return;
     }
+    if (heroId === 'roadhog' && abilitiesIndex?.roadhog?.onEnter) {
+        abilitiesIndex.roadhog.onEnter({ playerHeroId, rowId });
+        return;
+    }
 
     if (heroId === 'mercy' && abilitiesIndex?.mercy?.onEnter) {
         abilitiesIndex.mercy.onEnter({ playerHeroId, rowId });
@@ -1892,6 +1896,13 @@ export default function App() {
             abilitiesIndex.reinhardt.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
         } catch (e) {
             console.log('Error executing REINHARDT ultimate:', e);
+        }
+    } else if (heroId === 'roadhog' && abilitiesIndex?.roadhog?.onUltimate) {
+        try {
+            window.__ow_trackUltimateUsed?.(heroId, 'Roadhog', 'Whole Hog', playerNum, rowId, adjustedCost);
+            abilitiesIndex.roadhog.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
+        } catch (e) {
+            console.log('Error executing ROADHOG ultimate:', e);
         }
     } else {
                         console.log(`Executing ultimate for ${playerHeroId} in ${rowId} (cost: ${adjustedCost})`);

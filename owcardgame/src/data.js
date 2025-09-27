@@ -651,7 +651,7 @@ const data = {
             synergy: {
                 f: 1,
                 m: 2,
-                b: 3,
+                b: 2,
             },
             isImplemented: true,
         },
@@ -806,14 +806,14 @@ const data = {
             },
             health: 3,
             power: {
-                f: 2,
+                f: 1,
                 m: 1,
                 b: 3,
             },
             synergy: {
-                f: 2,
-                m: 3,
-                b: 1,
+                f: 1,
+                m: 2,
+                b: 2,
             },
             isImplemented: true,
         },

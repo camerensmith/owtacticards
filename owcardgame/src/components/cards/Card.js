@@ -10,6 +10,7 @@ import SuitedUpOverlay from '../effects/SuitedUpOverlay';
 import MercyHealOverlay from '../effects/MercyHealOverlay';
 import MercyDamageOverlay from '../effects/MercyDamageOverlay';
 import AnnihilationOverlay from '../effects/AnnihilationOverlay';
+import ChainHookOverlay from '../effects/ChainHookOverlay';
 import { heroCardImages } from '../../assets/imageImports';
 import ContextMenu from './ContextMenu';
 import actionsBus, { Actions } from '../../abilities/engine/actionsBus';
@@ -125,6 +126,7 @@ export default function Card(props) {
         effects.some(effect => effect?.id === 'cryo-freeze' && effect?.type === 'immunity');
 
     const [isResurrectOverlayVisible, setIsResurrectOverlayVisible] = useState(false);
+    const [chainHookEffect, setChainHookEffect] = useState(null);
 
     useEffect(() => {
         const unsub = effectsBus.subscribe((event) => {
@@ -133,6 +135,13 @@ export default function Card(props) {
             if (event.type === 'fx:resurrect' && event.cardId === playerHeroId) {
                 setIsResurrectOverlayVisible(true);
                 setTimeout(() => setIsResurrectOverlayVisible(false), 1500);
+            }
+            // Handle chain hook effect
+            if (event.type === 'fx:chainHook' && event.payload) {
+                if (event.payload.sourceCardId === playerHeroId || event.payload.targetCardId === playerHeroId) {
+                    setChainHookEffect(event.payload);
+                    setTimeout(() => setChainHookEffect(null), event.payload.duration || 1000);
+                }
             }
         });
         return unsub;
@@ -213,6 +222,13 @@ export default function Card(props) {
                             )}
                             {health > 0 && Array.isArray(effects) && effects.some(e => e?.id === 'annihilation') && (
                                 <AnnihilationOverlay playerHeroId={playerHeroId} rowId={rowId} />
+                            )}
+                            {chainHookEffect && (
+                                <ChainHookOverlay 
+                                    sourceCardId={chainHookEffect.sourceCardId} 
+                                    targetCardId={chainHookEffect.targetCardId} 
+                                    duration={chainHookEffect.duration} 
+                                />
                             )}
                             {imageLoaded === playerHeroId &&
                                 (turnState.playerTurn === playerNum ||

@@ -27,6 +27,7 @@ import ramattra from './heroes/ramattra';
 import nemesis from './heroes/nemesis';
 import reaper from './heroes/reaper';
 import reinhardt from './heroes/reinhardt';
+import roadhog from './heroes/roadhog';
 
 export const abilities = {
     ashe,
@@ -54,6 +55,7 @@ export const abilities = {
     nemesis,
     reaper,
     reinhardt,
+    roadhog,
 };
 
 export default abilities;
