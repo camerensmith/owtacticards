@@ -95,6 +95,25 @@ export default function Card(props) {
                 },
             });
         }
+        if (id === 'reinhardt') {
+            const hasBarrierField = Array.isArray(card?.effects) && 
+                card.effects.some(effect => effect?.id === 'barrier-field' && effect?.type === 'barrier');
+            const isAbsorbing = hasBarrierField && card.effects.find(effect => 
+                effect?.id === 'barrier-field' && effect?.type === 'barrier'
+            )?.absorbing;
+            
+            if (hasBarrierField) {
+                items.push({
+                    label: isAbsorbing ? 'Disable Damage Absorption' : 'Enable Damage Absorption',
+                    onClick: () => {
+                        console.log('Card.js - Reinhardt toggle clicked for:', playerHeroId);
+                        console.log('Card.js - Reinhardt functions:', window.__ow_getReinhardtFunctions?.());
+                        window.__ow_getReinhardtFunctions?.().toggleBarrierAbsorption?.(playerHeroId);
+                        setMenu(null);
+                    },
+                });
+            }
+        }
         setMenu({ x: e.clientX, y: e.clientY, items });
     }
 

@@ -102,7 +102,47 @@ export function dealDamage(targetCardId, targetRow, amount, ignoreShields = fals
         }
     }
     
-    const damageEvent = { type: 'damage', targetCardId, targetRow, amount: finalAmount, ignoreShields, sourceCardId };
+    // Check for Reinhardt Barrier Field damage absorption
+    let absorbedAmount = 0;
+    if (finalAmount > 0 && window.__ow_getRow) {
+        // Find all Reinhardt cards that might absorb this damage
+        const allRows = ['1f', '1m', '1b', '2f', '2m', '2b'];
+        for (const rowId of allRows) {
+            const row = window.__ow_getRow(rowId);
+            if (row && row.cardIds) {
+                for (const cardId of row.cardIds) {
+                    const card = window.__ow_getCard?.(cardId);
+                    if (card && card.id === 'reinhardt' && Array.isArray(card.effects)) {
+                        const barrierEffect = card.effects.find(effect => 
+                            effect?.id === 'barrier-field' && effect?.type === 'barrier'
+                        );
+                        if (barrierEffect && barrierEffect.absorbing) {
+                            console.log(`DamageBus - Found Reinhardt with absorbing barrier effect:`, barrierEffect);
+                            // Check if this Reinhardt should absorb damage for the target
+                            const reinhardtFunctions = window.__ow_getReinhardtFunctions?.();
+                            console.log(`DamageBus - Reinhardt functions:`, reinhardtFunctions);
+                            const { shouldAbsorbDamage, absorbDamage } = reinhardtFunctions || {};
+                            if (shouldAbsorbDamage && shouldAbsorbDamage(cardId, targetCardId, targetRow)) {
+                                console.log(`DamageBus - Reinhardt should absorb damage for ${targetCardId}`);
+                                const absorbed = absorbDamage ? absorbDamage(cardId, finalAmount) : 0;
+                                absorbedAmount += absorbed;
+                                finalAmount = Math.max(0, finalAmount - absorbed);
+                                console.log(`DamageBus - Reinhardt absorbed ${absorbed} damage, remaining: ${finalAmount}`);
+                            } else {
+                                console.log(`DamageBus - Reinhardt should NOT absorb damage for ${targetCardId}`);
+                            }
+                        } else {
+                            console.log(`DamageBus - Reinhardt barrier effect not absorbing:`, barrierEffect);
+                            console.log(`DamageBus - barrierEffect.absorbing value:`, barrierEffect.absorbing);
+                            console.log(`DamageBus - barrierEffect.absorbing type:`, typeof barrierEffect.absorbing);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    const damageEvent = { type: 'damage', targetCardId, targetRow, amount: finalAmount, ignoreShields, sourceCardId, absorbedAmount };
     console.log('DamageBus - Publishing damage event:', damageEvent);
     publish(damageEvent);
 }

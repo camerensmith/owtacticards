@@ -934,6 +934,10 @@ function checkOnEnterAbilities(playerHeroId, rowId, playerNum) {
         abilitiesIndex.reaper.onEnter({ playerHeroId, rowId });
         return;
     }
+    if (heroId === 'reinhardt' && abilitiesIndex?.reinhardt?.onEnter) {
+        abilitiesIndex.reinhardt.onEnter({ playerHeroId, rowId });
+        return;
+    }
 
     if (heroId === 'mercy' && abilitiesIndex?.mercy?.onEnter) {
         abilitiesIndex.mercy.onEnter({ playerHeroId, rowId });
@@ -1262,6 +1266,17 @@ export default function App() {
         window.__ow_dispatchAction = (action) => {
             dispatch(action);
         };
+        window.__ow_getReinhardtFunctions = () => {
+            const reinhardtModule = abilitiesIndex?.reinhardt;
+            if (reinhardtModule) {
+                return {
+                    shouldAbsorbDamage: reinhardtModule.shouldAbsorbDamage,
+                    absorbDamage: reinhardtModule.absorbDamage,
+                    toggleBarrierAbsorption: reinhardtModule.toggleBarrierAbsorption
+                };
+            }
+            return {};
+        };
         window.__ow_executeDuplicatedUltimate = async (lastUltimate, playerHeroId, rowId) => {
             // Execute the duplicated ultimate by calling the original hero's ability
             try {
@@ -1329,7 +1344,7 @@ export default function App() {
                 }
             }
         };
-        return () => { window.__ow_appendRowEffect = null; window.__ow_getRow = null; window.__ow_setRowArray = null; window.__ow_updateSynergy = null; window.__ow_getCard = null; window.__ow_getMaxHealth = null; window.__ow_setCardHealth = null; window.__ow_isSpecial = null; window.__ow_setRowPower = null; window.__ow_setInvulnerableSlots = null; window.__ow_clearInvulnerableSlots = null; window.__ow_isSlotInvulnerable = null; window.__ow_removeRowEffect = null; window.__ow_cleanupImmortalityField = null; window.__ow_dealDamage = null; window.__ow_dispatchShieldUpdate = null; window.__ow_appendCardEffect = null; window.__ow_removeCardEffect = null; window.__ow_moveCardToRow = null; window.__ow_isRowFull = null; window.__ow_addSpecialCardToHand = null; window.__ow_returnDvaToHand = null; window.__ow_replaceWithDva = null; window.__ow_cleanupDvaSuitedUp = null; window.__ow_removeSpecialCard = null; window.__ow_getLastUltimateUsed = null; window.__ow_trackUltimateUsed = null; window.__ow_dispatchAction = null; window.__ow_executeDuplicatedUltimate = null; };
+        return () => { window.__ow_appendRowEffect = null; window.__ow_getRow = null; window.__ow_setRowArray = null; window.__ow_updateSynergy = null; window.__ow_getCard = null; window.__ow_getMaxHealth = null; window.__ow_setCardHealth = null; window.__ow_isSpecial = null; window.__ow_setRowPower = null; window.__ow_setInvulnerableSlots = null; window.__ow_clearInvulnerableSlots = null; window.__ow_isSlotInvulnerable = null; window.__ow_removeRowEffect = null; window.__ow_cleanupImmortalityField = null; window.__ow_dealDamage = null; window.__ow_dispatchShieldUpdate = null; window.__ow_appendCardEffect = null; window.__ow_removeCardEffect = null; window.__ow_moveCardToRow = null; window.__ow_isRowFull = null; window.__ow_addSpecialCardToHand = null; window.__ow_returnDvaToHand = null; window.__ow_replaceWithDva = null; window.__ow_cleanupDvaSuitedUp = null; window.__ow_removeSpecialCard = null; window.__ow_getLastUltimateUsed = null; window.__ow_trackUltimateUsed = null; window.__ow_dispatchAction = null; window.__ow_executeDuplicatedUltimate = null; window.__ow_getReinhardtFunctions = null; };
     }, [gameState]);
     // Game logic state
     const [gameLogic, setGameLogic] = useState({
@@ -1857,6 +1872,13 @@ export default function App() {
             abilitiesIndex.reaper.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
         } catch (e) {
             console.log('Error executing REAPER ultimate:', e);
+        }
+    } else if (heroId === 'reinhardt' && abilitiesIndex?.reinhardt?.onUltimate) {
+        try {
+            window.__ow_trackUltimateUsed?.(heroId, 'Reinhardt', 'Earthshatter', playerNum, rowId, adjustedCost);
+            abilitiesIndex.reinhardt.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
+        } catch (e) {
+            console.log('Error executing REINHARDT ultimate:', e);
         }
     } else {
                         console.log(`Executing ultimate for ${playerHeroId} in ${rowId} (cost: ${adjustedCost})`);

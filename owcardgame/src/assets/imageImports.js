@@ -224,12 +224,15 @@ import reaperAbility2 from './audio/reaper-ability2.mp3';
 import reaperUltimate from './audio/reaper-ultimate.mp3';
 import reaperUltimateResolve from './audio/reaper-ultimate-resolve.mp3';
 import reaperIntro from './audio/reaper-intro.mp3';
+import reinhardtEnter from './audio/reinhardt-enter.mp3';
+import reinhardtUltimate from './audio/reinhardt-ultimate.mp3';
+import reinhardtIntro from './audio/reinhardt-intro.mp3';
+import reinhardtEnable from './audio/reinhardt-enable.mp3';
 import nemesisEnter from './audio/nemesis-enter.mp3';
 import nemesisAbility1 from './audio/nemesis-ability1.mp3';
 import nemesisUltimate from './audio/nemesis-ultimate.mp3';
 import nemesisIntro from './audio/nemesis-intro.mp3';
 import reaperUlt from './audio/reaper-ult.mp3';
-import reinhardtBarrier from './audio/reinhardt-barrier.mp3';
 import reinhardtUlt from './audio/reinhardt-ult.mp3';
 import roadhogHook from './audio/roadhog-hook.mp3';
 import roadhogHogwild from './audio/roadhog-hogwild.mp3';
@@ -403,12 +406,15 @@ export const abilityAudioFiles = {
     'reaper-ultimate': reaperUltimate,
     'reaper-ultimate-resolve': reaperUltimateResolve,
     'reaper-intro': reaperIntro,
+    'reinhardt-enter': reinhardtEnter,
+    'reinhardt-ultimate': reinhardtUltimate,
+    'reinhardt-intro': reinhardtIntro,
+    'reinhardt-enable': reinhardtEnable,
     'nemesis-enter': nemesisEnter,
     'nemesis-ability1': nemesisAbility1,
     'nemesis-ultimate': nemesisUltimate,
     'nemesis-intro': nemesisIntro,
     'reaper-ult': reaperUlt,
-    'reinhardt-barrier': reinhardtBarrier,
     'reinhardt-ult': reinhardtUlt,
     'roadhog-hook': roadhogHook,
     'roadhog-hogwild': roadhogHogwild,
