@@ -218,11 +218,16 @@ import ramattraAbility1 from './audio/ramattra-ability1.mp3';
 import ramattraUltimate from './audio/ramattra-ultimate.mp3';
 import ramattraUltimateResolve from './audio/ramattra-ultimate-resolve.mp3';
 import ramattraIntro from './audio/ramattra-intro.mp3';
+import reaperEnter from './audio/reaper-enter.mp3';
+import reaperAbility1 from './audio/reaper-ability1.mp3';
+import reaperAbility2 from './audio/reaper-ability2.mp3';
+import reaperUltimate from './audio/reaper-ultimate.mp3';
+import reaperUltimateResolve from './audio/reaper-ultimate-resolve.mp3';
+import reaperIntro from './audio/reaper-intro.mp3';
 import nemesisEnter from './audio/nemesis-enter.mp3';
 import nemesisAbility1 from './audio/nemesis-ability1.mp3';
 import nemesisUltimate from './audio/nemesis-ultimate.mp3';
 import nemesisIntro from './audio/nemesis-intro.mp3';
-import reaperLastwords from './audio/reaper-lastwords.mp3';
 import reaperUlt from './audio/reaper-ult.mp3';
 import reinhardtBarrier from './audio/reinhardt-barrier.mp3';
 import reinhardtUlt from './audio/reinhardt-ult.mp3';
@@ -392,11 +397,16 @@ export const abilityAudioFiles = {
     'ramattra-ultimate': ramattraUltimate,
     'ramattra-ultimate-resolve': ramattraUltimateResolve,
     'ramattra-intro': ramattraIntro,
+    'reaper-enter': reaperEnter,
+    'reaper-ability1': reaperAbility1,
+    'reaper-ability2': reaperAbility2,
+    'reaper-ultimate': reaperUltimate,
+    'reaper-ultimate-resolve': reaperUltimateResolve,
+    'reaper-intro': reaperIntro,
     'nemesis-enter': nemesisEnter,
     'nemesis-ability1': nemesisAbility1,
     'nemesis-ultimate': nemesisUltimate,
     'nemesis-intro': nemesisIntro,
-    'reaper-lastwords': reaperLastwords,
     'reaper-ult': reaperUlt,
     'reinhardt-barrier': reinhardtBarrier,
     'reinhardt-ult': reinhardtUlt,

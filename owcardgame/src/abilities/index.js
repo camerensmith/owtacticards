@@ -24,6 +24,7 @@ import orisa from './heroes/orisa';
 import pharah from './heroes/pharah';
 import ramattra from './heroes/ramattra';
 import nemesis from './heroes/nemesis';
+import reaper from './heroes/reaper';
 
 export const abilities = {
     ashe,
@@ -48,6 +49,7 @@ export const abilities = {
     pharah,
     ramattra,
     nemesis,
+    reaper,
 };
 
 export default abilities;

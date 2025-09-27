@@ -930,6 +930,10 @@ function checkOnEnterAbilities(playerHeroId, rowId, playerNum) {
         abilitiesIndex.nemesis.onEnter({ playerHeroId, rowId });
         return;
     }
+    if (heroId === 'reaper' && abilitiesIndex?.reaper?.onEnter) {
+        abilitiesIndex.reaper.onEnter({ playerHeroId, rowId });
+        return;
+    }
 
     if (heroId === 'mercy' && abilitiesIndex?.mercy?.onEnter) {
         abilitiesIndex.mercy.onEnter({ playerHeroId, rowId });
@@ -1846,6 +1850,13 @@ export default function App() {
             abilitiesIndex.nemesis.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
         } catch (e) {
             console.log('Error executing NEMESIS ultimate:', e);
+        }
+    } else if (heroId === 'reaper' && abilitiesIndex?.reaper?.onUltimate) {
+        try {
+            window.__ow_trackUltimateUsed?.(heroId, 'Reaper', 'Death Blossom', playerNum, rowId, adjustedCost);
+            abilitiesIndex.reaper.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
+        } catch (e) {
+            console.log('Error executing REAPER ultimate:', e);
         }
     } else {
                         console.log(`Executing ultimate for ${playerHeroId} in ${rowId} (cost: ${adjustedCost})`);
