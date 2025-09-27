@@ -660,6 +660,174 @@ When a hero is automatically drawn during gameplay (NOT during initial setup), t
 
 3. **System Handles Player IDs Automatically**: The `getAudioFile()` function automatically converts player-specific IDs (e.g., `1lucio-intro`) to hero-specific keys (e.g., `lucio-intro`).
 
+## **Ramattra & Nemesis Implementation - Complete Guide**
+
+### **Overview**
+Ramattra and Nemesis Ramattra are unique heroes that require special transformation mechanics, custom card removal, and persistent effects. This section documents all the challenges encountered and solutions implemented.
+
+### **Key Challenges & Solutions**
+
+#### **1. Hero Transformation System**
+**Challenge**: Ramattra needs to transform into Nemesis when using his ultimate, requiring removal of alive hero and addition of special card.
+
+**Solution**: Created new action type `REMOVE_ALIVE_CARD` for removing alive heroes (bypasses health check).
+
+```javascript
+// In App.js - Added new action type
+REMOVE_ALIVE_CARD: 'remove-alive-card',
+
+// In reducer - Added case for removing alive cards
+case ACTIONS.REMOVE_ALIVE_CARD: {
+    // Same logic as REMOVE_DEAD_CARD but for alive heroes
+}
+
+// In Ramattra ultimate
+window.__ow_dispatchAction?.({
+    type: 'remove-alive-card',  // Note: use string, not constant
+    payload: { cardId: playerHeroId }
+});
+```
+
+#### **2. Special Card Intro Sounds**
+**Challenge**: Special cards (Nemesis, D.Va+MEKA, BOB) weren't playing intro sounds when added to hand.
+
+**Solution**: Added intro sound logic to `ADD_SPECIAL_CARD_TO_HAND` reducer.
+
+```javascript
+// In App.js - ADD_SPECIAL_CARD_TO_HAND reducer
+const result = produce(gameState, (draft) => {
+    // ... card creation logic
+});
+
+// Play intro sound AFTER state update but BEFORE return
+console.log(`ADD_SPECIAL_CARD_TO_HAND: Attempting to play intro sound for ${cardId}`);
+try {
+    const introAudioSrc = getAudioFile(`${cardId}-intro`);
+    if (introAudioSrc) {
+        const introAudio = new Audio(introAudioSrc);
+        introAudio.play();
+    }
+} catch (err) {
+    console.log(`${cardId} intro audio creation failed:`, err);
+}
+
+return result;
+```
+
+#### **3. Card-Level Overlay Rendering**
+**Challenge**: AnnihilationOverlay was rendering at row level, causing it to appear in center of row instead of tracking Nemesis.
+
+**Solution**: Moved overlay rendering to individual Card component.
+
+```javascript
+// In Card.js - Render overlays at card level
+{health > 0 && Array.isArray(effects) && effects.some(e => e?.id === 'annihilation') && (
+    <AnnihilationOverlay playerHeroId={playerHeroId} rowId={rowId} />
+)}
+
+// In BoardRow.js - REMOVED overlay rendering
+// (No longer renders overlays at row level)
+```
+
+#### **4. Window Dispatch Function**
+**Challenge**: Hero modules couldn't dispatch actions because they don't have access to dispatch function.
+
+**Solution**: Created `window.__ow_dispatchAction` function.
+
+```javascript
+// In App.js - Added window function
+window.__ow_dispatchAction = (action) => {
+    dispatch(action);
+};
+
+// In hero modules - Use window function
+window.__ow_dispatchAction?.({
+    type: 'remove-alive-card',
+    payload: { cardId: playerHeroId }
+});
+```
+
+#### **5. Focus Images for Special Cards**
+**Challenge**: Ramattra and Nemesis were missing from shift-click focus system.
+
+**Solution**: Added focus image imports and mappings.
+
+```javascript
+// In imageImports.js
+import ramattraFocus from './heroes/cardfocus/ramattra.webp';
+import nemesisFocus from './heroes/cardfocus/nemesis.webp';
+
+export const heroCardFocusImages = {
+    // ... other heroes
+    ramattra: ramattraFocus,
+    nemesis: nemesisFocus,
+};
+```
+
+#### **6. Persistent Turn Effects**
+**Challenge**: Nemesis Annihilation needed to trigger every turn start.
+
+**Solution**: Added processing to TurnEffectsRunner.
+
+```javascript
+// In TurnEffectsRunner.js - Added Nemesis processing
+// Process Nemesis Annihilation effects
+const row = gameState.rows[rowId];
+if (row && row.cardIds) {
+    for (let cardId of row.cardIds) {
+        const card = gameState.playerCards[`player${playerTurn}cards`]?.cards?.[cardId];
+        if (card && card.id === 'nemesis' && Array.isArray(card.effects)) {
+            const hasAnnihilation = card.effects.some(effect => 
+                effect?.id === 'annihilation' && effect?.type === 'persistent'
+            );
+            if (hasAnnihilation) {
+                processAnnihilation(cardId, rowId);
+            }
+        }
+    }
+}
+```
+
+### **File Structure for Ramattra/Nemesis**
+
+```
+src/abilities/heroes/
+├── ramattra.js          # Ramattra abilities + transformation
+├── nemesis.js           # Nemesis abilities + Annihilation processing
+
+src/components/effects/
+├── AnnihilationOverlay.js  # Visual effect for Nemesis
+
+src/assets/
+├── audio/
+│   ├── ramattra-*.mp3   # Ramattra audio files
+│   └── nemesis-*.mp3    # Nemesis audio files
+├── heroes/cardfocus/
+│   ├── ramattra.webp    # Focus images
+│   └── nemesis.webp
+└── annihilation.png     # Overlay icon
+```
+
+### **Key Implementation Notes**
+
+1. **Transformation Timing**: Ramattra transforms immediately when ultimate is used, not at end of turn
+2. **Special Card Handling**: Nemesis is treated as special card (ignores hand size limits)
+3. **Effect Cleanup**: Annihilation effect ends when Nemesis dies
+4. **Overlay Positioning**: Card-level overlays track the hero, row-level overlays don't
+5. **Audio Integration**: Special cards need intro sounds in ADD_SPECIAL_CARD_TO_HAND reducer
+6. **Action Dispatch**: Use window functions for dispatching actions from hero modules
+
+### **Testing Checklist**
+
+- [ ] Ramattra ultimate removes Ramattra from board
+- [ ] Nemesis added to hand with intro sound
+- [ ] Nemesis Pummel ability works (damage = shield value, pierces shields)
+- [ ] Nemesis Annihilation ultimate adds persistent effect
+- [ ] Annihilation overlay appears and tracks Nemesis
+- [ ] Annihilation damage triggers every turn start
+- [ ] Effect ends when Nemesis dies
+- [ ] Both heroes have shift-click focus images
+
 #### Common Mistakes:
 - ❌ **Missing Imports**: Audio files imported but not mapped
 - ❌ **Missing Mappings**: Audio files mapped but not imported

@@ -3,6 +3,11 @@ import { selectRowTarget } from '../engine/targeting';
 import { showMessage as showToast, clearMessage as clearToast } from '../engine/targetingBus';
 import { playAudioByKey } from '../../assets/imageImports';
 
+// Junkrat intro sound on draw
+export function onDraw({ playerHeroId }) {
+    try { playAudioByKey('junkrat-intro'); } catch {}
+}
+
 // onEnter: Nothing happens (empty function)
 export function onEnter({ playerHeroId, rowId }) {
     // Junkrat's onEnter does nothing - Total Mayhem is a death ability
@@ -154,4 +159,4 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
     }
 }
 
-export default { onEnter, onDeath, onUltimate };
+export default { onDraw, onEnter, onDeath, onUltimate };

@@ -52,6 +52,7 @@ export const ACTIONS = {
     CLEANUP_DVA_SUITED_UP: 'cleanup-dva-suited-up',
     REMOVE_SPECIAL_CARD: 'remove-special-card',
     REMOVE_DEAD_CARD: 'remove-dead-card',
+    REMOVE_ALIVE_CARD: 'remove-alive-card',
     UPDATE_ROW: 'update-row',
     UPDATE_SYNERGY: 'update-synergy',
     DEDUCT_SYNERGY: 'deduct-synergy',
@@ -474,11 +475,12 @@ function reducer(gameState, action) {
 
         // Add special card to hand (ignores hand size limit)
         case ACTIONS.ADD_SPECIAL_CARD_TO_HAND: {
+            console.log('ADD_SPECIAL_CARD_TO_HAND reducer called with:', action.payload);
             const { playerNum, cardId } = action.payload; // cardId is base hero id, e.g. 'dvameka'
             const playerKey = `player${playerNum}cards`;
             const handId = `player${playerNum}hand`;
 
-            return produce(gameState, (draft) => {
+            const result = produce(gameState, (draft) => {
                 const heroData = data.heroes[cardId];
                 if (!heroData) return;
 
@@ -511,6 +513,28 @@ function reducer(gameState, action) {
                 // Add to top of hand using the player-specific id
                 draft.rows[handId].cardIds.unshift(playerCardId);
             });
+            
+            // Play intro sound for special cards (after the reducer returns)
+            console.log(`ADD_SPECIAL_CARD_TO_HAND: Attempting to play intro sound for ${cardId}`);
+            try {
+                const introAudioSrc = getAudioFile(`${cardId}-intro`);
+                console.log(`ADD_SPECIAL_CARD_TO_HAND: Intro audio src for ${cardId}:`, introAudioSrc);
+                if (introAudioSrc) {
+                    console.log(`Playing ${cardId} intro sound...`);
+                    const introAudio = new Audio(introAudioSrc);
+                    introAudio.play().then(() => {
+                        console.log(`${cardId} intro sound played successfully`);
+                    }).catch(err => {
+                        console.log(`${cardId} intro sound play failed:`, err);
+                    });
+                } else {
+                    console.log(`No intro audio found for ${cardId}`);
+                }
+            } catch (err) {
+                console.log(`${cardId} intro audio creation failed:`, err);
+            }
+            
+            return result;
         }
 
         // Replace D.Va+MEKA with D.Va
@@ -591,24 +615,76 @@ function reducer(gameState, action) {
             const { cardId } = action.payload;
             const playerNum = parseInt(cardId[0]);
             const playerKey = `player${playerNum}cards`;
+            
+            console.log('REMOVE_DEAD_CARD: Removing card:', cardId);
+            console.log('REMOVE_DEAD_CARD: PlayerNum:', playerNum);
 
             return produce(gameState, (draft) => {
                 // Find and remove from all rows
                 const allRows = ['1f', '1m', '1b', '2f', '2m', '2b'];
+                let cardFound = false;
                 for (const rowId of allRows) {
                     const row = draft.rows[rowId];
                     if (row && Array.isArray(row.cardIds)) {
                         const cardIndex = row.cardIds.indexOf(cardId);
                         if (cardIndex !== -1) {
+                            console.log('REMOVE_DEAD_CARD: Found card in row:', rowId, 'at index:', cardIndex);
                             row.cardIds.splice(cardIndex, 1);
+                            cardFound = true;
                             break; // Card found and removed, exit loop
                         }
                     }
                 }
                 
+                if (!cardFound) {
+                    console.log('REMOVE_DEAD_CARD: Card not found in any row!');
+                }
+                
                 // Remove from player cards
                 if (draft.playerCards[playerKey]?.cards?.[cardId]) {
+                    console.log('REMOVE_DEAD_CARD: Removing from player cards');
                     delete draft.playerCards[playerKey].cards[cardId];
+                } else {
+                    console.log('REMOVE_DEAD_CARD: Card not found in player cards');
+                }
+            });
+        }
+
+        case ACTIONS.REMOVE_ALIVE_CARD: {
+            const { cardId } = action.payload;
+            const playerNum = parseInt(cardId[0]);
+            const playerKey = `player${playerNum}cards`;
+            
+            console.log('REMOVE_ALIVE_CARD: Removing card:', cardId);
+            console.log('REMOVE_ALIVE_CARD: PlayerNum:', playerNum);
+
+            return produce(gameState, (draft) => {
+                // Find and remove from all rows
+                const allRows = ['1f', '1m', '1b', '2f', '2m', '2b'];
+                let cardFound = false;
+                for (const rowId of allRows) {
+                    const row = draft.rows[rowId];
+                    if (row && Array.isArray(row.cardIds)) {
+                        const cardIndex = row.cardIds.indexOf(cardId);
+                        if (cardIndex !== -1) {
+                            console.log('REMOVE_ALIVE_CARD: Found card in row:', rowId, 'at index:', cardIndex);
+                            row.cardIds.splice(cardIndex, 1);
+                            cardFound = true;
+                            break; // Card found and removed, exit loop
+                        }
+                    }
+                }
+                
+                if (!cardFound) {
+                    console.log('REMOVE_ALIVE_CARD: Card not found in any row!');
+                }
+                
+                // Remove from player cards
+                if (draft.playerCards[playerKey]?.cards?.[cardId]) {
+                    console.log('REMOVE_ALIVE_CARD: Removing from player cards');
+                    delete draft.playerCards[playerKey].cards[cardId];
+                } else {
+                    console.log('REMOVE_ALIVE_CARD: Card not found in player cards');
                 }
             });
         }
@@ -844,6 +920,14 @@ function checkOnEnterAbilities(playerHeroId, rowId, playerNum) {
     }
     if (heroId === 'pharah' && abilitiesIndex?.pharah?.onEnter) {
         abilitiesIndex.pharah.onEnter({ playerHeroId, rowId });
+        return;
+    }
+    if (heroId === 'ramattra' && abilitiesIndex?.ramattra?.onEnter) {
+        abilitiesIndex.ramattra.onEnter({ playerHeroId, rowId });
+        return;
+    }
+    if (heroId === 'nemesis' && abilitiesIndex?.nemesis?.onEnter) {
+        abilitiesIndex.nemesis.onEnter({ playerHeroId, rowId });
         return;
     }
 
@@ -1126,6 +1210,7 @@ export default function App() {
             } catch { return false; }
         };
         window.__ow_addSpecialCardToHand = (playerNum, cardId) => {
+            console.log('addSpecialCardToHand called with:', { playerNum, cardId });
             // Add special card to hand (ignores hand size limit)
             dispatch({
                 type: ACTIONS.ADD_SPECIAL_CARD_TO_HAND,
@@ -1168,6 +1253,10 @@ export default function App() {
                 type: ACTIONS.TRACK_ULTIMATE_USED,
                 payload: { heroId, heroName, abilityName, playerNum, rowId, cost }
             });
+        };
+        
+        window.__ow_dispatchAction = (action) => {
+            dispatch(action);
         };
         window.__ow_executeDuplicatedUltimate = async (lastUltimate, playerHeroId, rowId) => {
             // Execute the duplicated ultimate by calling the original hero's ability
@@ -1236,7 +1325,7 @@ export default function App() {
                 }
             }
         };
-        return () => { window.__ow_appendRowEffect = null; window.__ow_getRow = null; window.__ow_setRowArray = null; window.__ow_updateSynergy = null; window.__ow_getCard = null; window.__ow_getMaxHealth = null; window.__ow_setCardHealth = null; window.__ow_isSpecial = null; window.__ow_setRowPower = null; window.__ow_setInvulnerableSlots = null; window.__ow_clearInvulnerableSlots = null; window.__ow_isSlotInvulnerable = null; window.__ow_removeRowEffect = null; window.__ow_cleanupImmortalityField = null; window.__ow_dealDamage = null; window.__ow_dispatchShieldUpdate = null; window.__ow_appendCardEffect = null; window.__ow_removeCardEffect = null; window.__ow_moveCardToRow = null; window.__ow_isRowFull = null; window.__ow_addSpecialCardToHand = null; window.__ow_returnDvaToHand = null; window.__ow_replaceWithDva = null; window.__ow_cleanupDvaSuitedUp = null; window.__ow_removeSpecialCard = null; window.__ow_getLastUltimateUsed = null; window.__ow_trackUltimateUsed = null; window.__ow_executeDuplicatedUltimate = null; };
+        return () => { window.__ow_appendRowEffect = null; window.__ow_getRow = null; window.__ow_setRowArray = null; window.__ow_updateSynergy = null; window.__ow_getCard = null; window.__ow_getMaxHealth = null; window.__ow_setCardHealth = null; window.__ow_isSpecial = null; window.__ow_setRowPower = null; window.__ow_setInvulnerableSlots = null; window.__ow_clearInvulnerableSlots = null; window.__ow_isSlotInvulnerable = null; window.__ow_removeRowEffect = null; window.__ow_cleanupImmortalityField = null; window.__ow_dealDamage = null; window.__ow_dispatchShieldUpdate = null; window.__ow_appendCardEffect = null; window.__ow_removeCardEffect = null; window.__ow_moveCardToRow = null; window.__ow_isRowFull = null; window.__ow_addSpecialCardToHand = null; window.__ow_returnDvaToHand = null; window.__ow_replaceWithDva = null; window.__ow_cleanupDvaSuitedUp = null; window.__ow_removeSpecialCard = null; window.__ow_getLastUltimateUsed = null; window.__ow_trackUltimateUsed = null; window.__ow_dispatchAction = null; window.__ow_executeDuplicatedUltimate = null; };
     }, [gameState]);
     // Game logic state
     const [gameLogic, setGameLogic] = useState({
@@ -1743,6 +1832,20 @@ export default function App() {
             abilitiesIndex.pharah.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
         } catch (e) {
             console.log('Error executing PHARAH ultimate:', e);
+        }
+    } else if (heroId === 'ramattra' && abilitiesIndex?.ramattra?.onUltimate) {
+        try {
+            window.__ow_trackUltimateUsed?.(heroId, 'Ramattra', 'Ravenous Vortex', playerNum, rowId, adjustedCost);
+            abilitiesIndex.ramattra.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
+        } catch (e) {
+            console.log('Error executing RAMATTRA ultimate:', e);
+        }
+    } else if (heroId === 'nemesis' && abilitiesIndex?.nemesis?.onUltimate) {
+        try {
+            window.__ow_trackUltimateUsed?.(heroId, 'Nemesis', 'Annihilation', playerNum, rowId, adjustedCost);
+            abilitiesIndex.nemesis.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
+        } catch (e) {
+            console.log('Error executing NEMESIS ultimate:', e);
         }
     } else {
                         console.log(`Executing ultimate for ${playerHeroId} in ${rowId} (cost: ${adjustedCost})`);

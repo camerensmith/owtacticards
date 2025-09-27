@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useRef } from 'react';
 import gameContext from 'context/gameContext';
 import turnContext from 'context/turnContext';
 import abilities from '../index';
+import { processAnnihilation } from '../heroes/nemesis';
 
 export default function TurnEffectsRunner() {
     const { gameState } = useContext(gameContext);
@@ -89,8 +90,26 @@ export default function TurnEffectsRunner() {
                             if (abilities[effect.hero]?.updateSuperchargerSynergy) {
                                 abilities[effect.hero].updateSuperchargerSynergy(rowId);
                             }
-                        } else if (abilities[effect.hero]?.[effect.id]?.run) {
-                            abilities[effect.hero][effect.id].run(rowId);
+                        }
+                    }
+                }
+                
+                // Process Nemesis Annihilation effects
+                const row = gameState.rows[rowId];
+                if (row && row.cardIds) {
+                    for (let cardId of row.cardIds) {
+                        const card = gameState.playerCards[`player${playerTurn}cards`]?.cards?.[cardId];
+                        if (card && card.id === 'nemesis' && Array.isArray(card.effects)) {
+                            const hasAnnihilation = card.effects.some(effect => 
+                                effect?.id === 'annihilation' && effect?.type === 'persistent'
+                            );
+                            if (hasAnnihilation) {
+                                try {
+                                    processAnnihilation(cardId, rowId);
+                                } catch (error) {
+                                    console.error(`TurnEffectsRunner: Error processing Nemesis Annihilation:`, error);
+                                }
+                            }
                         }
                     }
                 }

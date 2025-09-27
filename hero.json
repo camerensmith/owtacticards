@@ -242,14 +242,14 @@
   {
     "name": "Ramattra (Nemesis)",
     "class": "offense",
-    "hp": 2,
+    "hp": 4,
     "front_power": 2,
     "front_synergy": 2,
     "middle_power": 2,
     "middle_synergy": 1,
     "back_power": 2,
     "back_synergy": 1,
-    "on_enter1": "Void Shift — Discard Ramattra and move Nemesis Ramattra to any open space on your side.",
+    "on_enter1": "Pummel — Deal X damage to an enemy in the opposing row. X is their Shield value. Pierces Shields. ",
     "ultimate": "Annihilation (4): All enemies in the opposite row and column take 1 damage at the start of your turn until Nemesis Ramattra is defeated.",
     "special": true
   },
@@ -290,7 +290,7 @@
     "back_power": 3,
     "back_synergy": 1,
     "on_enter1": "Void Barrier — Place 1 Shield token on Ramattra and 1 Shield on an ally in any row.",
-    "ultimate": "Ravenous Vortex (2): Shuffle positions of Heroes in the opposite row. Deal 1 damage to the Hero positioned opposite Ramattra. After, remove and put Nemesis Ramattra into your hand."
+    "ultimate": "Ravenous Vortex (3): Shuffle positions of Heroes in the opposite row. Deal 1 damage to the Hero positioned opposite Ramattra. After, remove and put Nemesis Ramattra into your hand."
   },
   {
     "name": "Reaper",

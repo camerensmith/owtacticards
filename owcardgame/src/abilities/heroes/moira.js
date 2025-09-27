@@ -4,6 +4,11 @@ import { dealDamage } from '../engine/damageBus';
 import { playAudioByKey } from '../../assets/imageImports';
 import effectsBus, { Effects } from '../engine/effectsBus';
 
+// Moira intro sound on draw
+export function onDraw({ playerHeroId }) {
+    try { playAudioByKey('moira-intro'); } catch {}
+}
+
 // On Enter: Biotic Grasp — Deal 1 to any enemy ignoring shields, then heal 2 to any ally.
 export async function onEnter({ playerHeroId, rowId }) {
     const playerNum = parseInt(playerHeroId[0]);
@@ -117,6 +122,6 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
     }
 }
 
-export default { onEnter, onUltimate };
+export default { onDraw, onEnter, onUltimate };
 
 

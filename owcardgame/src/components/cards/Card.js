@@ -9,6 +9,7 @@ import ShieldBashOverlay from '../effects/ShieldBashOverlay';
 import SuitedUpOverlay from '../effects/SuitedUpOverlay';
 import MercyHealOverlay from '../effects/MercyHealOverlay';
 import MercyDamageOverlay from '../effects/MercyDamageOverlay';
+import AnnihilationOverlay from '../effects/AnnihilationOverlay';
 import { heroCardImages } from '../../assets/imageImports';
 import ContextMenu from './ContextMenu';
 import actionsBus, { Actions } from '../../abilities/engine/actionsBus';
@@ -190,6 +191,9 @@ export default function Card(props) {
                             )}
                             {health > 0 && Array.isArray(effects) && effects.some(e => e?.id === 'mercy-damage') && (
                                 <MercyDamageOverlay playerHeroId={playerHeroId} rowId={rowId} />
+                            )}
+                            {health > 0 && Array.isArray(effects) && effects.some(e => e?.id === 'annihilation') && (
+                                <AnnihilationOverlay playerHeroId={playerHeroId} rowId={rowId} />
                             )}
                             {imageLoaded === playerHeroId &&
                                 (turnState.playerTurn === playerNum ||

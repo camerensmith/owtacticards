@@ -577,7 +577,7 @@ const data = {
             id: 'nemesis',
             name: 'Ramattra (Nemesis)',
             image: 'assets/heroes/nemesis.png',
-            health: 2,
+            health: 4,
             power: { f: 2, m: 2, b: 2 },
             synergy: { f: 2, m: 1, b: 1 },
             isImplemented: false,
@@ -785,7 +785,7 @@ const data = {
                     value: 1,
                 },
             },
-            health: 4,
+            health: 3,
             power: {
                 f: 2,
                 m: 1,

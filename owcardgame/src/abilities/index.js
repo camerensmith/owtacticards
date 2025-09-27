@@ -22,6 +22,8 @@ import mercy from './heroes/mercy';
 import moira from './heroes/moira';
 import orisa from './heroes/orisa';
 import pharah from './heroes/pharah';
+import ramattra from './heroes/ramattra';
+import nemesis from './heroes/nemesis';
 
 export const abilities = {
     ashe,
@@ -44,6 +46,8 @@ export const abilities = {
     moira,
     orisa,
     pharah,
+    ramattra,
+    nemesis,
 };
 
 export default abilities;

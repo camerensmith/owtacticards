@@ -21,6 +21,7 @@ import moira from './heroes/cards/moira.webp';
 import orisa from './heroes/cards/orisa.webp';
 import protectiveBarrier from './heroes/cards/protectivebarrier.png';
 import clearDead from './cleardead.png';
+import annihilation from './annihilation.png';
 import pharah from './heroes/cards/pharah.webp';
 import reaper from './heroes/cards/reaper.webp';
 import reinhardt from './heroes/cards/reinhardt.webp';
@@ -79,6 +80,8 @@ import mercyFocus from './heroes/cardfocus/mercy.webp';
 import moiraFocus from './heroes/cardfocus/moira.webp';
 import orisaFocus from './heroes/cardfocus/orisa.webp';
 import pharahFocus from './heroes/cardfocus/pharah.webp';
+import ramattraFocus from './heroes/cardfocus/ramattra.webp';
+import nemesisFocus from './heroes/cardfocus/nemesis.webp';
 import reaperFocus from './heroes/cardfocus/reaper.webp';
 import reinhardtFocus from './heroes/cardfocus/reinhardt.webp';
 import roadhogFocus from './heroes/cardfocus/roadhog.webp';
@@ -132,6 +135,7 @@ import baptisteAbility1 from './audio/baptiste-ability1.mp3';
 import baptisteAbility2 from './audio/baptiste-ability2.mp3';
 import bastionUlt from './audio/bastion-ult.mp3';
 import bastionIntro from './audio/bastion-intro.mp3';
+import bobIntro from './audio/bob-intro.mp3';
 import bastionEnter from './audio/bastion-enter.mp3';
 import bastionAbility1 from './audio/bastion-ability1.mp3';
 import bastionAbility2 from './audio/bastion-ability2.mp3';
@@ -199,6 +203,8 @@ import moiraEnter from './audio/moira-enter.mp3';
 import moiraAbility1 from './audio/moira-ability1.mp3';
 import moiraUltimate from './audio/moira-ultimate.mp3';
 import moiraUltimateResolve from './audio/moira-ultimate-resolve.mp3';
+import moiraIntro from './audio/moira-intro.mp3';
+import junkratIntro from './audio/junkrat-intro.mp3';
 import orisaEnter from './audio/orisa-enter.mp3';
 import orisaUltimate from './audio/orisa-ultimate.mp3';
 import orisaIntro from './audio/orisa-intro.mp3';
@@ -207,6 +213,15 @@ import pharahAbility1 from './audio/pharah-ability1.mp3';
 import pharahUltimate from './audio/pharah-ultimate.mp3';
 import pharahUltimateResolve from './audio/pharah-ultimate-resolve.mp3';
 import pharahIntro from './audio/pharah-intro.mp3';
+import ramattraEnter from './audio/ramattra-enter.mp3';
+import ramattraAbility1 from './audio/ramattra-ability1.mp3';
+import ramattraUltimate from './audio/ramattra-ultimate.mp3';
+import ramattraUltimateResolve from './audio/ramattra-ultimate-resolve.mp3';
+import ramattraIntro from './audio/ramattra-intro.mp3';
+import nemesisEnter from './audio/nemesis-enter.mp3';
+import nemesisAbility1 from './audio/nemesis-ability1.mp3';
+import nemesisUltimate from './audio/nemesis-ultimate.mp3';
+import nemesisIntro from './audio/nemesis-intro.mp3';
 import reaperLastwords from './audio/reaper-lastwords.mp3';
 import reaperUlt from './audio/reaper-ult.mp3';
 import reinhardtBarrier from './audio/reinhardt-barrier.mp3';
@@ -246,7 +261,7 @@ export const heroIconImages = {
 };
 
 export const heroCardFocusImages = {
-    ana: anaFocus, ashe: asheFocus, baptiste: baptisteFocus, bastion: bastionFocus, bob: bobFocus, brigitte: brigitteFocus, doomfist: doomfistFocus, dva: dvaFocus, dvameka: dvamekaFocus, echo: echoFocus, genji: genjiFocus, hanzo: hanzoFocus, junkrat: junkratFocus, lucio: lucioFocus, mccree: mccreeFocus, mei: meiFocus, mercy: mercyFocus, moira: moiraFocus, orisa: orisaFocus, pharah: pharahFocus, reaper: reaperFocus, reinhardt: reinhardtFocus, roadhog: roadhogFocus, sigma: sigmaFocus, soldier: soldierFocus, sombra: sombraFocus, symmetra: symmetraFocus, torbjorn: torbjornFocus, tracer: tracerFocus, widowmaker: widowmakerFocus, winston: winstonFocus, wreckingball: wreckingballFocus, zarya: zaryaFocus, zenyatta: zenyattaFocus
+    ana: anaFocus, ashe: asheFocus, baptiste: baptisteFocus, bastion: bastionFocus, bob: bobFocus, brigitte: brigitteFocus, doomfist: doomfistFocus, dva: dvaFocus, dvameka: dvamekaFocus, echo: echoFocus, genji: genjiFocus, hanzo: hanzoFocus, junkrat: junkratFocus, lucio: lucioFocus, mccree: mccreeFocus, mei: meiFocus, mercy: mercyFocus, moira: moiraFocus, orisa: orisaFocus, pharah: pharahFocus, ramattra: ramattraFocus, nemesis: nemesisFocus, reaper: reaperFocus, reinhardt: reinhardtFocus, roadhog: roadhogFocus, sigma: sigmaFocus, soldier: soldierFocus, sombra: sombraFocus, symmetra: symmetraFocus, torbjorn: torbjornFocus, tracer: tracerFocus, widowmaker: widowmakerFocus, winston: winstonFocus, wreckingball: wreckingballFocus, zarya: zaryaFocus, zenyatta: zenyattaFocus
 };
 
 export const otherImages = {
@@ -293,6 +308,7 @@ export const abilityAudioFiles = {
     'baptiste-immortality': baptisteImmortality,
     'baptiste-ultimate': baptisteUltimate,
     'bastion-intro': bastionIntro,
+    'bob-intro': bobIntro,
     'bastion-enter': bastionEnter,
     'bastion-ability1': bastionAbility1,
     'bastion-ability2': bastionAbility2,
@@ -361,6 +377,8 @@ export const abilityAudioFiles = {
     'moira-ability1': moiraAbility1,
     'moira-ultimate': moiraUltimate,
     'moira-ultimate-resolve': moiraUltimateResolve,
+    'moira-intro': moiraIntro,
+    'junkrat-intro': junkratIntro,
     'orisa-enter': orisaEnter,
     'orisa-ultimate': orisaUltimate,
     'orisa-intro': orisaIntro,
@@ -369,6 +387,15 @@ export const abilityAudioFiles = {
     'pharah-ultimate': pharahUltimate,
     'pharah-ultimate-resolve': pharahUltimateResolve,
     'pharah-intro': pharahIntro,
+    'ramattra-enter': ramattraEnter,
+    'ramattra-ability1': ramattraAbility1,
+    'ramattra-ultimate': ramattraUltimate,
+    'ramattra-ultimate-resolve': ramattraUltimateResolve,
+    'ramattra-intro': ramattraIntro,
+    'nemesis-enter': nemesisEnter,
+    'nemesis-ability1': nemesisAbility1,
+    'nemesis-ultimate': nemesisUltimate,
+    'nemesis-intro': nemesisIntro,
     'reaper-lastwords': reaperLastwords,
     'reaper-ult': reaperUlt,
     'reinhardt-barrier': reinhardtBarrier,
