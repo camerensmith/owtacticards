@@ -955,6 +955,10 @@ function checkOnEnterAbilities(playerHeroId, rowId, playerNum) {
         abilitiesIndex.soldier.onEnter({ playerHeroId, rowId });
         return;
     }
+    if (heroId === 'sombra' && abilitiesIndex?.sombra?.onEnter) {
+        abilitiesIndex.sombra.onEnter({ playerHeroId, rowId });
+        return;
+    }
 
     if (heroId === 'mercy' && abilitiesIndex?.mercy?.onEnter) {
         abilitiesIndex.mercy.onEnter({ playerHeroId, rowId });
@@ -1925,6 +1929,13 @@ export default function App() {
             abilitiesIndex.soldier.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
         } catch (e) {
             console.log('Error executing SOLDIER ultimate:', e);
+        }
+    } else if (heroId === 'sombra' && abilitiesIndex?.sombra?.onUltimate) {
+        try {
+            window.__ow_trackUltimateUsed?.(heroId, 'Sombra', 'E.M.P.', playerNum, rowId, adjustedCost);
+            abilitiesIndex.sombra.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
+        } catch (e) {
+            console.log('Error executing SOMBRA ultimate:', e);
         }
     } else {
                         console.log(`Executing ultimate for ${playerHeroId} in ${rowId} (cost: ${adjustedCost})`);

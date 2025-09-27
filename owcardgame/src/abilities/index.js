@@ -30,6 +30,7 @@ import reinhardt from './heroes/reinhardt';
 import roadhog from './heroes/roadhog';
 import sigma from './heroes/sigma';
 import soldier from './heroes/soldier';
+import sombra from './heroes/sombra';
 
 export const abilities = {
     ashe,
@@ -60,6 +61,7 @@ export const abilities = {
     roadhog,
     sigma,
     soldier,
+    sombra,
 };
 
 export default abilities;

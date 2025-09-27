@@ -2825,3 +2825,168 @@ Modify the `HeroCounter` component to display custom indicators for specific row
 - [ ] Test shield absorption mechanics
 - [ ] Verify visual indicators appear correctly
 - [ ] Test effect persistence when source hero dies
+
+## Sombra Implementation Guide
+
+### Overview
+Sombra demonstrates advanced patterns including comprehensive token cleanup systems, effect type filtering, and global board-wide abilities that affect all rows on both sides.
+
+### Key Abilities
+
+#### HACK (onEnter1)
+- **Targeting**: Any enemy hero (cannot target allies or self)
+- **Shield Removal**: Removes all shield tokens from target hero
+- **Effect Cleanup**: Removes ALL effects belonging to target hero from all rows
+- **Validation**: Only targets living heroes
+- **Visual Feedback**: Shows floating text for removed shields
+
+#### E.M.P. (Ultimate, Cost 3)
+- **Global Scope**: Affects all rows on both sides of the board
+- **Comprehensive Cleanup**: Removes all row effects except invulnerability/immortality
+- **Shield Removal**: Removes all shields from all heroes
+- **Turret Destruction**: Immediately destroys all turrets
+- **Instant Cast**: Resolves immediately without targeting
+
+### Token Cleanup System
+
+#### Effect Type Classification
+The game uses many different effect types, not just `type: 'token'`:
+
+```javascript
+// Common effect types in the codebase
+'damage-reduction'     // Hanzo Sonic Arrow
+'damageReduction'      // Orisa Protective Barrier  
+'synergyBoost'         // Orisa Supercharger
+'healing'              // Mercy, Lúcio healing tokens
+'immunity'             // Mei Cryo Freeze
+'invulnerability'      // Baptiste Immortality Field
+'barrier'              // Reinhardt, Sigma barriers
+'ultimateCostModifier' // Mei Blizzard
+'persistent'           // Nemesis Annihilation
+'temporaryHP'          // Lifeweaver Tree of Life
+'debuff'               // Brigitte Shield Bash
+```
+
+#### HACK Cleanup Pattern
+```javascript
+// Remove all effects belonging to target hero
+const effectsToRemove = row.allyEffects.filter(effect => 
+    effect?.sourceCardId === target.cardId
+);
+for (const effect of effectsToRemove) {
+    window.__ow_removeRowEffect?.(rowId, 'allyEffects', effect.id);
+    removedTokens++;
+}
+```
+
+#### E.M.P. Cleanup Pattern
+```javascript
+// Remove all effects except defensive ones
+const effectsToRemove = row.allyEffects.filter(effect => 
+    effect?.type !== 'invulnerability' && effect?.type !== 'immortality'
+);
+for (const effect of effectsToRemove) {
+    window.__ow_removeRowEffect?.(rowId, 'allyEffects', effect.id);
+    totalTokensRemoved++;
+}
+```
+
+### Key Learning Points
+
+#### 1. Comprehensive Effect Cleanup
+- **Problem**: Only looking for `type: 'token'` misses most effects
+- **Solution**: Remove all effects by `sourceCardId` (HACK) or all effects except defensive ones (E.M.P.)
+- **Pattern**: Use descriptive effect types, not generic "token" classification
+
+#### 2. Effect Type Preservation
+- **Problem**: E.M.P. should clear most effects but preserve defensive ones
+- **Solution**: Filter out `invulnerability` and `immortality` effects
+- **Pattern**: Preserve critical defensive effects while clearing offensive/utility effects
+
+#### 3. Global Board Effects
+- **Problem**: Need to affect all rows on both sides
+- **Solution**: Iterate through all row IDs and process each row
+- **Pattern**: Use comprehensive row iteration for global abilities
+
+#### 4. Shield Removal System
+- **Problem**: Need to remove shields from all heroes
+- **Solution**: Check each hero in each row and set shields to 0
+- **Pattern**: Use `window.__ow_dispatchShieldUpdate?.(cardId, 0)` for shield removal
+
+### Common Pitfalls
+
+1. **Wrong Effect Type Filtering**: Only looking for `type: 'token'` instead of all effect types
+2. **Missing Defensive Effect Preservation**: Accidentally removing Immortality Field or other critical effects
+3. **Incomplete Row Iteration**: Not checking all 6 rows (1f, 1m, 1b, 2f, 2m, 2b)
+4. **Missing Shield Removal**: Forgetting to remove shields in addition to effects
+5. **Incorrect Source Card ID Matching**: Not properly matching `sourceCardId` for HACK cleanup
+
+### Integration Checklist
+
+- [ ] Add hero to `data.js` with correct stats
+- [ ] Create hero module with proper function signatures
+- [ ] Add to `abilities/index.js` exports
+- [ ] Add to `App.js` onEnter and ultimate handling
+- [ ] Add audio imports and mappings to `imageImports.js`
+- [ ] Implement comprehensive token cleanup system
+- [ ] Test HACK ability with various effect types
+- [ ] Test E.M.P. ultimate with all row effects
+- [ ] Verify defensive effects are preserved
+- [ ] Test shield removal mechanics
+- [ ] Verify turret destruction works
+
+## Fixed Damage System
+
+### Overview
+The fixed damage system allows abilities to deal damage that cannot be mitigated or amplified by other effects, while still respecting shields.
+
+### Implementation
+```javascript
+// In damageBus.js - Fixed damage bypasses all modifications
+if (fixedDamage) {
+    console.log(`Fixed Damage: ${amount} damage to ${targetCardId} (no modifications)`);
+    let finalAmount = amount;
+    
+    // Still respect shields if not ignoring them
+    if (!ignoreShields && finalAmount > 0) {
+        const card = window.__ow_getCard?.(targetCardId);
+        if (card && card.shield > 0) {
+            const shieldAbsorbed = Math.min(finalAmount, card.shield);
+            finalAmount = Math.max(0, finalAmount - shieldAbsorbed);
+            window.__ow_dispatchShieldUpdate?.(targetCardId, card.shield - shieldAbsorbed);
+        }
+    }
+    
+    // Apply remaining damage to health
+    if (finalAmount > 0) {
+        const card = window.__ow_getCard?.(targetCardId);
+        if (card) {
+            const newHealth = Math.max(0, card.health - finalAmount);
+            window.__ow_setCardHealth?.(targetCardId, newHealth);
+        }
+    }
+    
+    // Publish damage event for consistency
+    publish({ type: 'damage', targetCardId, targetRow, amount: finalAmount, ignoreShields, sourceCardId, fixedDamage: true });
+    return;
+}
+```
+
+### Usage Example
+```javascript
+// Soldier: 76 Tactical Visor - Fixed damage that cannot be mitigated
+dealDamage(target.cardId, target.rowId, damage, false, playerHeroId, true);
+//                                                                      ^^^^
+//                                                                  fixedDamage = true
+```
+
+### Key Features
+- **Bypasses Modifications**: Ignores Reinhardt, Orisa, Sigma, Hanzo, and Mercy damage modifications
+- **Respects Shields**: Still absorbs shields normally
+- **Consistent API**: Uses same `dealDamage` function with additional parameter
+- **Event Publishing**: Publishes damage events for consistency with other systems
+
+### When to Use Fixed Damage
+- **Ultimate Abilities**: High-cost abilities that should be powerful and reliable
+- **Special Mechanics**: Abilities that specifically mention "cannot be mitigated"
+- **Balance Requirements**: When damage needs to be consistent regardless of other effects

@@ -252,8 +252,10 @@ import soldierEnter from './audio/soldier76-enter.mp3';
 import soldierUltimate from './audio/soldier-ultimate.mp3';
 import soldierUltimateResolve from './audio/soldier76-ultimate-resolve.mp3';
 import soldierIntro from './audio/soldier-intro.mp3';
-import sombraHack from './audio/sombra-hack.mp3';
-import sombraUlt from './audio/sombra-ult.mp3';
+import sombraEnter from './audio/sonbra-enter.mp3';
+import sombraAbility1 from './audio/sombra-ability1.mp3';
+import sombraUltimate from './audio/sombra-ultimate.mp3';
+import sombraIntro from './audio/sombra-intro.mp3';
 import symmetraShield from './audio/symmetra-shield.mp3';
 import torbjornTurret from './audio/torbjorn-turret.mp3';
 import torbjornUlt from './audio/torbjorn-ult.mp3';
@@ -444,8 +446,10 @@ export const abilityAudioFiles = {
     'soldier-ultimate': soldierUltimate,
     'soldier-ultimate-resolve': soldierUltimateResolve,
     'soldier-intro': soldierIntro,
-    'sombra-hack': sombraHack,
-    'sombra-ult': sombraUlt,
+    'sombra-enter': sombraEnter,
+    'sombra-ability1': sombraAbility1,
+    'sombra-ultimate': sombraUltimate,
+    'sombra-intro': sombraIntro,
     'symmetra-shield': symmetraShield,
     'torbjorn-turret': torbjornTurret,
     'torbjorn-ult': torbjornUlt,

@@ -697,7 +697,7 @@ const data = {
             id: 'sombra',
             name: 'Sombra',
             image: 'assets/heroes/sombra.png',
-            health: 4,
+            health: 3,
             power: {
                 f: 3,
                 m: 1,
@@ -708,7 +708,7 @@ const data = {
                 m: 3,
                 b: 2,
             },
-            isImplemented: false,
+            isImplemented: true,
         },
 
         symmetra: {
