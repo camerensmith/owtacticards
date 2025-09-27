@@ -218,8 +218,11 @@ export default function Card(props) {
                                 (turnState.playerTurn === playerNum ||
                                 isPlayed ? (
                                     <HealthCounter
+                                        key={`${playerHeroId}-${effects?.length || 0}-${effects?.map(e => e.id).join(',') || ''}`}
                                         type='cardcounter'
                                         health={health}
+                                        effects={effects}
+                                        playerHeroId={playerHeroId}
                                     />
                                 ) : null)}
                             {turnState.playerTurn === playerNum || isPlayed

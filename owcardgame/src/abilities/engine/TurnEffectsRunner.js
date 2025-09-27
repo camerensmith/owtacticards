@@ -3,6 +3,7 @@ import gameContext from 'context/gameContext';
 import turnContext from 'context/turnContext';
 import abilities from '../index';
 import { processAnnihilation } from '../heroes/nemesis';
+import { cleanupTemporaryHP } from '../heroes/lifeweaver';
 
 export default function TurnEffectsRunner() {
     const { gameState } = useContext(gameContext);
@@ -34,7 +35,15 @@ export default function TurnEffectsRunner() {
         
         if (isNewTurn) {
             console.log('TurnEffectsRunner: Turn changed, processing effects');
+            
             const playerTurn = turnState.playerTurn;
+            
+            // Clean up temporary HP effects at the start of each turn
+            try {
+                cleanupTemporaryHP(gameState, playerTurn);
+            } catch (error) {
+                console.error('TurnEffectsRunner: Error cleaning up temporary HP:', error);
+            }
             const playerRowIds = [`${playerTurn}b`, `${playerTurn}m`, `${playerTurn}f`];
 
             // Clean up special cards that weren't played this turn

@@ -895,6 +895,11 @@ function checkOnEnterAbilities(playerHeroId, rowId, playerNum) {
         return;
     }
 
+    if (heroId === 'lifeweaver' && abilitiesIndex?.lifeweaver?.onEnter) {
+        abilitiesIndex.lifeweaver.onEnter({ playerHeroId, rowId });
+        return;
+    }
+
     if (heroId === 'lucio' && abilitiesIndex?.lucio?.onEnter) {
         abilitiesIndex.lucio.onEnter({ playerHeroId, rowId });
         return;
@@ -1798,6 +1803,14 @@ export default function App() {
                             abilitiesIndex.junkrat.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
                         } catch (e) {
                             console.log('Error executing JUNKRAT ultimate:', e);
+                        }
+                    } else if (heroId === 'lifeweaver' && abilitiesIndex?.lifeweaver?.onUltimate) {
+                        try {
+                            // Track ultimate usage for Echo's Duplicate
+                            window.__ow_trackUltimateUsed?.(heroId, 'Lifeweaver', 'Tree of Life', playerNum, rowId, adjustedCost);
+                            abilitiesIndex.lifeweaver.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
+                        } catch (e) {
+                            console.log('Error executing LIFEWEAVER ultimate:', e);
                         }
                     } else if (heroId === 'lucio' && abilitiesIndex?.lucio?.onUltimate) {
                         try {

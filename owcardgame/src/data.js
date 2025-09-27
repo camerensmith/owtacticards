@@ -15,6 +15,7 @@ const heroRoles = {
     genji: 'offense',
     hanzo: 'defense',
     junkrat: 'defense',
+    lifeweaver: 'support',
     lucio: 'support',
     mccree: 'offense',
     mei: 'defense',
@@ -369,6 +370,24 @@ const data = {
                 b: 3,
             },
             isImplemented: false,
+        },
+
+        lifeweaver: {
+            id: 'lifeweaver',
+            name: 'Lifeweaver',
+            image: 'assets/heroes/lifeweaver.png',
+            health: 3,
+            power: {
+                f: 1,
+                m: 2,
+                b: 3,
+            },
+            synergy: {
+                f: 1,
+                m: 2,
+                b: 1,
+            },
+            isImplemented: true,
         },
 
         lucio: {

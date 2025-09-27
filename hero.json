@@ -160,6 +160,19 @@
     "ultimate": "RIP-Tire (4): Move Junkrat to any of your rows and deal [Row Synergy] damage to all enemies in opposing row."
   },
   {
+    "name": "Lifeweaver",
+    "class": "support",
+    "hp": 3,
+    "front_power": 1,
+    "front_synergy": 1,
+    "middle_power": 2,
+    "middle_synergy": 2,
+    "back_power": 3,
+    "back_synergy": 1,
+    "on_enter1": "Life Grip — Pull a random damaged friendly unit into your row (if possible). They gain 1 Shield.",
+    "ultimate": "Tree of Life (2): Lifeweaver and all adjacent friendly Heroes gain +1 temporary HP until the start of your next turn."
+  },
+  {
     "name": "Lúcio",
     "class": "support",
     "hp": 3,

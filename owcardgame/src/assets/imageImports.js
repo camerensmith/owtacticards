@@ -13,6 +13,7 @@ import echo from './heroes/cards/echo.webp';
 import genji from './heroes/cards/genji.webp';
 import hanzo from './heroes/cards/hanzo.webp';
 import junkrat from './heroes/cards/junkrat.webp';
+import lifeweaver from './heroes/cards/lifeweaver.webp';
 import lucio from './heroes/cards/lucio.webp';
 import mccree from './heroes/cards/mccree.webp';
 import mei from './heroes/cards/mei.webp';
@@ -73,6 +74,7 @@ import echoFocus from './heroes/cardfocus/echo.webp';
 import genjiFocus from './heroes/cardfocus/genji.webp';
 import hanzoFocus from './heroes/cardfocus/hanzo.webp';
 import junkratFocus from './heroes/cardfocus/junkrat.webp';
+import lifeweaverFocus from './heroes/cardfocus/lifeweaver.webp';
 import lucioFocus from './heroes/cardfocus/lucio.webp';
 import mccreeFocus from './heroes/cardfocus/mccree.webp';
 import meiFocus from './heroes/cardfocus/mei.webp';
@@ -177,6 +179,9 @@ import junkratEnter from './audio/junkrat-enter.mp3';
 import junkratAbility1 from './audio/junkrat-ability1.mp3';
 import junkratUltimate from './audio/junkrat-ultimate.mp3';
 import junkratExplosion from './audio/junkrat-explosion.mp3';
+import lifeweaverEnter from './audio/lifeweaver-enter.mp3';
+import lifeweaverUltimate from './audio/lifeweaver-ultimate.mp3';
+import lifeweaverIntro from './audio/lifeweaver-intro.mp3';
 import lucioEnter from './audio/lucio-enter.mp3';
 import lucioAbility1 from './audio/lucio-ability1.mp3';
 import lucioAbility2 from './audio/lucio-ability2.mp3';
@@ -259,7 +264,7 @@ import zenyattaUlt from './audio/zenyatta-ult.mp3';
 
 // Create mapping objects
 export const heroCardImages = {
-    ana, ashe, baptiste, bastion, bob, brigitte, doomfist, dva, dvameka, echo, genji, hanzo, junkrat, lucio, mccree, mei, mercy, moira, orisa, pharah, reaper, reinhardt, roadhog, sigma, soldier, sombra, symmetra, torbjorn, tracer, widowmaker, winston, wreckingball, zarya, zenyatta, ramattra, nemesis, turret, 'card-back': cardBack
+    ana, ashe, baptiste, bastion, bob, brigitte, doomfist, dva, dvameka, echo, genji, hanzo, junkrat, lifeweaver, lucio, mccree, mei, mercy, moira, orisa, pharah, reaper, reinhardt, roadhog, sigma, soldier, sombra, symmetra, torbjorn, tracer, widowmaker, winston, wreckingball, zarya, zenyatta, ramattra, nemesis, turret, 'card-back': cardBack
 };
 
 export const clearDeadCursor = clearDead;
@@ -269,7 +274,7 @@ export const heroIconImages = {
 };
 
 export const heroCardFocusImages = {
-    ana: anaFocus, ashe: asheFocus, baptiste: baptisteFocus, bastion: bastionFocus, bob: bobFocus, brigitte: brigitteFocus, doomfist: doomfistFocus, dva: dvaFocus, dvameka: dvamekaFocus, echo: echoFocus, genji: genjiFocus, hanzo: hanzoFocus, junkrat: junkratFocus, lucio: lucioFocus, mccree: mccreeFocus, mei: meiFocus, mercy: mercyFocus, moira: moiraFocus, orisa: orisaFocus, pharah: pharahFocus, ramattra: ramattraFocus, nemesis: nemesisFocus, reaper: reaperFocus, reinhardt: reinhardtFocus, roadhog: roadhogFocus, sigma: sigmaFocus, soldier: soldierFocus, sombra: sombraFocus, symmetra: symmetraFocus, torbjorn: torbjornFocus, tracer: tracerFocus, widowmaker: widowmakerFocus, winston: winstonFocus, wreckingball: wreckingballFocus, zarya: zaryaFocus, zenyatta: zenyattaFocus
+    ana: anaFocus, ashe: asheFocus, baptiste: baptisteFocus, bastion: bastionFocus, bob: bobFocus, brigitte: brigitteFocus, doomfist: doomfistFocus, dva: dvaFocus, dvameka: dvamekaFocus, echo: echoFocus, genji: genjiFocus, hanzo: hanzoFocus, junkrat: junkratFocus, lifeweaver: lifeweaverFocus, lucio: lucioFocus, mccree: mccreeFocus, mei: meiFocus, mercy: mercyFocus, moira: moiraFocus, orisa: orisaFocus, pharah: pharahFocus, ramattra: ramattraFocus, nemesis: nemesisFocus, reaper: reaperFocus, reinhardt: reinhardtFocus, roadhog: roadhogFocus, sigma: sigmaFocus, soldier: soldierFocus, sombra: sombraFocus, symmetra: symmetraFocus, torbjorn: torbjornFocus, tracer: tracerFocus, widowmaker: widowmakerFocus, winston: winstonFocus, wreckingball: wreckingballFocus, zarya: zaryaFocus, zenyatta: zenyattaFocus
 };
 
 export const otherImages = {
@@ -359,6 +364,9 @@ export const abilityAudioFiles = {
     'junkrat-ability1': junkratAbility1,
     'junkrat-ultimate': junkratUltimate,
     'junkrat-explosion': junkratExplosion,
+    'lifeweaver-enter': lifeweaverEnter,
+    'lifeweaver-ultimate': lifeweaverUltimate,
+    'lifeweaver-intro': lifeweaverIntro,
     'lucio-enter': lucioEnter,
     'lucio-ability1': lucioAbility1,
     'lucio-ability2': lucioAbility2,

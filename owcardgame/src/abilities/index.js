@@ -15,6 +15,7 @@ import echo from './heroes/echo';
 import genji from './heroes/genji';
 import hanzo from './heroes/hanzo';
 import junkrat from './heroes/junkrat';
+import lifeweaver from './heroes/lifeweaver';
 import lucio from './heroes/lucio';
 import mccree from './heroes/mccree';
 import mei from './heroes/mei';
@@ -41,6 +42,7 @@ export const abilities = {
     genji,
     hanzo,
     junkrat,
+    lifeweaver,
     lucio,
     mccree,
     mei,

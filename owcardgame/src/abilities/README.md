@@ -2167,4 +2167,196 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
 11. **Wrong Effect Type Names**: Use `type: 'healing'` for healing, `type: 'damageBoost'` for damage boosts
 12. **Missing Turn Effect Integration**: Add turn-based effects to TurnEffectsRunner
 13. **Incorrect Damage Boost Logic**: Apply boosts in damageBus.js, not individual abilities
+14. **Missing Player Tracking**: Track source player for turn-based cleanup effects
+15. **Incorrect Temporary HP Calculation**: Use current HP + bonus, not base HP + bonus
+16. **Missing UI Re-render Triggers**: Use dynamic keys to force component re-renders
+17. **Wrong Cleanup Timing**: Only clean up effects when it's the source player's turn
 14. **Missing Resurrection Cleanup**: Remove negative effects when resurrecting heroes
+
+## Lifeweaver Implementation Guide
+
+### Overview
+Lifeweaver demonstrates several advanced patterns including automatic targeting, temporary HP systems, player-specific cleanup, and UI re-rendering techniques.
+
+### Key Abilities
+
+#### Life Grip (onEnter1)
+- **Automatic targeting**: Finds most damaged friendly unit across all friendly rows
+- **Smart selection**: Uses health percentage (current/max) to determine most damaged
+- **Row capacity check**: Fails gracefully if destination row is full
+- **Shield granting**: Gives 1 shield (respects 3-shield maximum)
+
+#### Tree of Life (Ultimate, Cost 2)
+- **Adjacent targeting**: Affects Lifeweaver + left/right + front/back column
+- **Temporary HP system**: Special visual system with green styling
+- **Player tracking**: Tracks which player used the ultimate for proper cleanup
+
+### Temporary HP System Implementation
+
+#### Core Concept
+Temporary HP shows as green health values that persist until the source player's next turn.
+
+#### Key Components
+
+1. **Effect Structure**:
+```javascript
+// Main effect
+{
+    id: 'tree-of-life-temp-hp',
+    hero: 'lifeweaver',
+    type: 'temporaryHP',
+    value: 1,
+    sourcePlayerNum: playerNum, // Critical for cleanup timing
+    tooltip: 'Tree of Life: +1 temporary HP until start of next turn'
+}
+
+// Display effect
+{
+    id: 'temp-hp-display',
+    hero: 'lifeweaver',
+    type: 'display',
+    tempHP: currentHealth + 1, // Current HP + bonus
+    originalHealth: currentHealth,
+    sourcePlayerNum: playerNum
+}
+```
+
+2. **HealthCounter Component Updates**:
+```javascript
+// Check for temporary HP effect
+const hasTempHP = Array.isArray(effects) && 
+    effects.some(effect => effect?.id === 'temp-hp-display' && effect?.type === 'display');
+
+// Display logic
+if (hasTempHP) {
+    const tempHPEffect = effects.find(effect => 
+        effect?.id === 'temp-hp-display' && effect?.type === 'display'
+    );
+    if (tempHPEffect && tempHPEffect.tempHP) {
+        displayHealth = tempHPEffect.tempHP;
+        isTemporary = true;
+    }
+}
+```
+
+3. **CSS Styling**:
+```css
+.healthcounter.temporary-hp {
+    filter: hue-rotate(120deg) brightness(1.2) saturate(1.5);
+}
+
+.healthvalue.temp-hp-value {
+    color: #00ff00 !important;
+    font-weight: bold;
+    text-shadow: 0 0 3px #00ff00;
+}
+```
+
+4. **UI Re-rendering**:
+```javascript
+// Force re-render when effects change
+<HealthCounter
+    key={`${playerHeroId}-${effects?.length || 0}-${effects?.map(e => e.id).join(',') || ''}`}
+    type='cardcounter'
+    health={health}
+    effects={effects}
+    playerHeroId={playerHeroId}
+/>
+```
+
+### Player-Specific Cleanup System
+
+#### Problem
+Temporary HP effects were being removed immediately when any turn changed, not when the source player's turn started.
+
+#### Solution
+Track the source player and only clean up when it's their turn:
+
+```javascript
+// In effect creation
+sourcePlayerNum: playerNum // Track which player used the ultimate
+
+// In cleanup function
+const shouldCleanup = (mainEffect && mainEffect.sourcePlayerNum === currentPlayerTurn) ||
+                     (displayEffect && displayEffect.sourcePlayerNum === currentPlayerTurn);
+```
+
+#### TurnEffectsRunner Integration
+```javascript
+// Pass current player turn to cleanup function
+cleanupTemporaryHP(gameState, playerTurn);
+```
+
+### Key Learning Points
+
+#### 1. Temporary HP Calculation
+- **Wrong**: `maxHealth + 1` (base HP + bonus)
+- **Correct**: `currentHealth + 1` (current HP + bonus)
+- **Example**: Hero at 1/3 HP should get 2 temporary HP, not 4
+
+#### 2. UI Re-rendering Issues
+- **Problem**: React components don't re-render when props change internally
+- **Solution**: Use dynamic keys that change when effects change
+- **Pattern**: `key={cardId}-${effects.length}-${effectIds.join(',')}`
+
+#### 3. Player-Specific Effect Cleanup
+- **Problem**: Effects cleaned up on any turn change
+- **Solution**: Track source player and only clean up on their turn
+- **Pattern**: Store `sourcePlayerNum` in effects, check in cleanup
+
+#### 4. Effect Detection for Cleanup
+- **Problem**: Only checking for main effect, missing display effect
+- **Solution**: Check for both effect types independently
+- **Pattern**: Use `find()` to get specific effects, check both
+
+#### 5. Function Parameter Passing
+- **Problem**: `playerNum` not in scope for nested functions
+- **Solution**: Pass as parameter through function chain
+- **Pattern**: `onUltimate` → `applyTemporaryHP` → `updateTemporaryHPDisplay`
+
+### Debugging Techniques
+
+#### Console Logging
+```javascript
+// Track cleanup process
+console.log(`Lifeweaver: Found temporary HP on ${cardId} (${card.name}) from player ${currentPlayerTurn}`);
+console.log(`Lifeweaver: Has main effect: ${!!mainEffect}, Has display effect: ${!!displayEffect}`);
+
+// Verify effect removal
+setTimeout(() => {
+    const updatedCard = window.__ow_getCard?.(cardId);
+    console.log(`Lifeweaver: Card effects after removal:`, updatedCard?.effects);
+}, 100);
+```
+
+#### HealthCounter Debugging
+```javascript
+// Track what HealthCounter receives
+console.log(`HealthCounter for ${playerHeroId}:`, { 
+    health, 
+    effects, 
+    effectsLength: effects?.length 
+});
+```
+
+### Common Pitfalls
+
+1. **Scope Issues**: Always pass `playerNum` through function parameters
+2. **UI Not Updating**: Use dynamic keys to force re-renders
+3. **Wrong Cleanup Timing**: Track source player for proper cleanup
+4. **Incorrect HP Calculation**: Use current HP, not base HP
+5. **Missing Effect Types**: Check for both main and display effects
+6. **ESLint Errors**: Ensure all variables are properly defined
+
+### Integration Checklist
+
+- [ ] Add hero to `data.js` with correct stats
+- [ ] Create hero module with proper function signatures
+- [ ] Add to `abilities/index.js` exports
+- [ ] Add to `App.js` onEnter and ultimate handling
+- [ ] Add audio imports and mappings to `imageImports.js`
+- [ ] Add focus image for shift-click
+- [ ] Integrate with TurnEffectsRunner for cleanup
+- [ ] Add CSS styling for visual effects
+- [ ] Test UI re-rendering with dynamic keys
+- [ ] Verify player-specific cleanup timing

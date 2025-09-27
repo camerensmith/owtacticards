@@ -88,6 +88,22 @@
     left: 78%;
 }
 
+/* Temporary HP styling */
+.healthcounter.temporary-hp {
+    background-image: url('../assets/healthbackground-hexagon.webp');
+    background-position: center;
+    background-size: contain;
+    background-repeat: no-repeat;
+    border-radius: 100%;
+    filter: hue-rotate(120deg) brightness(1.2) saturate(1.5);
+}
+
+.healthvalue.temp-hp-value {
+    color: #00ff00 !important;
+    font-weight: bold;
+    text-shadow: 0 0 3px #00ff00;
+}
+
 .matchcountercontainer {
     display: flex;
     justify-content: center;
