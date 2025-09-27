@@ -142,6 +142,41 @@ export function dealDamage(targetCardId, targetRow, amount, ignoreShields = fals
         }
     }
     
+    // Check for Sigma Token shield absorption
+    if (finalAmount > 0 && window.__ow_getRow) {
+        // Check if target is in a row with Sigma Token
+        const targetRowData = window.__ow_getRow(targetRow);
+        if (targetRowData && targetRowData.allyEffects) {
+            const sigmaToken = targetRowData.allyEffects.find(effect => 
+                effect?.id === 'sigma-token' && effect?.type === 'barrier'
+            );
+            
+            if (sigmaToken && sigmaToken.shields > 0) {
+                const shieldsToUse = Math.min(finalAmount, sigmaToken.shields);
+                finalAmount = Math.max(0, finalAmount - shieldsToUse);
+                absorbedAmount += shieldsToUse;
+                
+                // Update Sigma Token shields
+                const newShieldCount = sigmaToken.shields - shieldsToUse;
+                
+                // Remove old effect and add updated one
+                window.__ow_removeRowEffect?.(targetRow, 'allyEffects', 'sigma-token');
+                
+                if (newShieldCount > 0) {
+                    // Add updated effect with new shield count
+                    setTimeout(() => {
+                        window.__ow_appendRowEffect?.(targetRow, 'allyEffects', {
+                            ...sigmaToken,
+                            shields: newShieldCount
+                        });
+                    }, 10);
+                }
+                
+                console.log(`DamageBus - Sigma Token absorbed ${shieldsToUse} damage, remaining shields: ${newShieldCount}`);
+            }
+        }
+    }
+    
     const damageEvent = { type: 'damage', targetCardId, targetRow, amount: finalAmount, ignoreShields, sourceCardId, absorbedAmount };
     console.log('DamageBus - Publishing damage event:', damageEvent);
     publish(damageEvent);

@@ -32,6 +32,7 @@ export default function CounterArea(props) {
                             playerNum={props.playerNum}
                             rowId={rowId}
                             health={effect.health}
+                            shields={effect.shields}
                             tooltip={effect.tooltip}
                         />
                     );

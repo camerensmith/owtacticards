@@ -369,7 +369,7 @@
     "back_power": 1,
     "back_synergy": 3,
     "on_enter1": "Biotic Field — All allies in the same row as Soldier: 76 are healed by 1 health.",
-    "ultimate": "Tactical Visor (3): Deal 3 damage to one enemy, 2 to a second, and 1 to a third, anywhere on the board."
+    "ultimate": "Tactical Visor (3): Deal 3 damage to one enemy, 2 to a second, and 1 to a third, anywhere on the board. This damage cannot be mitigated or amplified."
   },
   {
     "name": "Sombra",

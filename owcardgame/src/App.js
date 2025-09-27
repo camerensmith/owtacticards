@@ -947,6 +947,10 @@ function checkOnEnterAbilities(playerHeroId, rowId, playerNum) {
         abilitiesIndex.roadhog.onEnter({ playerHeroId, rowId });
         return;
     }
+    if (heroId === 'sigma' && abilitiesIndex?.sigma?.onEnter) {
+        abilitiesIndex.sigma.onEnter({ playerHeroId, rowId });
+        return;
+    }
 
     if (heroId === 'mercy' && abilitiesIndex?.mercy?.onEnter) {
         abilitiesIndex.mercy.onEnter({ playerHeroId, rowId });
@@ -1903,6 +1907,13 @@ export default function App() {
             abilitiesIndex.roadhog.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
         } catch (e) {
             console.log('Error executing ROADHOG ultimate:', e);
+        }
+    } else if (heroId === 'sigma' && abilitiesIndex?.sigma?.onUltimate) {
+        try {
+            window.__ow_trackUltimateUsed?.(heroId, 'Sigma', 'Gravitic Flux', playerNum, rowId, adjustedCost);
+            abilitiesIndex.sigma.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
+        } catch (e) {
+            console.log('Error executing SIGMA ultimate:', e);
         }
     } else {
                         console.log(`Executing ultimate for ${playerHeroId} in ${rowId} (cost: ${adjustedCost})`);

@@ -243,8 +243,11 @@ import roadhogEnter from './audio/roadhog-enter.mp3';
 import roadhogAbility1 from './audio/roadhog-ability1.mp3';
 import roadhogUltimate from './audio/roadhog-ultimate.mp3';
 import roadhogIntro from './audio/roadhog-intro.mp3';
-import sigmaBarrier from './audio/sigma-barrier.mp3';
-import sigmaUlt from './audio/sigma-ult.mp3';
+import sigmaEnter from './audio/sigma-enter.mp3';
+import sigmaAbility1 from './audio/sigma-ability1.mp3';
+import sigmaUltimate from './audio/sigma-ultimate.mp3';
+import sigmaUltimateResolve from './audio/sigma-ultimate-resolve.mp3';
+import sigmaIntro from './audio/sigma-intro.mp3';
 import soldierTargetrich from './audio/soldier-targetrich.mp3';
 import soldierUlt from './audio/soldier-ult.mp3';
 import sombraHack from './audio/sombra-hack.mp3';
@@ -430,8 +433,11 @@ export const abilityAudioFiles = {
     'roadhog-ability1': roadhogAbility1,
     'roadhog-ultimate': roadhogUltimate,
     'roadhog-intro': roadhogIntro,
-    'sigma-barrier': sigmaBarrier,
-    'sigma-ult': sigmaUlt,
+    'sigma-enter': sigmaEnter,
+    'sigma-ability1': sigmaAbility1,
+    'sigma-ultimate': sigmaUltimate,
+    'sigma-ultimate-resolve': sigmaUltimateResolve,
+    'sigma-intro': sigmaIntro,
     'soldier-targetrich': soldierTargetrich,
     'soldier-ult': soldierUlt,
     'sombra-hack': sombraHack,

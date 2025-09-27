@@ -2639,3 +2639,189 @@ console.log(`HealthCounter for ${playerHeroId}:`, {
 - [ ] Add CSS animations for visual effects
 - [ ] Test random distribution and timing
 - [ ] Verify floating damage text appears
+
+## Sigma Implementation Guide
+
+### Overview
+Sigma demonstrates advanced patterns including row-level shield tokens, damage absorption systems, and custom visual indicators for row effects.
+
+### Key Abilities
+
+#### Experimental Barrier (onEnter1)
+- **Targeting**: Friendly rows only with proper validation
+- **Row Effect**: Places Sigma Token as row effect with 3 shield tokens
+- **Shield Mechanics**: Automatically absorbs up to 3 damage for any hero in that row
+- **Persistence**: Tokens persist even if Sigma dies
+- **Cleanup**: Token removed when all shields are expended
+
+#### Gravitic Flux (Ultimate, Cost 3)
+- **Targeting**: Enemy rows only with proper validation
+- **Damage**: 1 damage to all living enemies (respects shields)
+- **Synergy Removal**: Sets row synergy to 0
+- **Concurrent**: Damage and synergy removal happen simultaneously
+- **Visual**: Floating red `-1` text for all enemies
+
+### Row-Level Shield Token System
+
+#### Core Concept
+Sigma's Experimental Barrier creates row-level shield tokens that automatically absorb damage for any hero in that row, similar to Reinhardt's barrier but row-specific instead of column-specific.
+
+#### Implementation Pattern
+```javascript
+// Place Sigma Token on the row
+const sigmaToken = {
+    id: 'sigma-token',
+    hero: 'sigma',
+    type: 'barrier',
+    shields: 3,
+    maxShields: 3,
+    sourceCardId: playerHeroId,
+    sourceRowId: rowId,
+    tooltip: 'Experimental Barrier: Absorbs up to 3 damage for any hero in this row',
+    visual: 'sigma-icon'
+};
+
+window.__ow_appendRowEffect?.(target.rowId, 'allyEffects', sigmaToken);
+```
+
+#### Damage Absorption Integration
+```javascript
+// In damageBus.js - Check for Sigma Token shield absorption
+if (finalAmount > 0 && window.__ow_getRow) {
+    const targetRowData = window.__ow_getRow(targetRow);
+    if (targetRowData && targetRowData.allyEffects) {
+        const sigmaToken = targetRowData.allyEffects.find(effect => 
+            effect?.id === 'sigma-token' && effect?.type === 'barrier'
+        );
+        
+        if (sigmaToken && sigmaToken.shields > 0) {
+            const shieldsToUse = Math.min(finalAmount, sigmaToken.shields);
+            finalAmount = Math.max(0, finalAmount - shieldsToUse);
+            absorbedAmount += shieldsToUse;
+            
+            // Update Sigma Token shields
+            const newShieldCount = sigmaToken.shields - shieldsToUse;
+            
+            // Remove old effect and add updated one
+            window.__ow_removeRowEffect?.(targetRow, 'allyEffects', 'sigma-token');
+            
+            if (newShieldCount > 0) {
+                setTimeout(() => {
+                    window.__ow_appendRowEffect?.(targetRow, 'allyEffects', {
+                        ...sigmaToken,
+                        shields: newShieldCount
+                    });
+                }, 10);
+            }
+        }
+    }
+}
+```
+
+### Custom Visual Indicators for Row Effects
+
+#### Problem
+Row effects (like Sigma tokens) need custom visual indicators that appear over the token icon in the row counter area.
+
+#### Solution
+Modify the `HeroCounter` component to display custom indicators for specific row effects:
+
+```javascript
+// In HeroCounter.js - Add custom shield display for Sigma tokens
+{shields && shields > 0 && (
+    <div style={{ 
+        position: 'absolute', 
+        top: '50%', 
+        left: '50%', 
+        transform: 'translate(-50%, -50%)',
+        zIndex: 1000
+    }}>
+        <div style={{ 
+            fontSize: '12px',
+            fontWeight: 'bold',
+            color: '#00ff00',
+            textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+            background: 'rgba(0, 0, 0, 0.7)',
+            borderRadius: '50%',
+            width: '20px',
+            height: '20px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            border: '1px solid #00ff00'
+        }}>
+            {shields}
+        </div>
+    </div>
+)}
+```
+
+#### Key Requirements
+- **Parent Container**: Must have `position: 'relative'` for absolute positioning
+- **High Z-Index**: Use `zIndex: 1000` to appear above token icons
+- **Centered Positioning**: Use `top: 50%, left: 50%, transform: translate(-50%, -50%)`
+- **Custom Styling**: Create distinctive visual indicators that match the effect theme
+
+### Row Effect Visual Integration
+
+#### CounterArea Integration
+```javascript
+// In CounterArea.js - Pass shields property to HeroCounter
+<HeroCounter
+    playerHeroId={effect.playerHeroId}
+    heroId={effect.hero}
+    key={`${effect.hero}-${effect.id || 'row'}-${idx}`}
+    setCardFocus={props.setCardFocus}
+    playerNum={props.playerNum}
+    rowId={rowId}
+    health={effect.health}
+    shields={effect.shields}  // Pass shields for Sigma tokens
+    tooltip={effect.tooltip}
+/>
+```
+
+### Key Learning Points
+
+#### 1. Row-Level Damage Absorption
+- **Problem**: Need to absorb damage for any hero in a specific row
+- **Solution**: Check target row for shield tokens in damage bus
+- **Pattern**: Row effects can modify damage before it reaches the target
+
+#### 2. Effect Update Pattern
+- **Problem**: Need to update existing row effects (like shield count)
+- **Solution**: Remove old effect, add updated effect with new values
+- **Pattern**: Use `removeRowEffect` + `appendRowEffect` with timeout
+
+#### 3. Custom Visual Indicators
+- **Problem**: Row effects need custom visual feedback
+- **Solution**: Modify HeroCounter to display custom indicators
+- **Pattern**: Use absolute positioning with high z-index over token icons
+
+#### 4. Row Effect Persistence
+- **Problem**: Effects should persist even if source hero dies
+- **Solution**: Store effects on row, not on hero
+- **Pattern**: Row effects are independent of source hero lifecycle
+
+### Common Pitfalls
+
+1. **Missing Parent Positioning**: Forgot to add `position: 'relative'` to parent container
+2. **Low Z-Index**: Custom indicators appear behind token icons
+3. **Wrong Effect Update**: Used `appendRowEffect` instead of remove + add pattern
+4. **Missing Shields Property**: Forgot to pass `shields` from CounterArea to HeroCounter
+5. **Incorrect Row Targeting**: Used wrong row ID in damage absorption logic
+
+### Integration Checklist
+
+- [ ] Add hero to `data.js` with correct stats
+- [ ] Create hero module with proper function signatures
+- [ ] Add to `abilities/index.js` exports
+- [ ] Add to `App.js` onEnter and ultimate handling
+- [ ] Add audio imports and mappings to `imageImports.js`
+- [ ] Add focus image for shift-click
+- [ ] Implement row-level shield token system
+- [ ] Add damage absorption logic to damageBus.js
+- [ ] Modify HeroCounter for custom visual indicators
+- [ ] Update CounterArea to pass shields property
+- [ ] Test shield absorption mechanics
+- [ ] Verify visual indicators appear correctly
+- [ ] Test effect persistence when source hero dies
