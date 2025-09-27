@@ -784,8 +784,9 @@ const data = {
             health: 3,
             power: { f: 0, m: 0, b: 0 },
             synergy: { f: 0, m: 0, b: 0 },
-            isImplemented: false,
+            isImplemented: true,
             special: true,
+            turret: true,
         },
 
         widowmaker: {

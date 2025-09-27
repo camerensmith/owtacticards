@@ -11,6 +11,7 @@ import MercyHealOverlay from '../effects/MercyHealOverlay';
 import MercyDamageOverlay from '../effects/MercyDamageOverlay';
 import AnnihilationOverlay from '../effects/AnnihilationOverlay';
 import ChainHookOverlay from '../effects/ChainHookOverlay';
+import ForgeHammerOverlay from '../effects/ForgeHammerOverlay';
 import { heroCardImages } from '../../assets/imageImports';
 import ContextMenu from './ContextMenu';
 import actionsBus, { Actions } from '../../abilities/engine/actionsBus';
@@ -222,6 +223,9 @@ export default function Card(props) {
                             )}
                             {health > 0 && Array.isArray(effects) && effects.some(e => e?.id === 'annihilation') && (
                                 <AnnihilationOverlay playerHeroId={playerHeroId} rowId={rowId} />
+                            )}
+                            {health > 0 && Array.isArray(effects) && effects.some(e => e?.id === 'forge-hammer' && e?.hero === 'torbjorn') && (
+                                <ForgeHammerOverlay playerHeroId={playerHeroId} rowId={rowId} />
                             )}
                             {chainHookEffect && (
                                 <ChainHookOverlay 

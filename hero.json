@@ -78,7 +78,7 @@
     "middle_synergy": 2,
     "back_power": 1,
     "back_synergy": 3,
-    "on_enter1": "Repair Pack — Target Ally is healed by 3. Any healing above their health value adds shield tokens instead.",
+    "on_enter1": "Repair Pack — Target Ally is healed by 3. Any healing above their health value adds shield tokens instead. Can heal Turret.",
     "ultimate": "Shield Bash (3): Brigitte gains 2 Shield Tokens. Turn target enemy 180°. That enemy cannot use their Ultimate Ability this round."
   },
   {

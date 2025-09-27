@@ -32,10 +32,19 @@ export async function onEnter({ playerHeroId, rowId }) {
             return;
         }
 
-        // Prevent targeting dead heroes
-        const targetHealth = window.__ow_getCard?.(target.cardId)?.health || 0;
+        // Prevent targeting dead heroes or turrets
+        const targetCard = window.__ow_getCard?.(target.cardId);
+        const targetHealth = targetCard?.health || 0;
+        const isTurret = targetCard?.id === 'turret';
+        
         if (targetHealth <= 0) {
             showToast('Doomfist: Cannot target dead heroes');
+            setTimeout(() => clearToast(), 1500);
+            return;
+        }
+        
+        if (isTurret) {
+            showToast('Doomfist: Cannot punch turret - it is immobile');
             setTimeout(() => clearToast(), 1500);
             return;
         }

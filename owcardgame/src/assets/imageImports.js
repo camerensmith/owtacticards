@@ -256,9 +256,12 @@ import sombraEnter from './audio/sonbra-enter.mp3';
 import sombraAbility1 from './audio/sombra-ability1.mp3';
 import sombraUltimate from './audio/sombra-ultimate.mp3';
 import sombraIntro from './audio/sombra-intro.mp3';
+import torbjornEnter from './audio/torbjorn-enter.mp3';
+import torbjornUltimate from './audio/torbjorn-ult.mp3';
+import torbjornIntro from './audio/torbjorn-intro.mp3';
+import turretEnter from './audio/turret-enter.mp3';
+import turretFire from './audio/turret-fire.mp3';
 import symmetraShield from './audio/symmetra-shield.mp3';
-import torbjornTurret from './audio/torbjorn-turret.mp3';
-import torbjornUlt from './audio/torbjorn-ult.mp3';
 import tracerDejavu from './audio/tracer-dejavu.mp3';
 import tracerImback from './audio/tracer-imback.mp3';
 import widowmakerOneshot from './audio/widowmaker-oneshot.mp3';
@@ -450,9 +453,12 @@ export const abilityAudioFiles = {
     'sombra-ability1': sombraAbility1,
     'sombra-ultimate': sombraUltimate,
     'sombra-intro': sombraIntro,
+    'torbjorn-enter': torbjornEnter,
+    'torbjorn-ultimate': torbjornUltimate,
+    'torbjorn-intro': torbjornIntro,
+    'turret-enter': turretEnter,
+    'turret-fire': turretFire,
     'symmetra-shield': symmetraShield,
-    'torbjorn-turret': torbjornTurret,
-    'torbjorn-ult': torbjornUlt,
     'tracer-dejavu': tracerDejavu,
     'tracer-imback': tracerImback,
     'widowmaker-oneshot': widowmakerOneshot,

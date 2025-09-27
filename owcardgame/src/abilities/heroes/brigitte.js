@@ -40,7 +40,7 @@ export async function onEnter({ playerHeroId, rowId }) {
             let healthToHeal = Math.min(healingAmount, maxHealth - currentHealth);
             let shieldToAdd = Math.max(0, healingAmount - healthToHeal);
             
-            // Apply health healing
+            // Apply health healing (Brigitte's Repair Pack can heal turrets up to max HP)
             if (healthToHeal > 0) {
                 window.__ow_setCardHealth?.(target.cardId, currentHealth + healthToHeal);
             }

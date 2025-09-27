@@ -1138,6 +1138,18 @@ The game features a comprehensive shield system that protects heroes from damage
 - **Shield Persistence**: Row shields persist even if source hero dies
 - **Shield Cleanup**: Individual hero shields are cleared when hero dies
 
+### Turret Healing Rules
+- **General Rule**: Turrets cannot be healed by most abilities (Mercy, Ana, Baptiste, Soldier: 76, Moira, Lúcio, etc.)
+- **Exception**: Brigitte's Repair Pack can heal turrets up to their max HP
+- **No Shields**: Turrets cannot receive shield tokens from any source (Lúcio's Sound Barrier, etc.)
+- **Implementation**: Most healing functions check `card.turret === true` and skip healing
+- **Brigitte Exception**: Repair Pack bypasses turret healing prevention for health only
+
+### Future Hero Considerations
+- **Symmetra**: When implemented, her healing and shield abilities should NOT affect turrets
+- **Zenyatta**: When implemented, his healing and shield abilities should NOT affect turrets
+- **General Rule**: All future healing and shield abilities should check `card.turret === true` and skip turrets
+
 ### Shield Implementation
 ```javascript
 // Update shield value

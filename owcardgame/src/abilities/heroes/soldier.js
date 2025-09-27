@@ -22,6 +22,10 @@ export async function onEnter({ playerHeroId, rowId }) {
     
     const alliesInRow = row.cardIds.filter(cardId => {
         const card = window.__ow_getCard?.(cardId);
+        if (card && card.turret === true) {
+            console.log(`Soldier: Skipping turret ${cardId} - turrets cannot be healed`);
+            return false;
+        }
         return card && card.health > 0 && card.health < card.maxHealth; // Only heal damaged allies
     });
     

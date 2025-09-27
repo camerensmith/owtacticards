@@ -97,6 +97,13 @@ export async function onEnterAbility1({ playerNum, playerHeroId }) {
             for (const pid of cards) {
                 const card = window.__ow_getCard?.(pid);
                 if (!card) continue;
+                
+                // Prevent turrets from being healed
+                if (card.turret === true) {
+                    console.log(`Ana: Cannot heal turret ${pid} - turrets cannot be healed`);
+                    continue;
+                }
+                
                 const cur = card.health || 0;
                 const max = window.__ow_getMaxHealth?.(pid) ?? cur;
                 if (cur < max) {

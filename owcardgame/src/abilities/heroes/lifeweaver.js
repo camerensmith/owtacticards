@@ -111,6 +111,12 @@ function findMostDamagedFriendlyUnit(playerNum) {
             const card = window.__ow_getCard?.(cardId);
             if (!card || card.health <= 0) return; // Skip dead cards
             
+            // Skip turrets - they cannot be moved or given shields
+            if (card.turret === true) {
+                console.log(`Lifeweaver: Skipping turret ${cardId} - turrets cannot be pulled`);
+                return;
+            }
+            
             const maxHealth = window.__ow_getMaxHealth?.(cardId) || card.health;
             const healthPercentage = card.health / maxHealth;
             

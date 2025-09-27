@@ -31,6 +31,8 @@ import roadhog from './heroes/roadhog';
 import sigma from './heroes/sigma';
 import soldier from './heroes/soldier';
 import sombra from './heroes/sombra';
+import torbjorn from './heroes/torbjorn';
+import turret from './heroes/turret';
 
 export const abilities = {
     ashe,
@@ -62,6 +64,8 @@ export const abilities = {
     sigma,
     soldier,
     sombra,
+    torbjorn,
+    turret,
 };
 
 export default abilities;

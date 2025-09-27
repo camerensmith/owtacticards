@@ -59,6 +59,13 @@ export function onEnter({ playerHeroId, rowId }) {
                 const candidates = rows.map(r => window.__ow_getRow?.(r)?.cardIds?.[liIndex]).filter(Boolean);
                 for (const pid of candidates) {
                     const card = window.__ow_getCard?.(pid);
+                    
+                    // Prevent turrets from being healed
+                    if (card && card.turret === true) {
+                        console.log(`Baptiste: Cannot heal turret ${pid} - turrets cannot be healed`);
+                        continue;
+                    }
+                    
                     const max = window.__ow_getMaxHealth?.(pid) ?? (card?.health || 0);
                     const cur = card?.health || 0;
                     if (cur < max) {

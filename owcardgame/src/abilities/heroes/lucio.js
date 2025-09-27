@@ -133,9 +133,13 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
         const currentRow = window.__ow_getRow?.(rowId);
         if (!currentRow) return;
         
-        // Give 2 shields to all heroes in the row
+        // Give 2 shields to all heroes in the row (excluding turrets)
         for (const cardId of currentRow.cardIds) {
             const card = window.__ow_getCard?.(cardId);
+            if (card && card.turret === true) {
+                console.log(`Lúcio: Skipping turret ${cardId} - turrets cannot receive shields`);
+                continue;
+            }
             if (card) {
                 const currentShield = card.shield || 0;
                 const newShield = Math.min(currentShield + 2, 3); // Max 3 shields (except Wrecking Ball)
@@ -181,9 +185,13 @@ export function lucioTokenHealing(rowId) {
         const row = window.__ow_getRow?.(rowId);
         if (!row) return;
         
-        // Heal all heroes in the row by 1 HP
+        // Heal all heroes in the row by 1 HP (excluding turrets)
         for (const cardId of row.cardIds) {
             const card = window.__ow_getCard?.(cardId);
+            if (card && card.turret === true) {
+                console.log(`Lúcio: Skipping turret ${cardId} - turrets cannot be healed`);
+                continue;
+            }
             if (card && card.health < card.maxHealth) {
                 const currentHealth = card.health || 0;
                 const maxHealth = card.maxHealth || 3;

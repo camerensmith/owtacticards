@@ -959,6 +959,14 @@ function checkOnEnterAbilities(playerHeroId, rowId, playerNum) {
         abilitiesIndex.sombra.onEnter({ playerHeroId, rowId });
         return;
     }
+    if (heroId === 'torbjorn' && abilitiesIndex?.torbjorn?.onEnter) {
+        abilitiesIndex.torbjorn.onEnter({ playerHeroId, rowId });
+        return;
+    }
+    if (heroId === 'turret' && abilitiesIndex?.turret?.onEnter) {
+        abilitiesIndex.turret.onEnter({ playerHeroId, rowId });
+        return;
+    }
 
     if (heroId === 'mercy' && abilitiesIndex?.mercy?.onEnter) {
         abilitiesIndex.mercy.onEnter({ playerHeroId, rowId });
@@ -1116,6 +1124,15 @@ export default function App() {
             return data.heroes[heroId]?.health ?? undefined;
         };
         window.__ow_setCardHealth = (playerHeroId, newHealth) => {
+            const playerNum = parseInt(playerHeroId[0]);
+            const card = gameState.playerCards[`player${playerNum}cards`]?.cards?.[playerHeroId];
+            
+            // Prevent turrets from being healed (but allow damage)
+            if (card && card.turret === true && newHealth > card.health) {
+                console.log(`Health Update: Turret ${playerHeroId} cannot be healed`);
+                return;
+            }
+            
             dispatch({ type: 'external-set-card-health', payload: { targetCardId: playerHeroId, newHealth } });
         };
         window.__ow_isSpecial = (heroId) => {
@@ -1183,6 +1200,14 @@ export default function App() {
         };
         window.__ow_dispatchShieldUpdate = (cardId, newShield) => {
             const playerNum = parseInt(cardId[0]);
+            const card = gameState.playerCards[`player${playerNum}cards`]?.cards?.[cardId];
+            
+            // Prevent turrets from receiving shields
+            if (card && card.turret === true) {
+                console.log(`Shield Update: Turret ${cardId} cannot receive shields`);
+                return;
+            }
+            
             dispatch({
                 type: ACTIONS.EDIT_CARD,
                 payload: {
@@ -1936,6 +1961,13 @@ export default function App() {
             abilitiesIndex.sombra.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
         } catch (e) {
             console.log('Error executing SOMBRA ultimate:', e);
+        }
+    } else if (heroId === 'torbjorn' && abilitiesIndex?.torbjorn?.onUltimate) {
+        try {
+            window.__ow_trackUltimateUsed?.(heroId, 'Torbjörn', 'Forge Hammer', playerNum, rowId, adjustedCost);
+            abilitiesIndex.torbjorn.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
+        } catch (e) {
+            console.log('Error executing TORBJÖRN ultimate:', e);
         }
     } else {
                         console.log(`Executing ultimate for ${playerHeroId} in ${rowId} (cost: ${adjustedCost})`);

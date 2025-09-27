@@ -335,6 +335,12 @@ export function mercyTokenHealing(cardId) {
     const card = window.__ow_getCard?.(cardId);
     if (!card || card.health <= 0) return;
     
+    // Prevent turrets from being healed
+    if (card.turret === true) {
+        console.log(`Mercy: Cannot heal turret ${cardId} - turrets cannot be healed`);
+        return;
+    }
+    
     const hasMercyHeal = Array.isArray(card.effects) && 
         card.effects.some(effect => effect.id === 'mercy-heal' && effect.hero === 'mercy');
     

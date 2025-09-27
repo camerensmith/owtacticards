@@ -4,6 +4,7 @@ import turnContext from 'context/turnContext';
 import abilities from '../index';
 import { processAnnihilation } from '../heroes/nemesis';
 import { cleanupTemporaryHP } from '../heroes/lifeweaver';
+import { processTurretDamage } from '../heroes/turret';
 
 export default function TurnEffectsRunner() {
     const { gameState } = useContext(gameContext);
@@ -121,6 +122,13 @@ export default function TurnEffectsRunner() {
                             }
                         }
                     }
+                }
+                
+                // Process Turret damage at start of enemy turn
+                try {
+                    processTurretDamage(gameState, playerTurn);
+                } catch (error) {
+                    console.error(`TurnEffectsRunner: Error processing Turret damage:`, error);
                 }
 
                 // Process enemy effects
