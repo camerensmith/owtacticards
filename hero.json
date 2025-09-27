@@ -374,7 +374,7 @@
   {
     "name": "Sombra",
     "class": "offense",
-    "hp": 4,
+    "hp": 3,
     "front_power": 3,
     "front_synergy": 1,
     "middle_power": 1,
@@ -407,8 +407,8 @@
     "middle_synergy": 3,
     "back_power": 2,
     "back_synergy": 2,
-    "on_enter1": "Build Turret — Place the Torbjorn Turret adjacent to Torbjorn.",
-    "ultimate": "Forge Hammer (3): Turret now does 2 damage to two Heroes."
+    "on_enter1": "Build Turret — Place the Torbjorn Turret into your hand.",
+    "ultimate": "Forge Hammer (3): Turret now does 2 damage to two Heroes, regardless of row for as long as Torbjorn stays alive."
   },
   {
     "name": "Tracer",

@@ -951,6 +951,10 @@ function checkOnEnterAbilities(playerHeroId, rowId, playerNum) {
         abilitiesIndex.sigma.onEnter({ playerHeroId, rowId });
         return;
     }
+    if (heroId === 'soldier' && abilitiesIndex?.soldier?.onEnter) {
+        abilitiesIndex.soldier.onEnter({ playerHeroId, rowId });
+        return;
+    }
 
     if (heroId === 'mercy' && abilitiesIndex?.mercy?.onEnter) {
         abilitiesIndex.mercy.onEnter({ playerHeroId, rowId });
@@ -1914,6 +1918,13 @@ export default function App() {
             abilitiesIndex.sigma.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
         } catch (e) {
             console.log('Error executing SIGMA ultimate:', e);
+        }
+    } else if (heroId === 'soldier' && abilitiesIndex?.soldier?.onUltimate) {
+        try {
+            window.__ow_trackUltimateUsed?.(heroId, 'Soldier: 76', 'Tactical Visor', playerNum, rowId, adjustedCost);
+            abilitiesIndex.soldier.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
+        } catch (e) {
+            console.log('Error executing SOLDIER ultimate:', e);
         }
     } else {
                         console.log(`Executing ultimate for ${playerHeroId} in ${rowId} (cost: ${adjustedCost})`);

@@ -15,7 +15,7 @@ export function publish(event) {
     }
 }
 
-export function dealDamage(targetCardId, targetRow, amount, ignoreShields = false, sourceCardId = null) {
+export function dealDamage(targetCardId, targetRow, amount, ignoreShields = false, sourceCardId = null, fixedDamage = false) {
     // Check if the target slot is invulnerable
     if (window.__ow_isSlotInvulnerable) {
         const row = window.__ow_getRow?.(targetRow);
@@ -45,6 +45,49 @@ export function dealDamage(targetCardId, targetRow, amount, ignoreShields = fals
             console.log(`DamageBus - Target ${targetCardId} has immunity effect, damage blocked`);
             return; // Block damage if card has immunity effect
         }
+    }
+    
+    // Fixed damage bypasses all modifications but still respects shields
+    if (fixedDamage) {
+        console.log(`Fixed Damage: ${amount} damage to ${targetCardId} (no modifications)`);
+        let finalAmount = amount;
+        
+        // Still respect shields if not ignoring them
+        if (!ignoreShields && finalAmount > 0) {
+            const card = window.__ow_getCard?.(targetCardId);
+            if (card && card.shield > 0) {
+                const shieldAbsorbed = Math.min(finalAmount, card.shield);
+                finalAmount = Math.max(0, finalAmount - shieldAbsorbed);
+                
+                // Update shield count
+                window.__ow_dispatchShieldUpdate?.(targetCardId, card.shield - shieldAbsorbed);
+                console.log(`Fixed Damage - Shields absorbed ${shieldAbsorbed}, remaining damage: ${finalAmount}`);
+            }
+        }
+        
+        // Apply remaining damage to health
+        if (finalAmount > 0) {
+            const card = window.__ow_getCard?.(targetCardId);
+            if (card) {
+                const newHealth = Math.max(0, card.health - finalAmount);
+                window.__ow_setCardHealth?.(targetCardId, newHealth);
+                console.log(`Fixed Damage - Applied ${finalAmount} damage to health (${card.health} → ${newHealth})`);
+            }
+        }
+        
+        // Publish damage event for consistency
+        const damageEvent = { 
+            type: 'damage', 
+            targetCardId, 
+            targetRow, 
+            amount: finalAmount, 
+            ignoreShields, 
+            sourceCardId,
+            fixedDamage: true 
+        };
+        console.log('DamageBus - Publishing fixed damage event:', damageEvent);
+        publish(damageEvent);
+        return;
     }
     
     // Check for Hanzo token damage reduction

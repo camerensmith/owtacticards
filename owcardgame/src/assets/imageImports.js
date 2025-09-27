@@ -248,8 +248,10 @@ import sigmaAbility1 from './audio/sigma-ability1.mp3';
 import sigmaUltimate from './audio/sigma-ultimate.mp3';
 import sigmaUltimateResolve from './audio/sigma-ultimate-resolve.mp3';
 import sigmaIntro from './audio/sigma-intro.mp3';
-import soldierTargetrich from './audio/soldier-targetrich.mp3';
-import soldierUlt from './audio/soldier-ult.mp3';
+import soldierEnter from './audio/soldier76-enter.mp3';
+import soldierUltimate from './audio/soldier-ultimate.mp3';
+import soldierUltimateResolve from './audio/soldier76-ultimate-resolve.mp3';
+import soldierIntro from './audio/soldier-intro.mp3';
 import sombraHack from './audio/sombra-hack.mp3';
 import sombraUlt from './audio/sombra-ult.mp3';
 import symmetraShield from './audio/symmetra-shield.mp3';
@@ -438,8 +440,10 @@ export const abilityAudioFiles = {
     'sigma-ultimate': sigmaUltimate,
     'sigma-ultimate-resolve': sigmaUltimateResolve,
     'sigma-intro': sigmaIntro,
-    'soldier-targetrich': soldierTargetrich,
-    'soldier-ult': soldierUlt,
+    'soldier-enter': soldierEnter,
+    'soldier-ultimate': soldierUltimate,
+    'soldier-ultimate-resolve': soldierUltimateResolve,
+    'soldier-intro': soldierIntro,
     'sombra-hack': sombraHack,
     'sombra-ult': sombraUlt,
     'symmetra-shield': symmetraShield,
