@@ -963,6 +963,10 @@ function checkOnEnterAbilities(playerHeroId, rowId, playerNum) {
         abilitiesIndex.torbjorn.onEnter({ playerHeroId, rowId });
         return;
     }
+    if (heroId === 'tracer' && abilitiesIndex?.tracer?.onEnter) {
+        abilitiesIndex.tracer.onEnter({ playerHeroId, rowId });
+        return;
+    }
     if (heroId === 'turret' && abilitiesIndex?.turret?.onEnter) {
         abilitiesIndex.turret.onEnter({ playerHeroId, rowId });
         return;
@@ -1361,7 +1365,7 @@ export default function App() {
                 let currentRowId = null;
                 let currentIndex = -1;
                 
-                const allRows = ['1f', '1m', '1b', '2f', '2m', '2b'];
+                const allRows = ['1f', '1m', '1b', '2f', '2m', '2b', 'player1hand', 'player2hand'];
                 for (const rowId of allRows) {
                     const rowCards = gameState.rows[rowId]?.cardIds || [];
                     const index = rowCards.indexOf(cardId);
@@ -1968,6 +1972,13 @@ export default function App() {
             abilitiesIndex.torbjorn.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
         } catch (e) {
             console.log('Error executing TORBJÖRN ultimate:', e);
+        }
+    } else if (heroId === 'tracer' && abilitiesIndex?.tracer?.onUltimate) {
+        try {
+            window.__ow_trackUltimateUsed?.(heroId, 'Tracer', 'Recall', playerNum, rowId, adjustedCost);
+            abilitiesIndex.tracer.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
+        } catch (e) {
+            console.log('Error executing TRACER ultimate:', e);
         }
     } else {
                         console.log(`Executing ultimate for ${playerHeroId} in ${rowId} (cost: ${adjustedCost})`);

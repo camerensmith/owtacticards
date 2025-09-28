@@ -47,6 +47,33 @@ export function dealDamage(targetCardId, targetRow, amount, ignoreShields = fals
         }
     }
     
+    // Check for Tracer Ultimate (avoid fatal damage)
+    if (targetCard && targetCard.id === 'tracer') {
+        const currentHealth = targetCard.health || 0;
+        const newHealth = currentHealth - amount;
+        const wouldBeFatal = newHealth <= 0;
+        
+        if (wouldBeFatal) {
+            // Check if Tracer's ultimate is available and has enough synergy
+            const row = window.__ow_getRow?.(targetRow);
+            const currentSynergy = row?.synergy || 0;
+            const ultimateCost = 2;
+            
+            if (currentSynergy >= ultimateCost && window.__ow_triggerTracerUltimate) {
+                console.log(`DamageBus - Tracer Ultimate: ${amount} damage would be fatal - triggering ultimate instead`);
+                
+                // Store HP before damage for restoration
+                const hpBeforeDamage = currentHealth;
+                
+                // Trigger Tracer Ultimate
+                window.__ow_triggerTracerUltimate(targetCardId, targetRow, hpBeforeDamage);
+                return; // Block the damage
+            } else {
+                console.log(`DamageBus - Tracer Ultimate: Not available (synergy: ${currentSynergy}/${ultimateCost})`);
+            }
+        }
+    }
+    
     // Fixed damage bypasses all modifications but still respects shields
     if (fixedDamage) {
         console.log(`Fixed Damage: ${amount} damage to ${targetCardId} (no modifications)`);

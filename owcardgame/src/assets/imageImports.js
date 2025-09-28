@@ -259,11 +259,17 @@ import sombraIntro from './audio/sombra-intro.mp3';
 import torbjornEnter from './audio/torbjorn-enter.mp3';
 import torbjornUltimate from './audio/torbjorn-ult.mp3';
 import torbjornIntro from './audio/torbjorn-intro.mp3';
+import tracerEnter from './audio/tracer-enter.mp3';
+import tracerEnter2 from './audio/tracer-enter2.mp3';
+import tracerAbility1 from './audio/tracer-ability1.mp3';
+import tracerAbility1Resolve from './audio/tracer-ability1-resolve.mp3';
+import tracerAbility2 from './audio/tracer-ability2.mp3';
+import tracerAbility2Resolve from './audio/tracer-ability2-resolve.mp3';
+import tracerUltimate from './audio/tracer-ultimate.mp3';
+import tracerIntro from './audio/tracer-intro.mp3';
 import turretEnter from './audio/turret-enter.mp3';
 import turretFire from './audio/turret-fire.mp3';
 import symmetraShield from './audio/symmetra-shield.mp3';
-import tracerDejavu from './audio/tracer-dejavu.mp3';
-import tracerImback from './audio/tracer-imback.mp3';
 import widowmakerOneshot from './audio/widowmaker-oneshot.mp3';
 import widowmakerWidowskiss from './audio/widowmaker-widowskiss.mp3';
 import winstonAngry from './audio/winston-angry.mp3';
@@ -456,11 +462,17 @@ export const abilityAudioFiles = {
     'torbjorn-enter': torbjornEnter,
     'torbjorn-ultimate': torbjornUltimate,
     'torbjorn-intro': torbjornIntro,
+    'tracer-enter': tracerEnter,
+    'tracer-enter2': tracerEnter2,
+    'tracer-ability1': tracerAbility1,
+    'tracer-ability1-resolve': tracerAbility1Resolve,
+    'tracer-ability2': tracerAbility2,
+    'tracer-ability2-resolve': tracerAbility2Resolve,
+    'tracer-ultimate': tracerUltimate,
+    'tracer-intro': tracerIntro,
     'turret-enter': turretEnter,
     'turret-fire': turretFire,
     'symmetra-shield': symmetraShield,
-    'tracer-dejavu': tracerDejavu,
-    'tracer-imback': tracerImback,
     'widowmaker-oneshot': widowmakerOneshot,
     'widowmaker-widowskiss': widowmakerWidowskiss,
     'winston-angry': winstonAngry,

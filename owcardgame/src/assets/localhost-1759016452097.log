@@ -1,0 +1,1000 @@
+ EDIT_CARD reducer: After edit - isPlayed: true, enteredTurn: 1
+ HealthCounter for 2orisa: Object
+ HealthCounter: Showing normal HP 5 for 2orisa
+ HealthCounter for 2brigitte: Object
+ HealthCounter: Showing normal HP 4 for 2brigitte
+ HealthCounter for 2bastion: Object
+ HealthCounter: Showing normal HP 4 for 2bastion
+ TurnEffectsRunner: useEffect triggered Object
+ TurnEffectsRunner: Turn change check Object
+ HealthCounter for 2orisa: Object
+ HealthCounter: Showing normal HP 5 for 2orisa
+ HealthCounter for 2brigitte: Object
+ HealthCounter: Showing normal HP 4 for 2brigitte
+ HealthCounter for 2bastion: Object
+ HealthCounter: Showing normal HP 4 for 2bastion
+ TurnEffectsRunner: useEffect triggered Object
+ TurnEffectsRunner: Turn change check Object
+ HealthCounter for 2orisa: Object
+ HealthCounter: Showing normal HP 5 for 2orisa
+ HealthCounter for 2brigitte: Object
+ HealthCounter: Showing normal HP 4 for 2brigitte
+ HealthCounter for 2bastion: Object
+ HealthCounter: Showing normal HP 4 for 2bastion
+ HealthCounter for 2tracer: Object
+ HealthCounter: Showing normal HP 3 for 2tracer
+ HealthCounter for 2tracer: Object
+ HealthCounter: Showing normal HP 3 for 2tracer
+ HealthCounter for 2orisa: Object
+ HealthCounter: Showing normal HP 5 for 2orisa
+ HealthCounter for 2brigitte: Object
+ HealthCounter: Showing normal HP 4 for 2brigitte
+ HealthCounter for 2bastion: Object
+ HealthCounter: Showing normal HP 4 for 2bastion
+ Placement sound played successfully
+ tracer enter sound played successfully
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1ramattra: Object
+ HealthCounter: Showing normal HP 4 for 1ramattra
+ HealthCounter for 1lifeweaver: Object
+ HealthCounter: Showing normal HP 3 for 1lifeweaver
+ HealthCounter for 1mei: Object
+ HealthCounter: Showing normal HP 4 for 1mei
+ HealthCounter for 2tracer: Object
+ HealthCounter: Showing normal HP 3 for 2tracer
+ Player 1 drew orisa
+ Playing orisa intro sound...
+ TurnEffectsRunner: useEffect triggered Object
+ TurnEffectsRunner: Turn change check Object
+ TurnEffectsRunner: Turn changed, processing effects
+ Lifeweaver: Starting temporary HP cleanup for player 1
+ Lifeweaver: No temporary HP effects found to clean up for player 1
+ Lifeweaver: Temporary HP cleanup completed
+ TurnEffectsRunner: Checking row 1b with 0 ally effects and 0 enemy effects
+ TurnEffectsRunner: Checking row 1m with 0 ally effects and 0 enemy effects
+ TurnEffectsRunner: Checking row 1f with 0 ally effects and 0 enemy effects
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1ramattra: Object
+ HealthCounter: Showing normal HP 4 for 1ramattra
+ HealthCounter for 1lifeweaver: Object
+ HealthCounter: Showing normal HP 3 for 1lifeweaver
+ HealthCounter for 1mei: Object
+ HealthCounter: Showing normal HP 4 for 1mei
+ HealthCounter for 2tracer: Object
+ HealthCounter: Showing normal HP 3 for 2tracer
+ TurnEffectsRunner: useEffect triggered Object
+ TurnEffectsRunner: Turn change check Object
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1ramattra: Object
+ HealthCounter: Showing normal HP 4 for 1ramattra
+ HealthCounter for 1lifeweaver: Object
+ HealthCounter: Showing normal HP 3 for 1lifeweaver
+ HealthCounter for 1mei: Object
+ HealthCounter: Showing normal HP 4 for 1mei
+ HealthCounter for 2tracer: Object
+ HealthCounter: Showing normal HP 3 for 2tracer
+ HealthCounter for 1orisa: Object
+ HealthCounter: Showing normal HP 5 for 1orisa
+ orisa intro sound played successfully
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1ramattra: Object
+ HealthCounter: Showing normal HP 4 for 1ramattra
+ HealthCounter for 1lifeweaver: Object
+ HealthCounter: Showing normal HP 3 for 1lifeweaver
+ HealthCounter for 1mei: Object
+ HealthCounter: Showing normal HP 4 for 1mei
+ HealthCounter for 1orisa: Object
+ HealthCounter: Showing normal HP 5 for 1orisa
+ HealthCounter for 2tracer: Object
+ HealthCounter: Showing normal HP 3 for 2tracer
+ Object
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1ramattra: Object
+ HealthCounter: Showing normal HP 4 for 1ramattra
+ HealthCounter for 1lifeweaver: Object
+ HealthCounter: Showing normal HP 3 for 1lifeweaver
+ HealthCounter for 1mei: Object
+ HealthCounter: Showing normal HP 4 for 1mei
+ HealthCounter for 1orisa: Object
+ HealthCounter: Showing normal HP 5 for 1orisa
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1ramattra: Object
+ HealthCounter: Showing normal HP 4 for 1ramattra
+ HealthCounter for 1lifeweaver: Object
+ HealthCounter: Showing normal HP 3 for 1lifeweaver
+ HealthCounter for 1mei: Object
+ HealthCounter: Showing normal HP 4 for 1mei
+ HealthCounter for 1orisa: Object
+ HealthCounter: Showing normal HP 5 for 1orisa
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1ramattra: Object
+ HealthCounter: Showing normal HP 4 for 1ramattra
+ HealthCounter for 1lifeweaver: Object
+ HealthCounter: Showing normal HP 3 for 1lifeweaver
+ HealthCounter for 1mei: Object
+ HealthCounter: Showing normal HP 4 for 1mei
+ HealthCounter for 1orisa: Object
+ HealthCounter: Showing normal HP 5 for 1orisa
+ HealthCounter for 2tracer: Object
+ HealthCounter: Showing normal HP 3 for 2tracer
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1ramattra: Object
+ HealthCounter: Showing normal HP 4 for 1ramattra
+ HealthCounter for 1lifeweaver: Object
+ HealthCounter: Showing normal HP 3 for 1lifeweaver
+ HealthCounter for 1mei: Object
+ HealthCounter: Showing normal HP 4 for 1mei
+ HealthCounter for 1orisa: Object
+ HealthCounter: Showing normal HP 5 for 1orisa
+ HealthCounter for 2tracer: Object
+ HealthCounter: Showing normal HP 3 for 2tracer
+ Object
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1ramattra: Object
+ HealthCounter: Showing normal HP 4 for 1ramattra
+ HealthCounter for 1lifeweaver: Object
+ HealthCounter: Showing normal HP 3 for 1lifeweaver
+ HealthCounter for 1mei: Object
+ HealthCounter: Showing normal HP 4 for 1mei
+ HealthCounter for 1orisa: Object
+ HealthCounter: Showing normal HP 5 for 1orisa
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1ramattra: Object
+ HealthCounter: Showing normal HP 4 for 1ramattra
+ HealthCounter for 1lifeweaver: Object
+ HealthCounter: Showing normal HP 3 for 1lifeweaver
+ HealthCounter for 1mei: Object
+ HealthCounter: Showing normal HP 4 for 1mei
+ HealthCounter for 1orisa: Object
+ HealthCounter: Showing normal HP 5 for 1orisa
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1ramattra: Object
+ HealthCounter: Showing normal HP 4 for 1ramattra
+ HealthCounter for 1lifeweaver: Object
+ HealthCounter: Showing normal HP 3 for 1lifeweaver
+ HealthCounter for 1mei: Object
+ HealthCounter: Showing normal HP 4 for 1mei
+ HealthCounter for 1orisa: Object
+ HealthCounter: Showing normal HP 5 for 1orisa
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1ramattra: Object
+ HealthCounter: Showing normal HP 4 for 1ramattra
+ HealthCounter for 1lifeweaver: Object
+ HealthCounter: Showing normal HP 3 for 1lifeweaver
+ HealthCounter for 1mei: Object
+ HealthCounter: Showing normal HP 4 for 1mei
+ HealthCounter for 1orisa: Object
+ HealthCounter: Showing normal HP 5 for 1orisa
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ Attempting to play placement sound...
+ Placement audio source: /owcardgame/static/media/placement.445605f26d71501234a7.mp3
+ Created placement audio object: 
+ Playing genji enter sound...
+ MOVE_CARD reducer: Moving 1genji from player1hand:0 to 1m:0
+ MOVE_CARD reducer: Start row exists: true, Finish row exists: true
+ MOVE_CARD reducer: Start row cards: [1genji, 1ramattra, 1lifeweaver, 1mei, 1orisa]
+ MOVE_CARD reducer: Finish row cards: [none]
+ MOVE_CARD reducer: New start row cards: [1ramattra, 1lifeweaver, 1mei, 1orisa]
+ MOVE_CARD reducer: New finish row cards: [1genji]
+ MOVE_CARD reducer: About to update state
+ MOVE_CARD reducer: State updated. New finish row cards: [1genji]
+ EDIT_CARD reducer: Editing 1genji for player 1
+ EDIT_CARD reducer: Keys: [isPlayed, enteredTurn, synergy], Values: [true, 2, [object Object]]
+ EDIT_CARD reducer: Target card found: true
+ EDIT_CARD reducer: Before edit - isPlayed: false, enteredTurn: undefined
+ EDIT_CARD reducer: Set isPlayed = true
+ EDIT_CARD reducer: Set enteredTurn = 2
+ EDIT_CARD reducer: Set synergy = [object Object]
+ EDIT_CARD reducer: After edit - isPlayed: true, enteredTurn: 2
+ HealthCounter for 1ramattra: Object
+ HealthCounter: Showing normal HP 4 for 1ramattra
+ HealthCounter for 1lifeweaver: Object
+ HealthCounter: Showing normal HP 3 for 1lifeweaver
+ HealthCounter for 1mei: Object
+ HealthCounter: Showing normal HP 4 for 1mei
+ HealthCounter for 1orisa: Object
+ HealthCounter: Showing normal HP 5 for 1orisa
+ HealthCounter for 2tracer: Object
+ HealthCounter: Showing normal HP 3 for 2tracer
+ TurnEffectsRunner: useEffect triggered Object
+ TurnEffectsRunner: Turn change check Object
+ HealthCounter for 1ramattra: Object
+ HealthCounter: Showing normal HP 4 for 1ramattra
+ HealthCounter for 1lifeweaver: Object
+ HealthCounter: Showing normal HP 3 for 1lifeweaver
+ HealthCounter for 1mei: Object
+ HealthCounter: Showing normal HP 4 for 1mei
+ HealthCounter for 1orisa: Object
+ HealthCounter: Showing normal HP 5 for 1orisa
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 2tracer: Object
+ HealthCounter: Showing normal HP 3 for 2tracer
+ TurnEffectsRunner: useEffect triggered Object
+ TurnEffectsRunner: Turn change check Object
+ HealthCounter for 1ramattra: Object
+ HealthCounter: Showing normal HP 4 for 1ramattra
+ HealthCounter for 1lifeweaver: Object
+ HealthCounter: Showing normal HP 3 for 1lifeweaver
+ HealthCounter for 1mei: Object
+ HealthCounter: Showing normal HP 4 for 1mei
+ HealthCounter for 1orisa: Object
+ HealthCounter: Showing normal HP 5 for 1orisa
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 2tracer: Object
+ HealthCounter: Showing normal HP 3 for 2tracer
+ Placement sound played successfully
+ genji enter sound played successfully
+ DamageBus - Checking invulnerability for 2tracer at index 0 in row 2m Object
+ DamageBus - Target 2tracer is NOT invulnerable, proceeding with damage
+ DamageBus - Tracer check: 2tracer, health: 3, damage: 1, newHealth: 2, shouldRecall: false
+ DamageBus - Publishing damage event: Object
+ EDIT_CARD reducer: Editing 2tracer for player 2
+ EDIT_CARD reducer: Keys: [health], Values: [2]
+ EDIT_CARD reducer: Target card found: true
+ EDIT_CARD reducer: Before edit - isPlayed: true, enteredTurn: 1
+ EDIT_CARD reducer: Set health = 2
+ EDIT_CARD reducer: After edit - isPlayed: true, enteredTurn: 1
+ HealthCounter for 1ramattra: Object
+ HealthCounter: Showing normal HP 4 for 1ramattra
+ HealthCounter for 1lifeweaver: Object
+ HealthCounter: Showing normal HP 3 for 1lifeweaver
+ HealthCounter for 1mei: Object
+ HealthCounter: Showing normal HP 4 for 1mei
+ HealthCounter for 1orisa: Object
+ HealthCounter: Showing normal HP 5 for 1orisa
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 2tracer: Object
+ HealthCounter: Showing normal HP 2 for 2tracer
+ TurnEffectsRunner: useEffect triggered Object
+ TurnEffectsRunner: Turn change check Object
+ HealthCounter for 1ramattra: Object
+ HealthCounter: Showing normal HP 4 for 1ramattra
+ HealthCounter for 1lifeweaver: Object
+ HealthCounter: Showing normal HP 3 for 1lifeweaver
+ HealthCounter for 1mei: Object
+ HealthCounter: Showing normal HP 4 for 1mei
+ HealthCounter for 1orisa: Object
+ HealthCounter: Showing normal HP 5 for 1orisa
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 2tracer: Object
+ HealthCounter: Showing normal HP 2 for 2tracer
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 2tracer: Object
+ HealthCounter: Showing normal HP 2 for 2tracer
+ HealthCounter for 2orisa: Object
+ HealthCounter: Showing normal HP 5 for 2orisa
+ HealthCounter for 2brigitte: Object
+ HealthCounter: Showing normal HP 4 for 2brigitte
+ HealthCounter for 2bastion: Object
+ HealthCounter: Showing normal HP 4 for 2bastion
+ Player 2 drew winston
+ TurnEffectsRunner: useEffect triggered Object
+ TurnEffectsRunner: Turn change check Object
+ TurnEffectsRunner: Turn changed, processing effects
+ Lifeweaver: Starting temporary HP cleanup for player 2
+ Lifeweaver: No temporary HP effects found to clean up for player 2
+ Lifeweaver: Temporary HP cleanup completed
+ TurnEffectsRunner: Checking row 2b with 0 ally effects and 0 enemy effects
+ TurnEffectsRunner: Checking row 2m with 0 ally effects and 0 enemy effects
+ TurnEffectsRunner: Checking row 2f with 0 ally effects and 0 enemy effects
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 2tracer: Object
+ HealthCounter: Showing normal HP 2 for 2tracer
+ HealthCounter for 2orisa: Object
+ HealthCounter: Showing normal HP 5 for 2orisa
+ HealthCounter for 2brigitte: Object
+ HealthCounter: Showing normal HP 4 for 2brigitte
+ HealthCounter for 2bastion: Object
+ HealthCounter: Showing normal HP 4 for 2bastion
+ TurnEffectsRunner: useEffect triggered Object
+ TurnEffectsRunner: Turn change check Object
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 2tracer: Object
+ HealthCounter: Showing normal HP 2 for 2tracer
+ HealthCounter for 2orisa: Object
+ HealthCounter: Showing normal HP 5 for 2orisa
+ HealthCounter for 2brigitte: Object
+ HealthCounter: Showing normal HP 4 for 2brigitte
+ HealthCounter for 2bastion: Object
+ HealthCounter: Showing normal HP 4 for 2bastion
+ HealthCounter for 2winston: Object
+ HealthCounter: Showing normal HP 4 for 2winston
+ HealthCounter for 1ramattra: Object
+ HealthCounter: Showing normal HP 4 for 1ramattra
+ HealthCounter for 1lifeweaver: Object
+ HealthCounter: Showing normal HP 3 for 1lifeweaver
+ HealthCounter for 1mei: Object
+ HealthCounter: Showing normal HP 4 for 1mei
+ HealthCounter for 1orisa: Object
+ HealthCounter: Showing normal HP 5 for 1orisa
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 2tracer: Object
+ HealthCounter: Showing normal HP 2 for 2tracer
+ Player 1 drew tracer
+ Playing tracer intro sound...
+ TurnEffectsRunner: useEffect triggered Object
+ TurnEffectsRunner: Turn change check Object
+ TurnEffectsRunner: Turn changed, processing effects
+ Lifeweaver: Starting temporary HP cleanup for player 1
+ Lifeweaver: No temporary HP effects found to clean up for player 1
+ Lifeweaver: Temporary HP cleanup completed
+ TurnEffectsRunner: Checking row 1b with 0 ally effects and 0 enemy effects
+ TurnEffectsRunner: Checking row 1m with 0 ally effects and 0 enemy effects
+ TurnEffectsRunner: Checking row 1f with 0 ally effects and 0 enemy effects
+ HealthCounter for 1ramattra: Object
+ HealthCounter: Showing normal HP 4 for 1ramattra
+ HealthCounter for 1lifeweaver: Object
+ HealthCounter: Showing normal HP 3 for 1lifeweaver
+ HealthCounter for 1mei: Object
+ HealthCounter: Showing normal HP 4 for 1mei
+ HealthCounter for 1orisa: Object
+ HealthCounter: Showing normal HP 5 for 1orisa
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 2tracer: Object
+ HealthCounter: Showing normal HP 2 for 2tracer
+ TurnEffectsRunner: useEffect triggered Object
+ TurnEffectsRunner: Turn change check Object
+ HealthCounter for 1ramattra: Object
+ HealthCounter: Showing normal HP 4 for 1ramattra
+ HealthCounter for 1lifeweaver: Object
+ HealthCounter: Showing normal HP 3 for 1lifeweaver
+ HealthCounter for 1mei: Object
+ HealthCounter: Showing normal HP 4 for 1mei
+ HealthCounter for 1orisa: Object
+ HealthCounter: Showing normal HP 5 for 1orisa
+ HealthCounter for 1tracer: Object
+ HealthCounter: Showing normal HP 3 for 1tracer
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 2tracer: Object
+ HealthCounter: Showing normal HP 2 for 2tracer
+ tracer intro sound played successfully
+ HealthCounter for 1ramattra: Object
+ HealthCounter: Showing normal HP 4 for 1ramattra
+ HealthCounter for 1lifeweaver: Object
+ HealthCounter: Showing normal HP 3 for 1lifeweaver
+ HealthCounter for 1mei: Object
+ HealthCounter: Showing normal HP 4 for 1mei
+ HealthCounter for 1orisa: Object
+ HealthCounter: Showing normal HP 5 for 1orisa
+ HealthCounter for 1tracer: Object
+ HealthCounter: Showing normal HP 3 for 1tracer
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 2tracer: Object
+ HealthCounter: Showing normal HP 2 for 2tracer
+ Object
+ HealthCounter for 1tracer: Object
+ HealthCounter: Showing normal HP 3 for 1tracer
+ HealthCounter for 1ramattra: Object
+ HealthCounter: Showing normal HP 4 for 1ramattra
+ HealthCounter for 1tracer: Object
+ HealthCounter: Showing normal HP 3 for 1tracer
+ HealthCounter for 1tracer: Object
+ HealthCounter: Showing normal HP 3 for 1tracer
+ HealthCounter for 1tracer: Object
+ HealthCounter: Showing normal HP 3 for 1tracer
+ HealthCounter for 1tracer: Object
+ HealthCounter: Showing normal HP 3 for 1tracer
+ HealthCounter for 1ramattra: Object
+ HealthCounter: Showing normal HP 4 for 1ramattra
+ HealthCounter for 1lifeweaver: Object
+ HealthCounter: Showing normal HP 3 for 1lifeweaver
+ HealthCounter for 1mei: Object
+ HealthCounter: Showing normal HP 4 for 1mei
+ HealthCounter for 1orisa: Object
+ HealthCounter: Showing normal HP 5 for 1orisa
+ HealthCounter for 1tracer: Object
+ HealthCounter: Showing normal HP 3 for 1tracer
+ HealthCounter for 1tracer: Object
+ HealthCounter: Showing normal HP 3 for 1tracer
+ HealthCounter for 1tracer: Object
+ HealthCounter: Showing normal HP 3 for 1tracer
+ HealthCounter for 1tracer: Object
+ HealthCounter: Showing normal HP 3 for 1tracer
+ HealthCounter for 1tracer: Object
+ HealthCounter: Showing normal HP 3 for 1tracer
+ HealthCounter for 1tracer: Object
+ HealthCounter: Showing normal HP 3 for 1tracer
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 1tracer: Object
+ HealthCounter: Showing normal HP 3 for 1tracer
+ HealthCounter for 1tracer: Object
+ HealthCounter: Showing normal HP 3 for 1tracer
+ HealthCounter for 1tracer: Object
+ HealthCounter: Showing normal HP 3 for 1tracer
+ HealthCounter for 1tracer: Object
+ HealthCounter: Showing normal HP 3 for 1tracer
+ HealthCounter for 1tracer: Object
+ HealthCounter: Showing normal HP 3 for 1tracer
+ HealthCounter for 1tracer: Object
+ HealthCounter: Showing normal HP 3 for 1tracer
+ HealthCounter for 1tracer: Object
+ HealthCounter: Showing normal HP 3 for 1tracer
+ HealthCounter for 1tracer: Object
+ HealthCounter: Showing normal HP 3 for 1tracer
+ HealthCounter for 1tracer: Object
+ HealthCounter: Showing normal HP 3 for 1tracer
+ HealthCounter for 1tracer: Object
+ HealthCounter: Showing normal HP 3 for 1tracer
+ HealthCounter for 1tracer: Object
+ HealthCounter: Showing normal HP 3 for 1tracer
+ HealthCounter for 1tracer: Object
+ HealthCounter: Showing normal HP 3 for 1tracer
+ HealthCounter for 1tracer: Object
+ HealthCounter: Showing normal HP 3 for 1tracer
+ HealthCounter for 1tracer: Object
+ HealthCounter: Showing normal HP 3 for 1tracer
+ HealthCounter for 1tracer: Object
+ HealthCounter: Showing normal HP 3 for 1tracer
+ HealthCounter for 1tracer: Object
+ HealthCounter: Showing normal HP 3 for 1tracer
+ HealthCounter for 1tracer: Object
+ HealthCounter: Showing normal HP 3 for 1tracer
+ HealthCounter for 1tracer: Object
+ HealthCounter: Showing normal HP 3 for 1tracer
+ HealthCounter for 1tracer: Object
+ HealthCounter: Showing normal HP 3 for 1tracer
+ HealthCounter for 1tracer: Object
+ HealthCounter: Showing normal HP 3 for 1tracer
+ HealthCounter for 1tracer: Object
+ HealthCounter: Showing normal HP 3 for 1tracer
+ HealthCounter for 1tracer: Object
+ HealthCounter: Showing normal HP 3 for 1tracer
+ HealthCounter for 1tracer: Object
+ HealthCounter: Showing normal HP 3 for 1tracer
+ HealthCounter for 1tracer: Object
+ HealthCounter: Showing normal HP 3 for 1tracer
+ HealthCounter for 1tracer: Object
+ HealthCounter: Showing normal HP 3 for 1tracer
+ HealthCounter for 1tracer: Object
+ HealthCounter: Showing normal HP 3 for 1tracer
+ HealthCounter for 1tracer: Object
+ HealthCounter: Showing normal HP 3 for 1tracer
+ HealthCounter for 1tracer: Object
+ HealthCounter: Showing normal HP 3 for 1tracer
+ HealthCounter for 1tracer: Object
+ HealthCounter: Showing normal HP 3 for 1tracer
+ HealthCounter for 1tracer: Object
+ HealthCounter: Showing normal HP 3 for 1tracer
+ HealthCounter for 1tracer: Object
+ HealthCounter: Showing normal HP 3 for 1tracer
+ HealthCounter for 1tracer: Object
+ HealthCounter: Showing normal HP 3 for 1tracer
+ Attempting to play placement sound...
+ Placement audio source: /owcardgame/static/media/placement.445605f26d71501234a7.mp3
+ Created placement audio object: 
+ Playing tracer enter sound...
+ MOVE_CARD reducer: Moving 1tracer from player1hand:4 to 1m:0
+ MOVE_CARD reducer: Start row exists: true, Finish row exists: true
+ MOVE_CARD reducer: Start row cards: [1ramattra, 1lifeweaver, 1mei, 1orisa, 1tracer]
+ MOVE_CARD reducer: Finish row cards: [1genji]
+ MOVE_CARD reducer: New start row cards: [1ramattra, 1lifeweaver, 1mei, 1orisa]
+ MOVE_CARD reducer: New finish row cards: [1tracer, 1genji]
+ MOVE_CARD reducer: About to update state
+ MOVE_CARD reducer: State updated. New finish row cards: [1tracer, 1genji]
+ EDIT_CARD reducer: Editing 1tracer for player 1
+ EDIT_CARD reducer: Keys: [isPlayed, enteredTurn, synergy], Values: [true, 4, [object Object]]
+ EDIT_CARD reducer: Target card found: true
+ EDIT_CARD reducer: Before edit - isPlayed: false, enteredTurn: undefined
+ EDIT_CARD reducer: Set isPlayed = true
+ EDIT_CARD reducer: Set enteredTurn = 4
+ EDIT_CARD reducer: Set synergy = [object Object]
+ EDIT_CARD reducer: After edit - isPlayed: true, enteredTurn: 4
+ HealthCounter for 1ramattra: Object
+ HealthCounter: Showing normal HP 4 for 1ramattra
+ HealthCounter for 1lifeweaver: Object
+ HealthCounter: Showing normal HP 3 for 1lifeweaver
+ HealthCounter for 1mei: Object
+ HealthCounter: Showing normal HP 4 for 1mei
+ HealthCounter for 1orisa: Object
+ HealthCounter: Showing normal HP 5 for 1orisa
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 2tracer: Object
+ HealthCounter: Showing normal HP 2 for 2tracer
+ TurnEffectsRunner: useEffect triggered Object
+ TurnEffectsRunner: Turn change check Object
+ HealthCounter for 1ramattra: Object
+ HealthCounter: Showing normal HP 4 for 1ramattra
+ HealthCounter for 1lifeweaver: Object
+ HealthCounter: Showing normal HP 3 for 1lifeweaver
+ HealthCounter for 1mei: Object
+ HealthCounter: Showing normal HP 4 for 1mei
+ HealthCounter for 1orisa: Object
+ HealthCounter: Showing normal HP 5 for 1orisa
+ HealthCounter for 1tracer: Object
+ HealthCounter: Showing normal HP 3 for 1tracer
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 2tracer: Object
+ HealthCounter: Showing normal HP 2 for 2tracer
+ TurnEffectsRunner: useEffect triggered Object
+ TurnEffectsRunner: Turn change check Object
+ HealthCounter for 1ramattra: Object
+ HealthCounter: Showing normal HP 4 for 1ramattra
+ HealthCounter for 1lifeweaver: Object
+ HealthCounter: Showing normal HP 3 for 1lifeweaver
+ HealthCounter for 1mei: Object
+ HealthCounter: Showing normal HP 4 for 1mei
+ HealthCounter for 1orisa: Object
+ HealthCounter: Showing normal HP 5 for 1orisa
+ HealthCounter for 1tracer: Object
+ HealthCounter: Showing normal HP 3 for 1tracer
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 2tracer: Object
+ HealthCounter: Showing normal HP 2 for 2tracer
+ Placement sound played successfully
+ tracer enter sound played successfully
+ HealthCounter for 1ramattra: Object
+ HealthCounter: Showing normal HP 4 for 1ramattra
+ HealthCounter for 1lifeweaver: Object
+ HealthCounter: Showing normal HP 3 for 1lifeweaver
+ HealthCounter for 1mei: Object
+ HealthCounter: Showing normal HP 4 for 1mei
+ HealthCounter for 1orisa: Object
+ HealthCounter: Showing normal HP 5 for 1orisa
+ HealthCounter for 1tracer: Object
+ HealthCounter: Showing normal HP 3 for 1tracer
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 2tracer: Object
+ HealthCounter: Showing normal HP 2 for 2tracer
+ DamageBus - Checking invulnerability for 2tracer at index 0 in row 2m Object
+ DamageBus - Target 2tracer is NOT invulnerable, proceeding with damage
+ DamageBus - Tracer check: 2tracer, health: 2, damage: 2, newHealth: 0, shouldRecall: true
+ DamageBus - Tracer Recall synergy check: 2 synergy available, need 2
+ DamageBus - Tracer Smart Recall: 2 damage would bring Tracer to 0 HP - triggering Recall instead
+ DamageBus - triggerTracerRecall function exists: true
+ Tracer Recall: Function called with 2tracer in row 2m
+ Tracer Recall: Active status: false
+ Tracer Recall: Triggering for 2tracer in row 2m
+ Tracer Recall: Removed 0 effects from 2tracer
+ Tracer Recall: Moving 2tracer from 2m to player2hand
+ Tracer Recall: moveCardToRow function exists: true
+ moveCardToRow: Moving 2tracer to player2hand
+ moveCardToRow: Card exists: true
+ moveCardToRow: Target row exists: true
+ moveCardToRow: Searching for 2tracer in all rows...
+ moveCardToRow: Row 1f has 0 cards: []
+ moveCardToRow: Row 1m has 2 cards: [1tracer, 1genji]
+ moveCardToRow: Row 1b has 0 cards: []
+ moveCardToRow: Row 2f has 0 cards: []
+ moveCardToRow: Row 2m has 1 cards: [2tracer]
+ moveCardToRow: Found 2tracer in 2m at index 0
+ moveCardToRow: Final location: 2m at index 0
+ moveCardToRow: Target row player2hand has 4 cards: [2orisa, 2brigitte, 2bastion, 2winston]
+ moveCardToRow: Dispatching move from 2m:0 to player2hand:4
+ Tracer Recall: Move command sent
+ Tracer Recall: Consumed 2 synergy from 2m
+ Tracer Recall: Marked ultimate as used for 2tracer
+ DamageBus - Recall trigger called
+ MOVE_CARD reducer: Moving 2tracer from 2m:0 to player2hand:4
+ MOVE_CARD reducer: Start row exists: true, Finish row exists: true
+ MOVE_CARD reducer: Start row cards: [2tracer]
+ MOVE_CARD reducer: Finish row cards: [2orisa, 2brigitte, 2bastion, 2winston]
+ MOVE_CARD reducer: New start row cards: []
+ MOVE_CARD reducer: New finish row cards: [2orisa, 2brigitte, 2bastion, 2winston, 2tracer]
+ MOVE_CARD reducer: About to update state
+ MOVE_CARD reducer: State updated. New finish row cards: [2orisa, 2brigitte, 2bastion, 2winston, 2tracer]
+ EDIT_CARD reducer: Editing 2tracer for player 2
+ EDIT_CARD reducer: Keys: [effects], Values: [[object Object]]
+ EDIT_CARD reducer: Target card found: true
+ EDIT_CARD reducer: Before edit - isPlayed: true, enteredTurn: 1
+ EDIT_CARD reducer: Set effects = [object Object]
+ EDIT_CARD reducer: After edit - isPlayed: true, enteredTurn: 1
+ HealthCounter for 1ramattra: Object
+ HealthCounter: Showing normal HP 4 for 1ramattra
+ HealthCounter for 1lifeweaver: Object
+ HealthCounter: Showing normal HP 3 for 1lifeweaver
+ HealthCounter for 1mei: Object
+ HealthCounter: Showing normal HP 4 for 1mei
+ HealthCounter for 1orisa: Object
+ HealthCounter: Showing normal HP 5 for 1orisa
+ HealthCounter for 1tracer: Object
+ HealthCounter: Showing normal HP 3 for 1tracer
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ TurnEffectsRunner: useEffect triggered Object
+ TurnEffectsRunner: Turn change check Object
+ HealthCounter for 1ramattra: Object
+ HealthCounter: Showing normal HP 4 for 1ramattra
+ HealthCounter for 1lifeweaver: Object
+ HealthCounter: Showing normal HP 3 for 1lifeweaver
+ HealthCounter for 1mei: Object
+ HealthCounter: Showing normal HP 4 for 1mei
+ HealthCounter for 1orisa: Object
+ HealthCounter: Showing normal HP 5 for 1orisa
+ HealthCounter for 1tracer: Object
+ HealthCounter: Showing normal HP 3 for 1tracer
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ TurnEffectsRunner: useEffect triggered Object
+ TurnEffectsRunner: Turn change check Object
+ HealthCounter for 1ramattra: Object
+ HealthCounter: Showing normal HP 4 for 1ramattra
+ HealthCounter for 1lifeweaver: Object
+ HealthCounter: Showing normal HP 3 for 1lifeweaver
+ HealthCounter for 1mei: Object
+ HealthCounter: Showing normal HP 4 for 1mei
+ HealthCounter for 1orisa: Object
+ HealthCounter: Showing normal HP 5 for 1orisa
+ HealthCounter for 1tracer: Object
+ HealthCounter: Showing normal HP 3 for 1tracer
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 2tracer: Object
+ HealthCounter: Showing normal HP 3 for 2tracer
+ Tracer Recall: Card after move attempt: Object
+ Tracer Recall: Card location after move: unknown
+ Tracer Recall: Move failed, not updating isPlayed status
+ Tracer Recall: Card isPlayed status: true
+ Tracer Recall: Card enteredTurn: 1
+ Tracer Recall: Card effects: Array(1)
+ Tracer Recall: Drag conditions check:
+   - isPlayed: true (should be false)
+   - currentTurn: 1, playerNum: 2 (should match)
+   - isSuitedUp: false (should be false)
+   - isDragDisabled: true
+ HealthCounter for 1tracer: Object
+ HealthCounter: Showing normal HP 3 for 1tracer
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 2orisa: Object
+ HealthCounter: Showing normal HP 5 for 2orisa
+ HealthCounter for 2brigitte: Object
+ HealthCounter: Showing normal HP 4 for 2brigitte
+ HealthCounter for 2bastion: Object
+ HealthCounter: Showing normal HP 4 for 2bastion
+ HealthCounter for 2winston: Object
+ HealthCounter: Showing normal HP 4 for 2winston
+ HealthCounter for 2tracer: Object
+ HealthCounter: Showing normal HP 3 for 2tracer
+ Player 2 drew torbjorn
+ Playing torbjorn intro sound...
+ TurnEffectsRunner: useEffect triggered Object
+ TurnEffectsRunner: Turn change check Object
+ TurnEffectsRunner: Turn changed, processing effects
+ Lifeweaver: Starting temporary HP cleanup for player 2
+ Lifeweaver: No temporary HP effects found to clean up for player 2
+ Lifeweaver: Temporary HP cleanup completed
+ TurnEffectsRunner: Checking row 2b with 0 ally effects and 0 enemy effects
+ TurnEffectsRunner: Checking row 2m with 0 ally effects and 0 enemy effects
+ Tracer Recall: Effect expired
+ TurnEffectsRunner: Checking row 2f with 0 ally effects and 0 enemy effects
+ EDIT_CARD reducer: Editing 2tracer for player 2
+ EDIT_CARD reducer: Keys: [effects], Values: []
+ EDIT_CARD reducer: Target card found: true
+ EDIT_CARD reducer: Before edit - isPlayed: true, enteredTurn: 1
+ EDIT_CARD reducer: Set effects = 
+ EDIT_CARD reducer: After edit - isPlayed: true, enteredTurn: 1
+ EDIT_CARD reducer: Editing 2tracer for player 2
+ EDIT_CARD reducer: Keys: [effects], Values: [[object Object],[object Object]]
+ EDIT_CARD reducer: Target card found: true
+ EDIT_CARD reducer: Before edit - isPlayed: true, enteredTurn: 1
+ EDIT_CARD reducer: Set effects = [object Object],[object Object]
+ EDIT_CARD reducer: After edit - isPlayed: true, enteredTurn: 1
+ EDIT_CARD reducer: Editing 2tracer for player 2
+ EDIT_CARD reducer: Keys: [effects], Values: []
+ EDIT_CARD reducer: Target card found: true
+ EDIT_CARD reducer: Before edit - isPlayed: true, enteredTurn: 1
+ EDIT_CARD reducer: Set effects = 
+ EDIT_CARD reducer: After edit - isPlayed: true, enteredTurn: 1
+ EDIT_CARD reducer: Editing 2tracer for player 2
+ EDIT_CARD reducer: Keys: [effects], Values: [[object Object],[object Object]]
+ EDIT_CARD reducer: Target card found: true
+ EDIT_CARD reducer: Before edit - isPlayed: true, enteredTurn: 1
+ EDIT_CARD reducer: Set effects = [object Object],[object Object]
+ EDIT_CARD reducer: After edit - isPlayed: true, enteredTurn: 1
+ EDIT_CARD reducer: Editing 2tracer for player 2
+ EDIT_CARD reducer: Keys: [effects], Values: []
+ EDIT_CARD reducer: Target card found: true
+ EDIT_CARD reducer: Before edit - isPlayed: true, enteredTurn: 1
+ EDIT_CARD reducer: Set effects = 
+ EDIT_CARD reducer: After edit - isPlayed: true, enteredTurn: 1
+ HealthCounter for 1tracer: Object
+ HealthCounter: Showing normal HP 3 for 1tracer
+ HealthCounter for 1genji: Object
+ HealthCounter: Showing normal HP 4 for 1genji
+ HealthCounter for 2orisa: Object
+ HealthCounter: Showing normal HP 5 for 2orisa
+ HealthCounter for 2brigitte: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 4 for 2brigitte
+HealthCounter.js:6 HealthCounter for 2bastion: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 4 for 2bastion
+HealthCounter.js:6 HealthCounter for 2winston: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 4 for 2winston
+HealthCounter.js:6 HealthCounter for 2tracer: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 3 for 2tracer
+TurnEffectsRunner.js:16 TurnEffectsRunner: useEffect triggered Object
+TurnEffectsRunner.js:27 TurnEffectsRunner: Turn change check Object
+HealthCounter.js:6 HealthCounter for 1tracer: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 3 for 1tracer
+HealthCounter.js:6 HealthCounter for 1genji: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 4 for 1genji
+HealthCounter.js:6 HealthCounter for 2orisa: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 5 for 2orisa
+HealthCounter.js:6 HealthCounter for 2brigitte: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 4 for 2brigitte
+HealthCounter.js:6 HealthCounter for 2bastion: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 4 for 2bastion
+HealthCounter.js:6 HealthCounter for 2winston: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 4 for 2winston
+HealthCounter.js:6 HealthCounter for 2tracer: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 3 for 2tracer
+HealthCounter.js:6 HealthCounter for 2torbjorn: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 3 for 2torbjorn
+PlayerButtons.js:208 torbjorn intro sound played successfully
+HealthCounter.js:6 HealthCounter for 2tracer: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 3 for 2tracer
+HealthCounter.js:6 HealthCounter for 2tracer: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 3 for 2tracer
+HealthCounter.js:6 HealthCounter for 2tracer: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 3 for 2tracer
+App.js:2035 Insufficient synergy for ultimate. Need 3, have 0
+HealthCounter.js:6 HealthCounter for 2tracer: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 3 for 2tracer
+HealthCounter.js:6 HealthCounter for 2tracer: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 3 for 2tracer
+HealthCounter.js:6 HealthCounter for 2bastion: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 4 for 2bastion
+HealthCounter.js:6 HealthCounter for 2tracer: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 3 for 2tracer
+HealthCounter.js:6 HealthCounter for 2bastion: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 4 for 2bastion
+HealthCounter.js:6 HealthCounter for 2tracer: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 3 for 2tracer

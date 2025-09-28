@@ -32,6 +32,7 @@ import sigma from './heroes/sigma';
 import soldier from './heroes/soldier';
 import sombra from './heroes/sombra';
 import torbjorn from './heroes/torbjorn';
+import tracer from './heroes/tracer';
 import turret from './heroes/turret';
 
 export const abilities = {
@@ -65,6 +66,7 @@ export const abilities = {
     soldier,
     sombra,
     torbjorn,
+    tracer,
     turret,
 };
 

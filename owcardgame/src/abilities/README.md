@@ -443,6 +443,10 @@ This matches the pattern used by Ashe and Baptiste: modal → targeting prompt(s
 2. If hero defines onInterrupt and row synergy ≥ cost, show modal to confirm
 3. If confirmed, execute interrupt (e.g., return Tracer to hand), consume synergy, skip applying that damage
 
+**⚠️ IMPORTANT: Tracer Recall Limitations**
+- Tracer cannot avoid killshots - Dragon Blade and Widowmaker's ultimate bypass Recall
+- These abilities use fixed damage that cannot be interrupted by Recall
+
 ## UI Components
 
 ## Board Geometry: Rows and Columns

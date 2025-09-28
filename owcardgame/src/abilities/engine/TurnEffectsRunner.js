@@ -131,6 +131,7 @@ export default function TurnEffectsRunner() {
                     console.error(`TurnEffectsRunner: Error processing Turret damage:`, error);
                 }
 
+
                 // Process enemy effects
                 for (let effect of enemyRowEffects) {
                     console.log(`TurnEffectsRunner: Processing enemy effect:`, effect);
