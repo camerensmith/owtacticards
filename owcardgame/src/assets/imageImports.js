@@ -270,6 +270,11 @@ import tracerIntro from './audio/tracer-intro.mp3';
 import turretEnter from './audio/turret-enter.mp3';
 import turretFire from './audio/turret-fire.mp3';
 import symmetraShield from './audio/symmetra-shield.mp3';
+import symmetraEnter from './audio/symmetra-enter.mp3';
+import symmetraIntro from './audio/symmetra-intro.mp3';
+import symmetraAbility1 from './audio/symmetra-ability1.mp3';
+import symmetraTeleporter from './audio/symmetra-teleporter.mp3';
+import symmetraUltimate from './audio/symmetra-ultimate.mp3';
 import widowmakerOneshot from './audio/widowmaker-oneshot.mp3';
 import widowmakerWidowskiss from './audio/widowmaker-widowskiss.mp3';
 import winstonAngry from './audio/winston-angry.mp3';
@@ -473,6 +478,11 @@ export const abilityAudioFiles = {
     'turret-enter': turretEnter,
     'turret-fire': turretFire,
     'symmetra-shield': symmetraShield,
+    'symmetra-enter': symmetraEnter,
+    'symmetra-intro': symmetraIntro,
+    'symmetra-ability1': symmetraAbility1,
+    'symmetra-teleporter': symmetraTeleporter,
+    'symmetra-ultimate': symmetraUltimate,
     'widowmaker-oneshot': widowmakerOneshot,
     'widowmaker-widowskiss': widowmakerWidowskiss,
     'winston-angry': winstonAngry,

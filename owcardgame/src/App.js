@@ -48,6 +48,7 @@ export const ACTIONS = {
     CLEANUP_SHIELD_BASH: 'cleanup-shield-bash',
     ADD_SPECIAL_CARD_TO_HAND: 'add-special-card-to-hand',
     RETURN_DVA_TO_HAND: 'return-dva-to-hand',
+    RETURN_HERO_TO_HAND: 'return-hero-to-hand',
     REPLACE_WITH_DVA: 'replace-with-dva',
     CLEANUP_DVA_SUITED_UP: 'cleanup-dva-suited-up',
     REMOVE_SPECIAL_CARD: 'remove-special-card',
@@ -576,6 +577,33 @@ function reducer(gameState, action) {
             });
         }
 
+        case ACTIONS.RETURN_HERO_TO_HAND: {
+            const { cardId, rowId } = action.payload;
+            const playerNum = parseInt(cardId[0]);
+            const playerKey = `player${playerNum}cards`;
+            const handId = `player${playerNum}hand`;
+
+            return produce(gameState, (draft) => {
+                // Find the card in the specified row
+                const row = draft.rows[rowId];
+                if (row && row.cardIds) {
+                    const index = row.cardIds.indexOf(cardId);
+                    if (index !== -1) {
+                        // Remove card from the row
+                        draft.rows[rowId].cardIds.splice(index, 1);
+                        
+                        // Add card to hand
+                        draft.rows[handId].cardIds.unshift(cardId);
+                        
+                        // Mark card as not played (so it can be dragged from hand)
+                        if (draft.playerCards[playerKey]?.cards?.[cardId]) {
+                            draft.playerCards[playerKey].cards[cardId].isPlayed = false;
+                        }
+                    }
+                }
+            });
+        }
+
         case ACTIONS.CLEANUP_DVA_SUITED_UP: {
             const { playerNum } = action.payload;
             const playerKey = `player${playerNum}cards`;
@@ -957,6 +985,10 @@ function checkOnEnterAbilities(playerHeroId, rowId, playerNum) {
     }
     if (heroId === 'sombra' && abilitiesIndex?.sombra?.onEnter) {
         abilitiesIndex.sombra.onEnter({ playerHeroId, rowId });
+        return;
+    }
+    if (heroId === 'symmetra' && abilitiesIndex?.symmetra?.onEnter) {
+        abilitiesIndex.symmetra.onEnter({ playerHeroId, rowId });
         return;
     }
     if (heroId === 'torbjorn' && abilitiesIndex?.torbjorn?.onEnter) {
@@ -1965,6 +1997,13 @@ export default function App() {
             abilitiesIndex.sombra.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
         } catch (e) {
             console.log('Error executing SOMBRA ultimate:', e);
+        }
+    } else if (heroId === 'symmetra' && abilitiesIndex?.symmetra?.onUltimate) {
+        try {
+            window.__ow_trackUltimateUsed?.(heroId, 'Symmetra', 'Shield Generator', playerNum, rowId, adjustedCost);
+            abilitiesIndex.symmetra.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
+        } catch (e) {
+            console.log('Error executing SYMMETRA ultimate:', e);
         }
     } else if (heroId === 'torbjorn' && abilitiesIndex?.torbjorn?.onUltimate) {
         try {

@@ -394,7 +394,7 @@
     "middle_synergy": 3,
     "back_power": 2,
     "back_synergy": 2,
-    "on_enter1": "Teleporter — You may return one of your undefeated Heroes to your hand. Remove all tokens and counters on or associated with that Hero.",
+    "on_enter1": "Teleporter — You may return one Hero to its owners hand. Remove all effects, and tokens and counters on or associated with that Hero. This includes yours or theirs. If not able (hand size reached) it does nothing.",
     "ultimate": "Shield Generator (2): All of your deployed Heroes (including Symmetra) gain one shield token."
   },
   {
@@ -422,7 +422,7 @@
     "back_synergy": 3,
     "on_enter1": "Pulse Pistols — Deal 2 damage to target enemy",
     "on_enter2": "Pulse Pistols — Deal 1 damage to two enemies anywhere on the board.",
-    "ultimate": "Recall (2): Remove all counters currently on Tracer and return her to your hand. Can be played as an interrupt."
+    "ultimate": "Recall (2): Automatically avoid a single instance of damage that would bring Tracer to 0 HP.  Return your HP value to what it was before taking fatal damage."
   },
   {
     "name": "Turret",

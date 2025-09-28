@@ -16,6 +16,7 @@ import { heroCardImages } from '../../assets/imageImports';
 import ContextMenu from './ContextMenu';
 import actionsBus, { Actions } from '../../abilities/engine/actionsBus';
 import effectsBus, { Effects } from '../../abilities/engine/effectsBus';
+import data from 'data';
 
 export default function Card(props) {
     // Context
@@ -80,9 +81,18 @@ export default function Card(props) {
                 const currentRow = gameState.rows[rowId];
                 const currentSynergy = currentRow ? currentRow.synergy : 0;
                 
-                // Get ultimate cost from hero data
-                const heroData = gameState.playerCards[playerCardsId]?.cards?.[playerHeroId];
-                const ultimateCost = heroData?.ultimateCost || 3; // Default to 3 if not specified
+                // Get ultimate cost from hero.json data
+                const heroId = playerHeroId.slice(1);
+                const heroJsonData = data.heroes[heroId];
+                
+                // Parse ultimate cost from description text like "Shield Generator (2)"
+                let ultimateCost = 3; // Default to 3 if not specified
+                if (heroJsonData?.ultimate) {
+                    const match = heroJsonData.ultimate.match(/\((\d+)\)/);
+                    if (match) {
+                        ultimateCost = parseInt(match[1]);
+                    }
+                }
                 
                 actionsBus.publish(Actions.requestUltimate(playerHeroId, rowId, ultimateCost));
                 setMenu(null);

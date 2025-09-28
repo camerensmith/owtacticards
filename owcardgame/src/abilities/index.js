@@ -31,6 +31,7 @@ import roadhog from './heroes/roadhog';
 import sigma from './heroes/sigma';
 import soldier from './heroes/soldier';
 import sombra from './heroes/sombra';
+import symmetra from './heroes/symmetra';
 import torbjorn from './heroes/torbjorn';
 import tracer from './heroes/tracer';
 import turret from './heroes/turret';
@@ -65,6 +66,7 @@ export const abilities = {
     sigma,
     soldier,
     sombra,
+    symmetra,
     torbjorn,
     tracer,
     turret,
