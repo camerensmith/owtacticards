@@ -313,6 +313,18 @@ function reducer(gameState, action) {
                 }
             }
 
+            // Check for Wrecking Ball minefield triggers on movement
+            if (abilitiesIndex?.wreckingball?.checkMinefieldTrigger) {
+                // Check if moving into a row with minefield tokens
+                if (finishRowId[0] !== 'p') {
+                    abilitiesIndex.wreckingball.checkMinefieldTrigger(targetCardId, finishRowId);
+                }
+                // Check if moving out of a row with minefield tokens
+                if (startRowId[0] !== 'p') {
+                    abilitiesIndex.wreckingball.checkMinefieldTrigger(targetCardId, startRowId);
+                }
+            }
+
             // Check if Orisa is moving and handle her effects
             const heroId = targetCardId.slice(1);
             if (heroId === 'orisa' && startRowId !== finishRowId && startRowId[0] !== 'p') {
@@ -1007,6 +1019,10 @@ function checkOnEnterAbilities(playerHeroId, rowId, playerNum) {
         abilitiesIndex.winston.onEnter({ playerHeroId, rowId });
         return;
     }
+    if (heroId === 'wreckingball' && abilitiesIndex?.wreckingball?.onEnter) {
+        abilitiesIndex.wreckingball.onEnter({ playerHeroId, rowId });
+        return;
+    }
     if (heroId === 'turret' && abilitiesIndex?.turret?.onEnter) {
         abilitiesIndex.turret.onEnter({ playerHeroId, rowId });
         return;
@@ -1073,6 +1089,11 @@ function checkOnEnterAbilities(playerHeroId, rowId, playerNum) {
     } else if (onEnter1) {
         // Auto-execute onEnter1
         executeOnEnterAbility(onEnter1, playerHeroId, rowId, playerNum);
+    }
+    
+    // Check for minefield triggers on card placement
+    if (abilitiesIndex?.wreckingball?.checkMinefieldTrigger) {
+        abilitiesIndex.wreckingball.checkMinefieldTrigger(playerHeroId, rowId);
     }
 }
 
@@ -2041,8 +2062,20 @@ export default function App() {
         } catch (e) {
             console.log('Error executing WINSTON ultimate:', e);
         }
+    } else if (heroId === 'wreckingball' && abilitiesIndex?.wreckingball?.onUltimate) {
+        try {
+            window.__ow_trackUltimateUsed?.(heroId, 'Wrecking Ball', 'Minefield', playerNum, rowId, adjustedCost);
+            abilitiesIndex.wreckingball.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
+        } catch (e) {
+            console.log('Error executing WRECKING BALL ultimate:', e);
+        }
     } else {
                         console.log(`Executing ultimate for ${playerHeroId} in ${rowId} (cost: ${adjustedCost})`);
+                    }
+                    
+                    // Check for minefield triggers on ultimate usage
+                    if (abilitiesIndex?.wreckingball?.checkMinefieldTrigger) {
+                        abilitiesIndex.wreckingball.checkMinefieldTrigger(playerHeroId, rowId);
                     }
                 } else {
                     console.log(`Insufficient synergy for ultimate. Need ${adjustedCost}, have ${currentSynergy}`);

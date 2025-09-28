@@ -37,6 +37,7 @@ import tracer from './heroes/tracer';
 import turret from './heroes/turret';
 import widowmaker from './heroes/widowmaker';
 import winston from './heroes/winston';
+import wreckingball from './heroes/wreckingball';
 
 export const abilities = {
     ashe,
@@ -74,6 +75,7 @@ export const abilities = {
     turret,
     widowmaker,
     winston,
+    wreckingball,
 };
 
 export default abilities;

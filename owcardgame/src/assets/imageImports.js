@@ -285,7 +285,9 @@ import winstonEnter from './audio/winston-enter.mp3';
 import winstonAbility1Toggle from './audio/winston-ability1-toggle.mp3';
 import winstonUltimate from './audio/winston-ultimate.mp3';
 import winstonUltimateResolve from './audio/winston-ultimate-resolve.mp3';
-import wreckingballUlt from './audio/wreckingball-ult.mp3';
+import wreckingballIntro from './audio/wreckingball-intro.mp3';
+import wreckingballEnter from './audio/wreckingball-enter.mp3';
+import wreckingballUltimate from './audio/wreckingball-ultimate.mp3';
 import zaryaBarrier from './audio/zarya-barrier.mp3';
 import zaryaUlt from './audio/zarya-ult.mp3';
 import zenyattaDiscord from './audio/zenyatta-discord.mp3';
@@ -499,7 +501,9 @@ export const abilityAudioFiles = {
     'winston-ability1-toggle': winstonAbility1Toggle,
     'winston-ultimate': winstonUltimate,
     'winston-ultimate-resolve': winstonUltimateResolve,
-    'wreckingball-ult': wreckingballUlt,
+    'wreckingball-intro': wreckingballIntro,
+    'wreckingball-enter': wreckingballEnter,
+    'wreckingball-ultimate': wreckingballUltimate,
     'zarya-barrier': zaryaBarrier,
     'zarya-ult': zaryaUlt,
     'zenyatta-discord': zenyattaDiscord,

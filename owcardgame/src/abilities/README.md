@@ -2590,6 +2590,193 @@ if (targetableEnemyRows.length === 1) {
 - [ ] Test movement-based ultimate targeting
 - [ ] Verify audio plays at correct times (toggle only, not enter)
 
+## Wrecking Ball Implementation Guide
+
+### Overview
+Wrecking Ball demonstrates advanced patterns including synergy-based ultimates, overshield mechanics, persistent token systems, and ability-triggered damage effects.
+
+### Key Abilities
+
+#### Adaptive Shield (onEnter1)
+- **Enemy Counting**: Counts living enemies in the opposing row
+- **Shield Calculation**: Enemies + 1, maximum 5 shields
+- **Overshield Styling**: Shields > 3 get golden styling with glow effects
+- **Audio**: `wreckingball-enter` plays on deployment
+
+#### Minefield (Ultimate, Cost X)
+- **Synergy-Based Cost**: Cost equals current row synergy
+- **Token Placement**: Places X tokens on target enemy row
+- **Synergy Reduction**: Reduces Wrecking Ball's row synergy to 0
+- **Audio**: `wreckingball-ultimate` plays after successful placement
+- **Trigger System**: Tokens trigger when enemies use abilities in that row
+
+### Overshield System Implementation
+
+#### Shield Counter Styling
+```javascript
+// In ShieldCounter.js
+const isOvershield = shield > 3;
+
+return (
+    <div className={`shieldcounter counter ${type} ${isOvershield ? 'overshield' : ''}`}>
+        <span className={`shieldvalue ${isOvershield ? 'overshield-value' : ''}`}>{shield}</span>
+    </div>
+);
+```
+
+#### CSS Styling
+```css
+/* In Counters.css */
+.shieldcounter.overshield {
+    filter: hue-rotate(60deg) brightness(1.3) saturate(1.5);
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+}
+
+.shieldvalue.overshield-value {
+    color: #FFD700 !important;
+    font-weight: bold;
+    text-shadow: 0 0 5px rgba(255, 215, 0, 0.8);
+}
+```
+
+### Synergy-Based Ultimate Pattern
+
+#### Row Synergy Integration
+```javascript
+// Get current row synergy
+const currentRow = window.__ow_getRow?.(rowId);
+const currentSynergy = currentRow?.synergy || 0;
+
+if (currentSynergy <= 0) {
+    showToast('Wrecking Ball: No synergy in current row to deploy Minefield');
+    return;
+}
+
+// Place tokens equal to synergy
+for (let i = 0; i < currentSynergy; i++) {
+    const tokenId = `wreckingball-minefield-${Date.now()}-${i}`;
+    // ... create token
+}
+
+// Reduce synergy to 0
+window.__ow_updateSynergy?.(rowId, -currentSynergy);
+```
+
+### Persistent Token System
+
+#### Token Creation and Management
+```javascript
+// Create unique tokens with charges
+const minefieldTokens = [];
+for (let i = 0; i < currentSynergy; i++) {
+    const tokenId = `wreckingball-minefield-${Date.now()}-${i}`;
+    minefieldTokens.push({
+        id: tokenId,
+        hero: 'wreckingball',
+        type: 'minefield',
+        charges: 1,
+        sourceCardId: playerHeroId,
+        sourceRowId: rowId,
+        tooltip: 'Minefield: Deals 2 damage when enemies use abilities in this row',
+        visual: 'wreckingball-icon'
+    });
+}
+
+// Add to enemy row effects
+minefieldTokens.forEach(token => {
+    window.__ow_appendRowEffect?.(targetRow.rowId, 'enemyEffects', token);
+});
+```
+
+### Ability-Triggered Damage System
+
+#### Trigger Integration
+```javascript
+// In App.js - After each ability execution
+if (abilitiesIndex?.wreckingball?.triggerMinefieldDamage) {
+    abilitiesIndex.wreckingball.triggerMinefieldDamage(playerHeroId, rowId);
+}
+
+// In wreckingball.js - Trigger function
+export function triggerMinefieldDamage(cardId, rowId) {
+    const row = window.__ow_getRow?.(rowId);
+    if (!row || !row.enemyEffects) return;
+    
+    const minefieldTokens = row.enemyEffects.filter(effect => 
+        effect?.hero === 'wreckingball' && effect?.type === 'minefield' && effect?.charges > 0
+    );
+    
+    if (minefieldTokens.length > 0) {
+        const token = minefieldTokens[0];
+        
+        // Check for immortality field
+        const targetCard = window.__ow_getCard?.(cardId);
+        if (targetCard && Array.isArray(targetCard.effects)) {
+            const hasImmortality = targetCard.effects.some(effect => 
+                effect?.id === 'immortality-field' && effect?.type === 'invulnerability'
+            );
+            if (hasImmortality) return; // Don't consume token or deal damage
+        }
+        
+        // Deal damage and consume token
+        dealDamage(cardId, rowId, 2, false, token.sourceCardId);
+        effectsBus.publish(Effects.showDamage(cardId, 2));
+        window.__ow_removeRowEffect?.(rowId, 'enemyEffects', token.id);
+    }
+}
+```
+
+### Key Learning Points
+
+#### 1. Overshield Visual System
+- **Problem**: Need to distinguish shields above normal limit
+- **Solution**: Use CSS filters and golden color scheme for shields > 3
+- **Pattern**: Check shield count, apply conditional styling classes
+
+#### 2. Synergy-Based Resource Management
+- **Problem**: Ultimate cost should be based on available resources
+- **Solution**: Use current row synergy as cost, reduce to 0 after use
+- **Pattern**: Check resource availability, use all available resources, reset to 0
+
+#### 3. Persistent Token System
+- **Problem**: Tokens need to persist after hero death but clear at round end
+- **Solution**: Store tokens as row effects with unique IDs and charge tracking
+- **Pattern**: Create unique tokens, store in enemy effects, track charges, remove when depleted
+
+#### 4. Ability-Triggered Damage
+- **Problem**: Need to trigger damage when enemies use abilities
+- **Solution**: Hook into ability resolution system and check for tokens
+- **Pattern**: Listen to all ability executions, check for relevant tokens, trigger damage
+
+#### 5. Damage Mitigation Integration
+- **Problem**: Minefield damage should respect damage reduction and immortality
+- **Solution**: Use standard damage bus and check for immortality before triggering
+- **Pattern**: Check for immortality first, then use dealDamage for proper integration
+
+### Common Pitfalls
+
+1. **Missing Immortality Check**: Forgetting to check for immortality before consuming tokens
+2. **Incorrect Token Cleanup**: Not properly removing tokens when charges are depleted
+3. **Synergy Management**: Forgetting to reduce synergy to 0 after ultimate use
+4. **Overshield Styling**: Not applying conditional classes for overshield display
+5. **Audio Timing**: Playing ultimate sound before placement instead of after
+
+### Integration Checklist
+
+- [ ] Add hero to `data.js` with correct stats
+- [ ] Create hero module with proper function signatures
+- [ ] Add to `abilities/index.js` exports
+- [ ] Add to `App.js` onEnter and ultimate handling
+- [ ] Add audio imports and mappings to `imageImports.js`
+- [ ] Implement overshield styling in `ShieldCounter.js` and `Counters.css`
+- [ ] Add ability trigger system to `App.js` for both onEnter and ultimate
+- [ ] Test overshield visual effects (4-5 shields)
+- [ ] Test synergy-based ultimate cost calculation
+- [ ] Test minefield token placement and persistence
+- [ ] Test ability-triggered damage with damage mitigation
+- [ ] Test immortality field blocking minefield damage
+- [ ] Verify audio plays at correct times (enter on deploy, ultimate after placement)
+
 ## Roadhog Implementation Guide
 
 ### Overview
@@ -3219,3 +3406,392 @@ dealDamage(target.cardId, target.rowId, damage, false, playerHeroId, true);
 - **Ultimate Abilities**: High-cost abilities that should be powerful and reliable
 - **Special Mechanics**: Abilities that specifically mention "cannot be mitigated"
 - **Balance Requirements**: When damage needs to be consistent regardless of other effects
+
+## Wrecking Ball Implementation Guide
+
+### Overview
+Wrecking Ball demonstrates advanced patterns including synergy-based ultimates, overshield mechanics, persistent token systems, movement-triggered damage effects, and proper floating combat text integration.
+
+### Key Abilities
+
+#### Adaptive Shield (onEnter1)
+- **Enemy Counting**: Counts living enemies in the opposing row
+- **Shield Calculation**: Enemies + 1, maximum 5 shields
+- **Overshield Styling**: Shields > 3 get golden styling with glow effects
+- **Audio**: `wreckingball-enter` plays on deployment
+
+#### Minefield (Ultimate, Cost X)
+- **Synergy-Based Cost**: Cost equals current row synergy
+- **Token Placement**: Places single token with X charges on target enemy row
+- **Synergy Reduction**: Reduces Wrecking Ball's row synergy to 0
+- **Audio**: `wreckingball-ultimate` plays after successful placement
+- **Trigger System**: Tokens trigger when enemies move into or out of that row
+
+### Overshield System Implementation
+
+#### Shield Counter Styling
+```javascript
+// In ShieldCounter.js
+const isOvershield = shield > 3;
+
+return (
+    <div className={`shieldcounter counter ${type} ${isOvershield ? 'overshield' : ''}`}>
+        <span className={`shieldvalue ${isOvershield ? 'overshield-value' : ''}`}>{shield}</span>
+    </div>
+);
+```
+
+#### CSS Styling
+```css
+/* In Counters.css */
+.shieldcounter.overshield {
+    filter: hue-rotate(60deg) brightness(1.3) saturate(1.5);
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+}
+
+.shieldvalue.overshield-value {
+    color: #FFD700 !important;
+    font-weight: bold;
+    text-shadow: 0 0 5px rgba(255, 215, 0, 0.8);
+}
+```
+
+### Synergy-Based Ultimate Pattern
+
+#### Row Synergy Integration
+```javascript
+// Get current row synergy
+const currentRow = window.__ow_getRow?.(rowId);
+const currentSynergy = currentRow?.synergy || 0;
+
+if (currentSynergy <= 0) {
+    showToast('Wrecking Ball: No synergy in current row to deploy Minefield');
+    return;
+}
+
+// Create single token with charges equal to synergy
+const minefieldToken = {
+    id: `wreckingball-minefield-${Date.now()}`,
+    hero: 'wreckingball',
+    type: 'minefield',
+    charges: currentSynergy, // Total number of charges
+    sourceCardId: playerHeroId,
+    sourceRowId: rowId,
+    tooltip: `Minefield: Deals 2 damage when enemies move into or out of this row (${currentSynergy} charges)`,
+    visual: 'wreckingball-icon'
+};
+
+// Reduce synergy to 0
+window.__ow_updateSynergy?.(rowId, -currentSynergy);
+```
+
+### Persistent Token System
+
+#### Single Token with Charges
+```javascript
+// Create single token with multiple charges (not multiple tokens)
+const minefieldToken = {
+    id: `wreckingball-minefield-${Date.now()}`,
+    hero: 'wreckingball',
+    type: 'minefield',
+    charges: currentSynergy, // Total number of charges
+    sourceCardId: playerHeroId,
+    sourceRowId: rowId,
+    tooltip: `Minefield: Deals 2 damage when enemies move into or out of this row (${currentSynergy} charges)`,
+    visual: 'wreckingball-icon'
+};
+
+// Add single token to enemy row
+const currentRow = window.__ow_getRow?.(targetRow.rowId);
+const currentEnemyEffects = currentRow?.enemyEffects || [];
+const updatedEnemyEffects = [...currentEnemyEffects, minefieldToken];
+window.__ow_setRowArray?.(targetRow.rowId, 'enemyEffects', updatedEnemyEffects);
+```
+
+#### Token Update Pattern
+```javascript
+// When reducing charges, update the token in place
+const updatedToken = {
+    ...minefieldToken,
+    charges: newCharges,
+    tooltip: `Minefield: Deals 2 damage when enemies move into or out of this row (${newCharges} charges)`
+};
+
+// Use setRowArray to replace the entire array (prevents duplication)
+const currentRow = window.__ow_getRow?.(rowId);
+const currentEnemyEffects = currentRow?.enemyEffects || [];
+const updatedEnemyEffects = currentEnemyEffects.map(effect => 
+    effect.id === minefieldToken.id ? updatedToken : effect
+);
+window.__ow_setRowArray?.(rowId, 'enemyEffects', updatedEnemyEffects);
+```
+
+### Movement-Triggered Damage System
+
+#### Trigger Integration
+```javascript
+// In App.js - After each card movement
+if (abilitiesIndex?.wreckingball?.checkMinefieldTrigger) {
+    // Check if moving into a row with minefield tokens
+    if (finishRowId[0] !== 'p') {
+        abilitiesIndex.wreckingball.checkMinefieldTrigger(targetCardId, finishRowId);
+    }
+    // Check if moving out of a row with minefield tokens
+    if (startRowId[0] !== 'p') {
+        abilitiesIndex.wreckingball.checkMinefieldTrigger(targetCardId, startRowId);
+    }
+}
+
+// In wreckingball.js - Trigger function
+export function checkMinefieldTrigger(cardId, rowId) {
+    const row = window.__ow_getRow?.(rowId);
+    if (!row || !row.enemyEffects) return;
+
+    const minefieldToken = row.enemyEffects.find(effect =>
+        effect?.hero === 'wreckingball' && effect?.type === 'minefield'
+    );
+
+    if (minefieldToken && minefieldToken.charges > 0) {
+        // Check for immortality field
+        const targetCard = window.__ow_getCard?.(cardId);
+        if (targetCard && Array.isArray(targetCard.effects)) {
+            const hasImmortality = targetCard.effects.some(effect =>
+                effect?.id === 'immortality-field' && effect?.type === 'invulnerability'
+            );
+            if (hasImmortality) return; // Don't consume charge or deal damage
+        }
+
+        // Deal damage and reduce charges
+        dealDamage(cardId, rowId, 2, false, minefieldToken.sourceCardId);
+        effectsBus.publish(Effects.showDamage(cardId, 2));
+        
+        // Update or remove token based on remaining charges
+        // ... (see token update pattern above)
+    }
+}
+```
+
+### Floating Combat Text Integration
+
+#### Critical Requirement
+**ALL damage and healing MUST include floating combat text for visual feedback.**
+
+#### Damage Floating Text
+```javascript
+// Always include this after dealing damage
+dealDamage(cardId, rowId, 2, false, sourceCardId);
+effectsBus.publish(Effects.showDamage(cardId, 2)); // REQUIRED for visual feedback
+```
+
+#### Healing Floating Text
+```javascript
+// For healing effects, use the healing floating text
+effectsBus.publish(Effects.showHealing(cardId, healingAmount));
+```
+
+#### Shield Floating Text
+```javascript
+// For shield changes, use the shield floating text
+effectsBus.publish(Effects.showShield(cardId, shieldAmount));
+```
+
+### Custom Token Overlay System
+
+#### WreckingBallTokenOverlay Component
+```javascript
+// In WreckingBallTokenOverlay.js
+export default function WreckingBallTokenOverlay({ rowId }) {
+    const { gameState } = useContext(gameContext);
+
+    const row = gameState.rows[rowId];
+    if (!row || !row.enemyEffects) return null;
+
+    const minefieldToken = row.enemyEffects.find(effect => 
+        effect?.hero === 'wreckingball' && effect?.type === 'minefield'
+    );
+    
+    if (!minefieldToken || minefieldToken.charges <= 0) return null;
+    
+    const totalCharges = minefieldToken.charges;
+
+    return (
+        <div className="wreckingball-token-overlay" style={{
+            position: 'absolute',
+            top: '10px',
+            right: '10px',
+            zIndex: 20,
+            pointerEvents: 'none'
+        }}>
+            <div className="wreckingball-token-icon" style={{
+                width: '40px',
+                height: '40px',
+                backgroundImage: 'url(/src/assets/heroes/wreckingball-icon.png)',
+                backgroundSize: 'contain',
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'center',
+                position: 'relative',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+            }}>
+                <div style={{
+                    fontSize: '16px',
+                    fontWeight: 'bold',
+                    color: '#ff6b35',
+                    textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
+                    background: 'rgba(0, 0, 0, 0.6)',
+                    borderRadius: '50%',
+                    width: '24px',
+                    height: '24px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    border: '2px solid #ff6b35',
+                    position: 'absolute',
+                    top: '-5px',
+                    right: '-5px'
+                }}>
+                    {totalCharges}
+                </div>
+            </div>
+        </div>
+    );
+}
+```
+
+#### Integration in BoardRow
+```javascript
+// In BoardRow.js
+import WreckingBallTokenOverlay from 'components/effects/WreckingBallTokenOverlay';
+
+// Inside the row component
+<WreckingBallTokenOverlay rowId={rowId} />
+```
+
+### Dynamic Ultimate Cost System
+
+#### Card.js Integration
+```javascript
+// Special case for Wrecking Ball - cost is current row synergy
+if (heroId === 'wreckingball') {
+    const ultimateCost = currentSynergy;
+    actionsBus.publish(Actions.requestUltimate(playerHeroId, rowId, ultimateCost));
+} else {
+    // Parse ultimate cost from description text like "Shield Generator (2)"
+    let ultimateCost = 3; // Default to 3 if not specified
+    if (heroJsonData?.ultimate) {
+        const match = heroJsonData.ultimate.match(/\((\d+)\)/);
+        if (match) {
+            ultimateCost = parseInt(match[1]);
+        }
+    }
+    actionsBus.publish(Actions.requestUltimate(playerHeroId, rowId, ultimateCost));
+}
+```
+
+### Audio Integration
+
+#### Required Audio Files
+```javascript
+// In imageImports.js
+import wreckingballIntro from './audio/wreckingball-intro.mp3';
+import wreckingballEnter from './audio/wreckingball-enter.mp3';
+import wreckingballUltimate from './audio/wreckingball-ultimate.mp3';
+
+export const abilityAudioFiles = {
+    'wreckingball-intro': wreckingballIntro,
+    'wreckingball-enter': wreckingballEnter,
+    'wreckingball-ultimate': wreckingballUltimate,
+};
+```
+
+#### Audio Playback Pattern
+```javascript
+// Intro audio on card draw
+playAudioByKey('wreckingball-intro');
+
+// Enter audio on deployment
+playAudioByKey('wreckingball-enter');
+
+// Ultimate audio after successful placement
+playAudioByKey('wreckingball-ultimate');
+```
+
+### Common Pitfalls and Solutions
+
+#### 1. Token Duplication Issue
+**Problem**: Multiple `wreckingball-icon` tokens appear instead of one with charges
+**Solution**: Create single token with `charges` property, not multiple individual tokens
+
+#### 2. State Update Race Conditions
+**Problem**: `__ow_appendRowEffect` uses stale state, causing only last token to be stored
+**Solution**: Use `__ow_setRowArray` with current state for bulk operations
+
+#### 3. Token Update Duplication
+**Problem**: Updating token charges creates duplicates instead of replacing
+**Solution**: Use `setRowArray` with mapped array to update token in place
+
+#### 4. Missing Floating Combat Text
+**Problem**: Damage/healing happens without visual feedback
+**Solution**: Always include `effectsBus.publish(Effects.showDamage/healing/shield(cardId, amount))`
+
+#### 5. Movement Trigger Timing
+**Problem**: Minefield doesn't trigger on card movement
+**Solution**: Hook into `MOVE_CARD` action in App.js reducer
+
+### Integration Checklist
+
+- [ ] Add hero to `data.js` with correct stats
+- [ ] Create hero module with proper function signatures
+- [ ] Add to `abilities/index.js` exports
+- [ ] Add to `App.js` onEnter and ultimate handling
+- [ ] Add movement trigger integration in `MOVE_CARD` action
+- [ ] Add audio imports and mappings to `imageImports.js`
+- [ ] Implement overshield styling in `ShieldCounter.js` and `Counters.css`
+- [ ] Create custom token overlay component
+- [ ] Integrate overlay in `BoardRow.js`
+- [ ] Add dynamic ultimate cost calculation in `Card.js`
+- [ ] Test synergy-based ultimate cost system
+- [ ] Test movement-triggered damage mechanics
+- [ ] Test token charge reduction and removal
+- [ ] Verify floating combat text appears for all damage/healing
+- [ ] Test overshield styling (shields > 3)
+- [ ] Test immortality field interaction
+- [ ] Verify audio plays at correct times
+
+### Key Learning Points
+
+#### 1. Single Token with Charges Pattern
+- **Problem**: Multiple tokens create visual clutter and management complexity
+- **Solution**: Use single token with `charges` property for count-based effects
+- **Pattern**: Prefer charge-based tokens over multiple individual tokens
+
+#### 2. State Management for Bulk Operations
+- **Problem**: `appendRowEffect` uses stale state in loops
+- **Solution**: Use `setRowArray` with current state for bulk operations
+- **Pattern**: Get current state, modify, then set entire array
+
+#### 3. Movement-Triggered Effects
+- **Problem**: Need to respond to card movement events
+- **Solution**: Hook into `MOVE_CARD` action in App.js reducer
+- **Pattern**: Check both source and destination rows for movement effects
+
+#### 4. Floating Combat Text Requirements
+- **Problem**: Damage/healing without visual feedback is confusing
+- **Solution**: Always include appropriate floating combat text
+- **Pattern**: `effectsBus.publish(Effects.showDamage/healing/shield(cardId, amount))`
+
+#### 5. Dynamic Ultimate Costs
+- **Problem**: Some ultimates have variable costs based on game state
+- **Solution**: Calculate cost dynamically in `Card.js` context menu
+- **Pattern**: Special case handling for heroes with dynamic costs
+
+### Advanced Patterns Demonstrated
+
+1. **Synergy-Based Resource Management**: Ultimate cost tied to current row synergy
+2. **Overshield Visual System**: Special styling for shields above normal limits
+3. **Persistent Token Systems**: Tokens that persist across turns with charge management
+4. **Movement-Triggered Damage**: Effects that respond to card movement events
+5. **Single Token with Charges**: Efficient token management for count-based effects
+6. **Dynamic Cost Calculation**: Ultimate costs that change based on game state
+7. **Comprehensive Floating Text**: Visual feedback for all damage, healing, and shield changes

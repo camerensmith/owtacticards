@@ -85,16 +85,21 @@ export default function Card(props) {
                 const heroId = playerHeroId.slice(1);
                 const heroJsonData = data.heroes[heroId];
                 
-                // Parse ultimate cost from description text like "Shield Generator (2)"
-                let ultimateCost = 3; // Default to 3 if not specified
-                if (heroJsonData?.ultimate) {
-                    const match = heroJsonData.ultimate.match(/\((\d+)\)/);
-                    if (match) {
-                        ultimateCost = parseInt(match[1]);
+                // Special case for Wrecking Ball - cost is current row synergy
+                if (heroId === 'wreckingball') {
+                    const ultimateCost = currentSynergy;
+                    actionsBus.publish(Actions.requestUltimate(playerHeroId, rowId, ultimateCost));
+                } else {
+                    // Parse ultimate cost from description text like "Shield Generator (2)"
+                    let ultimateCost = 3; // Default to 3 if not specified
+                    if (heroJsonData?.ultimate) {
+                        const match = heroJsonData.ultimate.match(/\((\d+)\)/);
+                        if (match) {
+                            ultimateCost = parseInt(match[1]);
+                        }
                     }
+                    actionsBus.publish(Actions.requestUltimate(playerHeroId, rowId, ultimateCost));
                 }
-                
-                actionsBus.publish(Actions.requestUltimate(playerHeroId, rowId, ultimateCost));
                 setMenu(null);
             },
         });

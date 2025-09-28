@@ -476,7 +476,7 @@
     "back_power": 1,
     "back_synergy": 3,
     "on_enter1": "Adaptive Shield — Place Shield Tokens on Wrecking Ball equal to the number of enemies in his opposing row +1.",
-    "ultimate": "Minefield (X): Place X Wrecking Ball Tokens near target row. After an enemy uses an ability in this row deal 2 damage to the enemy and remove a Wrecking Ball Token from that row."
+    "ultimate": "Minefield (X): Place X Wrecking Ball Tokens near target row. After an enemy moves into or out from this row deal 2 damage to the enemy and remove a Wrecking Ball Token from that row."
   },
   {
     "name": "Zarya",

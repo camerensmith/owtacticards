@@ -7,6 +7,7 @@ import CardDisplay from 'components/layout/CardDisplay';
 import ImmortalityFieldOverlay from 'components/effects/ImmortalityFieldOverlay';
 import CryoFreezeOverlay from 'components/effects/CryoFreezeOverlay';
 import OrisaBarrierOverlay from 'components/effects/OrisaBarrierOverlay';
+import WreckingBallTokenOverlay from 'components/effects/WreckingBallTokenOverlay';
 import CardFocusLite from 'components/cards/CardFocusLite';
 import { ACTIONS } from 'App';
 import { isOverflown } from 'helper';
@@ -140,6 +141,9 @@ export default function BoardRow(props) {
                     
                     {/* Render Orisa Protective Barrier overlay for this row */}
                     <OrisaBarrierOverlay rowId={rowId} />
+                    
+                    {/* Render Wrecking Ball Minefield token overlay for this row */}
+                    <WreckingBallTokenOverlay rowId={rowId} />
                     
                 </div>
                 <CardFocusLite focus={props.cardFocus && props.cardFocus.playerHeroId ? props.cardFocus : null} onClose={() => props.setCardFocus('invisible')} />
