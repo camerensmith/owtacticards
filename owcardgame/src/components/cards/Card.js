@@ -126,6 +126,27 @@ export default function Card(props) {
                 });
             }
         }
+        if (id === 'winston') {
+            const hasBarrierProtector = Array.isArray(card?.effects) && 
+                card.effects.some(effect => effect?.id === 'barrier-protector' && effect?.type === 'barrier');
+            const isActive = hasBarrierProtector && card.effects.find(effect => 
+                effect?.id === 'barrier-protector' && effect?.type === 'barrier'
+            )?.active;
+            
+            if (hasBarrierProtector) {
+                items.push({
+                    label: isActive ? 'Disable Barrier Protector' : 'Enable Barrier Protector',
+                    onClick: () => {
+                        console.log('Card.js - Winston toggle clicked for:', playerHeroId);
+                        // Import Winston's toggle function
+                        import('../../abilities/heroes/winston').then(module => {
+                            module.toggleBarrierProtector(playerHeroId);
+                        });
+                        setMenu(null);
+                    },
+                });
+            }
+        }
         setMenu({ x: e.clientX, y: e.clientY, items });
     }
 

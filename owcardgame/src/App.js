@@ -1003,6 +1003,10 @@ function checkOnEnterAbilities(playerHeroId, rowId, playerNum) {
         abilitiesIndex.widowmaker.onEnter({ playerHeroId, rowId });
         return;
     }
+    if (heroId === 'winston' && abilitiesIndex?.winston?.onEnter) {
+        abilitiesIndex.winston.onEnter({ playerHeroId, rowId });
+        return;
+    }
     if (heroId === 'turret' && abilitiesIndex?.turret?.onEnter) {
         abilitiesIndex.turret.onEnter({ playerHeroId, rowId });
         return;
@@ -2029,6 +2033,13 @@ export default function App() {
             abilitiesIndex.widowmaker.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
         } catch (e) {
             console.log('Error executing WIDOWMAKER ultimate:', e);
+        }
+    } else if (heroId === 'winston' && abilitiesIndex?.winston?.onUltimate) {
+        try {
+            window.__ow_trackUltimateUsed?.(heroId, 'Winston', 'Primal Rage', playerNum, rowId, adjustedCost);
+            abilitiesIndex.winston.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
+        } catch (e) {
+            console.log('Error executing WINSTON ultimate:', e);
         }
     } else {
                         console.log(`Executing ultimate for ${playerHeroId} in ${rowId} (cost: ${adjustedCost})`);

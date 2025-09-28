@@ -2377,6 +2377,219 @@ console.log(`HealthCounter for ${playerHeroId}:`, {
 - [ ] Test UI re-rendering with dynamic keys
 - [ ] Verify player-specific cleanup timing
 
+## Winston Implementation Guide
+
+### Overview
+Winston demonstrates advanced patterns including toggle systems, damage absorption mechanics, movement-based ultimates, and team validation for protective abilities.
+
+### Key Abilities
+
+#### Barrier Protector (onEnter1)
+- **Passive Effect**: Winston gets 3 shield tokens when deployed
+- **Toggle System**: Right-click context menu with "Enable/Disable Barrier Protector" option
+- **Damage Absorption**: When active, absorbs damage for friendly heroes in Winston's row using his shield tokens
+- **Audio**: `winston-ability1-toggle` plays only when toggling (not on enter)
+
+#### Primal Rage (Ultimate, Cost 3)
+- **Movement**: Can move to any row on Winston's side (1f, 1m, 1b for Player 1)
+- **Damage Targeting Logic**:
+  - Front row → Strikes middle row enemies
+  - Middle row → Player chooses front OR back row enemies
+  - Back row → Strikes middle row enemies
+- **Audio**: `winston-ultimate` on activation, `winston-ultimate-resolve` on damage resolution
+- **Shields**: Respects shields (does not pierce)
+- **Floating Text**: Uses Baptiste-style floating combat text for damage
+
+### Toggle System Implementation
+
+#### Card Component Integration
+```javascript
+// In Card.js - Add toggle button for Winston
+if (id === 'winston') {
+    const hasBarrierProtector = Array.isArray(card?.effects) && 
+        card.effects.some(effect => effect?.id === 'barrier-protector' && effect?.type === 'barrier');
+    const isActive = hasBarrierProtector && card.effects.find(effect => 
+        effect?.id === 'barrier-protector' && effect?.type === 'barrier'
+    )?.active;
+    
+    if (hasBarrierProtector) {
+        items.push({
+            label: isActive ? 'Disable Barrier Protector' : 'Enable Barrier Protector',
+            onClick: () => {
+                // Import Winston's toggle function
+                import('../../abilities/heroes/winston').then(module => {
+                    module.toggleBarrierProtector(playerHeroId);
+                });
+                setMenu(null);
+            },
+        });
+    }
+}
+```
+
+#### Toggle Function Pattern
+```javascript
+// In hero module - Export toggle function
+export function toggleBarrierProtector(playerHeroId) {
+    const card = window.__ow_getCard?.(playerHeroId);
+    if (!card || !Array.isArray(card.effects)) return;
+    
+    const barrierEffect = card.effects.find(effect => 
+        effect?.id === 'barrier-protector' && effect?.type === 'barrier'
+    );
+    
+    if (barrierEffect) {
+        // Toggle the barrier
+        const newActive = !barrierEffect.active;
+        
+        // Update the effect
+        window.__ow_removeCardEffect?.(playerHeroId, 'barrier-protector');
+        window.__ow_appendCardEffect?.(playerHeroId, {
+            ...barrierEffect,
+            active: newActive,
+            tooltip: newActive ? 
+                'Barrier Protector: ACTIVE - Absorbing damage for heroes in Winston\'s row' :
+                'Barrier Protector: INACTIVE - Click to activate'
+        });
+        
+        // Play toggle sound
+        try {
+            playAudioByKey('winston-ability1-toggle');
+        } catch {}
+        
+        showToast(`Winston: Barrier Protector ${newActive ? 'ACTIVATED' : 'DEACTIVATED'}`);
+        setTimeout(() => clearToast(), 1500);
+    }
+}
+```
+
+### Damage Absorption System
+
+#### Team Validation Pattern
+```javascript
+// In damageBus.js - Check for Winston Barrier Protector damage absorption
+if (finalAmount > 0 && window.__ow_getRow) {
+    // Find Winston cards that might absorb this damage
+    const allRows = ['1f', '1m', '1b', '2f', '2m', '2b'];
+    for (const rowId of allRows) {
+        const row = window.__ow_getRow(rowId);
+        if (row && row.cardIds) {
+            for (const cardId of row.cardIds) {
+                const card = window.__ow_getCard?.(cardId);
+                if (card && card.id === 'winston' && Array.isArray(card.effects)) {
+                    const barrierEffect = card.effects.find(effect => 
+                        effect?.id === 'barrier-protector' && effect?.type === 'barrier' && effect?.active === true
+                    );
+                    if (barrierEffect) {
+                        // Check if target is in Winston's row AND on the same team
+                        const targetRowData = window.__ow_getRow(targetRow);
+                        const targetPlayerNum = parseInt(targetCardId[0]);
+                        const winstonPlayerNum = parseInt(cardId[0]);
+                        
+                        if (targetRowData && targetRowData.cardIds.includes(targetCardId) && targetPlayerNum === winstonPlayerNum) {
+                            // Check if Winston has shields to absorb with
+                            const winstonShields = card.shield || 0;
+                            if (winstonShields > 0) {
+                                const shieldsToUse = Math.min(finalAmount, winstonShields);
+                                finalAmount = Math.max(0, finalAmount - shieldsToUse);
+                                absorbedAmount += shieldsToUse;
+                                
+                                // Update Winston's shields
+                                const newShieldCount = winstonShields - shieldsToUse;
+                                window.__ow_dispatchShieldUpdate?.(cardId, newShieldCount);
+                                
+                                console.log(`DamageBus - Winston Barrier Protector absorbed ${shieldsToUse} damage for ${targetCardId}, remaining Winston shields: ${newShieldCount}`);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+### Movement-Based Ultimate Pattern
+
+#### Row Targeting with Position Logic
+```javascript
+// Determine which enemy rows Winston can strike
+const winstonRowPosition = targetRow.rowId[1]; // 'f', 'm', 'b'
+let targetableEnemyRows = [];
+
+if (winstonRowPosition === 'f') {
+    // Front row can strike middle row
+    targetableEnemyRows = [`${playerNum === 1 ? 2 : 1}m`];
+} else if (winstonRowPosition === 'm') {
+    // Middle row can strike front OR back row
+    targetableEnemyRows = [`${playerNum === 1 ? 2 : 1}f`, `${playerNum === 1 ? 2 : 1}b`];
+} else if (winstonRowPosition === 'b') {
+    // Back row can strike middle row
+    targetableEnemyRows = [`${playerNum === 1 ? 2 : 1}m`];
+}
+
+if (targetableEnemyRows.length === 1) {
+    // Only one target row, strike it automatically
+    const enemyRowId = targetableEnemyRows[0];
+    strikeEnemyRow(enemyRowId, playerHeroId);
+} else {
+    // Multiple target rows, let player choose
+    showToast('Winston: Select enemy row to strike');
+    const strikeTarget = await selectRowTarget();
+    
+    if (strikeTarget && targetableEnemyRows.includes(strikeTarget.rowId)) {
+        strikeEnemyRow(strikeTarget.rowId, playerHeroId);
+    } else {
+        showToast('Winston: Invalid target row');
+        setTimeout(() => clearToast(), 1500);
+    }
+}
+```
+
+### Key Learning Points
+
+#### 1. Toggle System Implementation
+- **Problem**: Need to allow players to enable/disable abilities
+- **Solution**: Use right-click context menu with dynamic import of toggle function
+- **Pattern**: Check effect state, provide toggle option, update effect with new state
+
+#### 2. Team Validation for Protective Abilities
+- **Problem**: Protective abilities were affecting enemies instead of allies
+- **Solution**: Always check `targetPlayerNum === sourcePlayerNum` for team validation
+- **Pattern**: Extract player numbers from card IDs and compare before applying effects
+
+#### 3. Movement-Based Ultimate Logic
+- **Problem**: Need different targeting rules based on hero's position
+- **Solution**: Use row position to determine valid target rows
+- **Pattern**: Calculate targetable rows based on position, handle single vs multiple choices
+
+#### 4. Shield-Based Damage Absorption
+- **Problem**: Need to absorb damage using hero's own shields
+- **Solution**: Check hero's shield count and reduce both damage and shields
+- **Pattern**: Use `Math.min(damage, shields)` and update both values
+
+### Common Pitfalls
+
+1. **Missing Team Validation**: Protective abilities affecting enemies instead of allies
+2. **Incorrect Toggle State**: Not properly checking current effect state before toggling
+3. **Wrong Row Position Logic**: Not accounting for different targeting rules per position
+4. **Missing Shield Updates**: Forgetting to update hero's shields after absorption
+5. **Incorrect Audio Timing**: Playing toggle sounds on enter instead of only on toggle
+
+### Integration Checklist
+
+- [ ] Add hero to `data.js` with correct stats
+- [ ] Create hero module with proper function signatures
+- [ ] Add to `abilities/index.js` exports
+- [ ] Add to `App.js` onEnter and ultimate handling
+- [ ] Add audio imports and mappings to `imageImports.js`
+- [ ] Implement toggle system in `Card.js` with dynamic import
+- [ ] Add damage absorption logic to `damageBus.js` with team validation
+- [ ] Test toggle functionality and state persistence
+- [ ] Test damage absorption for allies only
+- [ ] Test movement-based ultimate targeting
+- [ ] Verify audio plays at correct times (toggle only, not enter)
+
 ## Roadhog Implementation Guide
 
 ### Overview

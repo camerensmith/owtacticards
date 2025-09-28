@@ -280,8 +280,11 @@ import widowmakerEnter from './audio/widowmaker-enter.mp3';
 import widowmakerAbility1 from './audio/widowmaker-ability1.mp3';
 import widowmakerUltimate from './audio/widowmaker-ultimate.mp3';
 import widowmakerUltimateResolve from './audio/widowmaker-ultimate-resolve.mp3';
-import winstonAngry from './audio/winston-angry.mp3';
-import winstonBarrier from './audio/winston-barrier.mp3';
+import winstonIntro from './audio/winston-intro.mp3';
+import winstonEnter from './audio/winston-enter.mp3';
+import winstonAbility1Toggle from './audio/winston-ability1-toggle.mp3';
+import winstonUltimate from './audio/winston-ultimate.mp3';
+import winstonUltimateResolve from './audio/winston-ultimate-resolve.mp3';
 import wreckingballUlt from './audio/wreckingball-ult.mp3';
 import zaryaBarrier from './audio/zarya-barrier.mp3';
 import zaryaUlt from './audio/zarya-ult.mp3';
@@ -491,8 +494,11 @@ export const abilityAudioFiles = {
     'widowmaker-ability1': widowmakerAbility1,
     'widowmaker-ultimate': widowmakerUltimate,
     'widowmaker-ultimate-resolve': widowmakerUltimateResolve,
-    'winston-angry': winstonAngry,
-    'winston-barrier': winstonBarrier,
+    'winston-intro': winstonIntro,
+    'winston-enter': winstonEnter,
+    'winston-ability1-toggle': winstonAbility1Toggle,
+    'winston-ultimate': winstonUltimate,
+    'winston-ultimate-resolve': winstonUltimateResolve,
     'wreckingball-ult': wreckingballUlt,
     'zarya-barrier': zaryaBarrier,
     'zarya-ult': zaryaUlt,

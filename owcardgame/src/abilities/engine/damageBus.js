@@ -261,6 +261,47 @@ export function dealDamage(targetCardId, targetRow, amount, ignoreShields = fals
         }
     }
     
+    // Check for Winston Barrier Protector damage absorption
+    if (finalAmount > 0 && window.__ow_getRow) {
+        // Find Winston cards that might absorb this damage
+        const allRows = ['1f', '1m', '1b', '2f', '2m', '2b'];
+        for (const rowId of allRows) {
+            const row = window.__ow_getRow(rowId);
+            if (row && row.cardIds) {
+                for (const cardId of row.cardIds) {
+                    const card = window.__ow_getCard?.(cardId);
+                    if (card && card.id === 'winston' && Array.isArray(card.effects)) {
+                        const barrierEffect = card.effects.find(effect => 
+                            effect?.id === 'barrier-protector' && effect?.type === 'barrier' && effect?.active === true
+                        );
+                        if (barrierEffect) {
+                            // Check if target is in Winston's row AND on the same team
+                            const targetRowData = window.__ow_getRow(targetRow);
+                            const targetPlayerNum = parseInt(targetCardId[0]);
+                            const winstonPlayerNum = parseInt(cardId[0]);
+                            
+                            if (targetRowData && targetRowData.cardIds.includes(targetCardId) && targetPlayerNum === winstonPlayerNum) {
+                                // Check if Winston has shields to absorb with
+                                const winstonShields = card.shield || 0;
+                                if (winstonShields > 0) {
+                                    const shieldsToUse = Math.min(finalAmount, winstonShields);
+                                    finalAmount = Math.max(0, finalAmount - shieldsToUse);
+                                    absorbedAmount += shieldsToUse;
+                                    
+                                    // Update Winston's shields
+                                    const newShieldCount = winstonShields - shieldsToUse;
+                                    window.__ow_dispatchShieldUpdate?.(cardId, newShieldCount);
+                                    
+                                    console.log(`DamageBus - Winston Barrier Protector absorbed ${shieldsToUse} damage for ${targetCardId}, remaining Winston shields: ${newShieldCount}`);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
     const damageEvent = { type: 'damage', targetCardId, targetRow, amount: finalAmount, ignoreShields, sourceCardId, absorbedAmount };
     console.log('DamageBus - Publishing damage event:', damageEvent);
     publish(damageEvent);
