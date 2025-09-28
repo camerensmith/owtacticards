@@ -999,6 +999,10 @@ function checkOnEnterAbilities(playerHeroId, rowId, playerNum) {
         abilitiesIndex.tracer.onEnter({ playerHeroId, rowId });
         return;
     }
+    if (heroId === 'widowmaker' && abilitiesIndex?.widowmaker?.onEnter) {
+        abilitiesIndex.widowmaker.onEnter({ playerHeroId, rowId });
+        return;
+    }
     if (heroId === 'turret' && abilitiesIndex?.turret?.onEnter) {
         abilitiesIndex.turret.onEnter({ playerHeroId, rowId });
         return;
@@ -2018,6 +2022,13 @@ export default function App() {
             abilitiesIndex.tracer.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
         } catch (e) {
             console.log('Error executing TRACER ultimate:', e);
+        }
+    } else if (heroId === 'widowmaker' && abilitiesIndex?.widowmaker?.onUltimate) {
+        try {
+            window.__ow_trackUltimateUsed?.(heroId, 'Widowmaker', 'Widow\'s Kiss', playerNum, rowId, adjustedCost);
+            abilitiesIndex.widowmaker.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
+        } catch (e) {
+            console.log('Error executing WIDOWMAKER ultimate:', e);
         }
     } else {
                         console.log(`Executing ultimate for ${playerHeroId} in ${rowId} (cost: ${adjustedCost})`);

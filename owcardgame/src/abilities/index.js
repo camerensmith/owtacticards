@@ -35,6 +35,7 @@ import symmetra from './heroes/symmetra';
 import torbjorn from './heroes/torbjorn';
 import tracer from './heroes/tracer';
 import turret from './heroes/turret';
+import widowmaker from './heroes/widowmaker';
 
 export const abilities = {
     ashe,
@@ -70,6 +71,7 @@ export const abilities = {
     torbjorn,
     tracer,
     turret,
+    widowmaker,
 };
 
 export default abilities;

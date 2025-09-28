@@ -156,6 +156,20 @@ export function dealDamage(targetCardId, targetRow, amount, ignoreShields = fals
         }
     }
     
+    // Check for Widowmaker Infra-Sight damage amplification
+    if (window.__ow_getRow) {
+        const targetRowData = window.__ow_getRow(targetRow);
+        if (targetRowData && targetRowData.enemyEffects) {
+            const widowmakerToken = targetRowData.enemyEffects.find(effect => 
+                effect?.id === 'widowmaker-token' && effect?.type === 'damageAmplification'
+            );
+            if (widowmakerToken) {
+                finalAmount += widowmakerToken.value || 1;
+                console.log(`DamageBus - Widowmaker Infra-Sight amplified damage by ${widowmakerToken.value || 1} (total: ${finalAmount})`);
+            }
+        }
+    }
+    
     // Check for Orisa Protective Barrier damage reduction
     if (window.__ow_getRow) {
         const targetRowData = window.__ow_getRow(targetRow);

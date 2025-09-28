@@ -275,8 +275,11 @@ import symmetraIntro from './audio/symmetra-intro.mp3';
 import symmetraAbility1 from './audio/symmetra-ability1.mp3';
 import symmetraTeleporter from './audio/symmetra-teleporter.mp3';
 import symmetraUltimate from './audio/symmetra-ultimate.mp3';
-import widowmakerOneshot from './audio/widowmaker-oneshot.mp3';
-import widowmakerWidowskiss from './audio/widowmaker-widowskiss.mp3';
+import widowmakerIntro from './audio/widowmaker-intro.mp3';
+import widowmakerEnter from './audio/widowmaker-enter.mp3';
+import widowmakerAbility1 from './audio/widowmaker-ability1.mp3';
+import widowmakerUltimate from './audio/widowmaker-ultimate.mp3';
+import widowmakerUltimateResolve from './audio/widowmaker-ultimate-resolve.mp3';
 import winstonAngry from './audio/winston-angry.mp3';
 import winstonBarrier from './audio/winston-barrier.mp3';
 import wreckingballUlt from './audio/wreckingball-ult.mp3';
@@ -483,8 +486,11 @@ export const abilityAudioFiles = {
     'symmetra-ability1': symmetraAbility1,
     'symmetra-teleporter': symmetraTeleporter,
     'symmetra-ultimate': symmetraUltimate,
-    'widowmaker-oneshot': widowmakerOneshot,
-    'widowmaker-widowskiss': widowmakerWidowskiss,
+    'widowmaker-intro': widowmakerIntro,
+    'widowmaker-enter': widowmakerEnter,
+    'widowmaker-ability1': widowmakerAbility1,
+    'widowmaker-ultimate': widowmakerUltimate,
+    'widowmaker-ultimate-resolve': widowmakerUltimateResolve,
     'winston-angry': winstonAngry,
     'winston-barrier': winstonBarrier,
     'wreckingball-ult': wreckingballUlt,
