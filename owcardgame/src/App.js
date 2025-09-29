@@ -1063,6 +1063,10 @@ function checkOnEnterAbilities(playerHeroId, rowId, playerNum) {
         abilitiesIndex.junkerqueen.onEnter({ playerHeroId, rowId });
         return;
     }
+    if (heroId === 'venture' && abilitiesIndex?.venture?.onEnter) {
+        abilitiesIndex.venture.onEnter({ playerHeroId, rowId });
+        return;
+    }
 
     if (heroId === 'zarya' && abilitiesIndex?.zarya?.onEnter) {
         abilitiesIndex.zarya.onEnter({ playerHeroId, rowId });
@@ -2062,6 +2066,13 @@ export default function App() {
             abilitiesIndex.junkerqueen.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
         } catch (e) {
             console.log('Error executing JUNKER QUEEN ultimate:', e);
+        }
+    } else if (heroId === 'venture' && abilitiesIndex?.venture?.onUltimate) {
+        try {
+            window.__ow_trackUltimateUsed?.(heroId, 'Venture', 'Tectonic Shock', playerNum, rowId, adjustedCost);
+            abilitiesIndex.venture.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
+        } catch (e) {
+            console.log('Error executing VENTURE ultimate:', e);
         }
     } else if (heroId === 'reinhardt' && abilitiesIndex?.reinhardt?.onUltimate) {
         try {

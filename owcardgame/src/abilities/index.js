@@ -43,6 +43,7 @@ import zenyatta from './heroes/zenyatta';
 import hazard from './heroes/hazard';
 import mauga from './heroes/mauga';
 import junkerqueen from './heroes/junkerqueen';
+import venture from './heroes/venture';
 
 export const abilities = {
     ashe,
@@ -86,6 +87,7 @@ export const abilities = {
     hazard,
     mauga,
     junkerqueen,
+    venture,
 };
 
 export default abilities;

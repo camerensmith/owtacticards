@@ -41,6 +41,7 @@ import zenyatta from './heroes/cards/zenyatta.webp';
 import hazard from './heroes/cards/hazard.jpg';
 import junkerqueen from './heroes/cards/junkerqueen.webp';
 import mauga from './heroes/cards/mauga.webp';
+import venture from './heroes/cards/venture.webp';
 import cardBack from './heroes/cards/card-back.webp';
 import ramattra from './heroes/cards/ramattra.webp';
 import nemesis from './heroes/cards/nemesis.webp';
@@ -314,10 +315,14 @@ import zenyattaUltimate from './audio/zenyatta-ultimate.mp3';
 import junkerqueenIntro from './audio/junkerqueen-intro.mp3';
 import junkerqueenEnter from './audio/junkerqueen-enter.mp3';
 import junkerqueenUltimate from './audio/junkerqueen-ultimate.mp3';
+import ventureIntro from './audio/venture-intro.mp3';
+import ventureEnter from './audio/venture-enter.mp3';
+import ventureAbility1 from './audio/venture-ability1.mp3';
+import ventureUltimate from './audio/venture-ultimate.mp3';
 
 // Create mapping objects
 export const heroCardImages = {
-    ana, ashe, baptiste, bastion, bob, brigitte, doomfist, dva, dvameka, echo, genji, hanzo, junkrat, lifeweaver, lucio, mccree, mei, mercy, moira, orisa, pharah, reaper, reinhardt, roadhog, sigma, soldier, sombra, symmetra, torbjorn, tracer, widowmaker, winston, wreckingball, zarya, zenyatta, ramattra, nemesis, turret, hazard, mauga, junkerqueen, 'card-back': cardBack
+    ana, ashe, baptiste, bastion, bob, brigitte, doomfist, dva, dvameka, echo, genji, hanzo, junkrat, lifeweaver, lucio, mccree, mei, mercy, moira, orisa, pharah, reaper, reinhardt, roadhog, sigma, soldier, sombra, symmetra, torbjorn, tracer, widowmaker, winston, wreckingball, zarya, zenyatta, ramattra, nemesis, turret, hazard, mauga, junkerqueen, venture, 'card-back': cardBack
 };
 
 export const clearDeadCursor = clearDead;
@@ -547,6 +552,10 @@ export const abilityAudioFiles = {
     'junkerqueen-intro': junkerqueenIntro,
     'junkerqueen-enter': junkerqueenEnter,
     'junkerqueen-ultimate': junkerqueenUltimate,
+    'venture-intro': ventureIntro,
+    'venture-enter': ventureEnter,
+    'venture-ability1': ventureAbility1,
+    'venture-ultimate': ventureUltimate,
 };
 
 // Simple per-key debounce for audio playback to avoid accidental double-plays
