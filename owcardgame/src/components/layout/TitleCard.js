@@ -12,16 +12,8 @@ export default function TitleCard(props) {
                 <i onClick={toggleTutorial} className='fas fa-question'></i>
             </div>
             <span className='title'>Overwatch</span>
-            <div className='credit'>
-                <span>Game & Card Design by</span>
-                <span>u/barberian912</span>
-            </div>
             <img src={otherImages.owlogo} id='centerlogo' alt='owlogo' />
-            <span className='credit'>
-                <span>Digitisation by</span>
-                <span>Nathan H Miles</span>
-            </span>
-            <span className='title'>Card Game</span>
+            <span className='title'>Tacticards</span>
             <AudioPlayer
                 playAudio={props.playAudio}
                 setPlayAudio={props.setPlayAudio}

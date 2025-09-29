@@ -1028,6 +1028,10 @@ function checkOnEnterAbilities(playerHeroId, rowId, playerNum) {
         abilitiesIndex.zarya.onEnter({ playerHeroId, rowId });
         return;
     }
+    if (heroId === 'zenyatta' && abilitiesIndex?.zenyatta?.onEnter) {
+        abilitiesIndex.zenyatta.onEnter({ playerHeroId, rowId });
+        return;
+    }
     if (heroId === 'turret' && abilitiesIndex?.turret?.onEnter) {
         abilitiesIndex.turret.onEnter({ playerHeroId, rowId });
         return;
@@ -2081,6 +2085,13 @@ export default function App() {
             abilitiesIndex.zarya.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
         } catch (e) {
             console.log('Error executing ZARYA ultimate:', e);
+        }
+    } else if (heroId === 'zenyatta' && abilitiesIndex?.zenyatta?.onUltimate) {
+        try {
+            window.__ow_trackUltimateUsed?.(heroId, 'Zenyatta', 'Transcendence', playerNum, rowId, adjustedCost);
+            abilitiesIndex.zenyatta.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
+        } catch (e) {
+            console.log('Error executing ZENYATTA ultimate:', e);
         }
     } else {
                         console.log(`Executing ultimate for ${playerHeroId} in ${rowId} (cost: ${adjustedCost})`);

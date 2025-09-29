@@ -35,11 +35,12 @@ export function dealDamage(targetCardId, targetRow, amount, ignoreShields = fals
         }
     }
     
-    // Check for card effect immunity (Mei Cryo Freeze)
+    // Check for card effect immunity (Mei Cryo Freeze, Zenyatta Transcendence)
     const targetCard = window.__ow_getCard?.(targetCardId);
     if (targetCard && Array.isArray(targetCard.effects)) {
         const hasImmunity = targetCard.effects.some(effect => 
-            effect?.id === 'cryo-freeze' && effect?.type === 'immunity'
+            (effect?.id === 'cryo-freeze' && effect?.type === 'immunity') ||
+            (effect?.hero === 'zenyatta' && effect?.type === 'immunity')
         );
         if (hasImmunity) {
             console.log(`DamageBus - Target ${targetCardId} has immunity effect, damage blocked`);
@@ -166,6 +167,20 @@ export function dealDamage(targetCardId, targetRow, amount, ignoreShields = fals
             if (widowmakerToken) {
                 finalAmount += widowmakerToken.value || 1;
                 console.log(`DamageBus - Widowmaker Infra-Sight amplified damage by ${widowmakerToken.value || 1} (total: ${finalAmount})`);
+            }
+        }
+    }
+    
+    // Check for Zenyatta Discord damage amplification
+    if (window.__ow_getCard) {
+        const targetCard = window.__ow_getCard(targetCardId);
+        if (targetCard && Array.isArray(targetCard.effects)) {
+            const discordToken = targetCard.effects.find(effect => 
+                effect?.hero === 'zenyatta' && effect?.type === 'discord'
+            );
+            if (discordToken) {
+                finalAmount += 1;
+                console.log(`DamageBus - Zenyatta Discord amplified damage by 1 (total: ${finalAmount})`);
             }
         }
     }

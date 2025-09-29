@@ -13,6 +13,9 @@ import AnnihilationOverlay from '../effects/AnnihilationOverlay';
 import ChainHookOverlay from '../effects/ChainHookOverlay';
 import ForgeHammerOverlay from '../effects/ForgeHammerOverlay';
 import ZaryaTokenOverlay from '../effects/ZaryaTokenOverlay';
+import HarmonyTokenOverlay from '../effects/HarmonyTokenOverlay';
+import DiscordTokenOverlay from '../effects/DiscordTokenOverlay';
+import ZenyattaImmunityOverlay from '../effects/ZenyattaImmunityOverlay';
 import { heroCardImages } from '../../assets/imageImports';
 import ContextMenu from './ContextMenu';
 import actionsBus, { Actions } from '../../abilities/engine/actionsBus';
@@ -292,6 +295,16 @@ export default function Card(props) {
                                 : null}
                             {turnState.playerTurn === playerNum || isPlayed
                                 ? <ZaryaTokenOverlay cardId={playerHeroId} />
+                                : null}
+                            {/* Zenyatta Transcendence immunity visual */}
+                            {turnState.playerTurn === playerNum || isPlayed
+                                ? <ZenyattaImmunityOverlay playerHeroId={playerHeroId} />
+                                : null}
+                            {turnState.playerTurn === playerNum || isPlayed
+                                ? <HarmonyTokenOverlay cardId={playerHeroId} />
+                                : null}
+                            {turnState.playerTurn === playerNum || isPlayed
+                                ? <DiscordTokenOverlay cardId={playerHeroId} />
                                 : null}
                             <img
                                 onLoad={() => setImageLoaded(playerHeroId)}

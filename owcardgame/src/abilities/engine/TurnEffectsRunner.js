@@ -171,6 +171,15 @@ export default function TurnEffectsRunner() {
                             console.log(`TurnEffectsRunner: Found Mercy healing effect on card ${cardId}, calling healing`);
                             abilities.mercy.mercyTokenHealing(cardId);
                         }
+                        
+                        // Check for Zenyatta Harmony token healing and jumping
+                        const hasHarmony = card.effects.some(effect => 
+                            effect.hero === 'zenyatta' && effect.type === 'harmony'
+                        );
+                        if (hasHarmony && abilities.zenyatta?.processHarmonyJump) {
+                            console.log(`TurnEffectsRunner: Found Harmony token on card ${cardId}, processing jump`);
+                            abilities.zenyatta.processHarmonyJump(cardId);
+                        }
                     }
                 }
 
@@ -178,6 +187,20 @@ export default function TurnEffectsRunner() {
                 for (let effect of enemyRowEffects) {
                     if (effect.on === 'turnstart' && abilities[effect.hero]?.[effect.id]?.run) {
                         abilities[effect.hero][effect.id].run(rowId);
+                    }
+                }
+                
+                // Check for Discord token jumping on enemy cards
+                for (let cardId of gameState.rows[rowId].cardIds) {
+                    const card = gameState.playerCards[`player${playerTurn}cards`]?.cards?.[cardId];
+                    if (card && Array.isArray(card.effects)) {
+                        const hasDiscord = card.effects.some(effect => 
+                            effect.hero === 'zenyatta' && effect.type === 'discord'
+                        );
+                        if (hasDiscord && abilities.zenyatta?.processDiscordJump) {
+                            console.log(`TurnEffectsRunner: Found Discord token on enemy card ${cardId}, processing jump`);
+                            abilities.zenyatta.processDiscordJump(cardId);
+                        }
                     }
                 }
             }

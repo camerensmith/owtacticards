@@ -293,8 +293,11 @@ import zaryaEnter from './audio/zarya-enter.mp3';
 import zaryaAbility1 from './audio/zarya-ability1.mp3';
 import zaryaUltimate from './audio/zarya-ultimate.mp3';
 import zaryaUltimateResolve from './audio/zarya-ultimate-resolve.mp3';
-import zenyattaDiscord from './audio/zenyatta-discord.mp3';
-import zenyattaUlt from './audio/zenyatta-ult.mp3';
+import zenyattaIntro from './audio/zenyatta-intro.mp3';
+import zenyattaEnter from './audio/zenyatta-enter.mp3';
+import zenyattaAbility1 from './audio/zenyatta-ability1.mp3';
+import zenyattaAbility2 from './audio/zenyatta-ability2.mp3';
+import zenyattaUltimate from './audio/zenyatta-ultimate.mp3';
 
 // Create mapping objects
 export const heroCardImages = {
@@ -512,8 +515,11 @@ export const abilityAudioFiles = {
     'zarya-ability1': zaryaAbility1,
     'zarya-ultimate': zaryaUltimate,
     'zarya-ultimate-resolve': zaryaUltimateResolve,
-    'zenyatta-discord': zenyattaDiscord,
-    'zenyatta-ult': zenyattaUlt,
+    'zenyatta-intro': zenyattaIntro,
+    'zenyatta-enter': zenyattaEnter,
+    'zenyatta-ability1': zenyattaAbility1,
+    'zenyatta-ability2': zenyattaAbility2,
+    'zenyatta-ultimate': zenyattaUltimate,
 };
 
 // Simple per-key debounce for audio playback to avoid accidental double-plays
