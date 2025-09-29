@@ -61,6 +61,8 @@ export const ACTIONS = {
     CLEAR_INVULNERABLE_SLOTS: 'clear-invulnerable-slots',
     REMOVE_ROW_EFFECT: 'remove-row-effect',
     TRACK_ULTIMATE_USED: 'track-ultimate-used',
+    APPLY_ROW_LOCK: 'apply-row-lock',
+    CLEAR_ROW_LOCKS: 'clear-row-locks',
 };
 
 function reducer(gameState, action) {
@@ -256,6 +258,23 @@ function reducer(gameState, action) {
             });
         }
 
+        // Apply a row lock (no movement in/out) with visual styling; persists until end of round
+        case ACTIONS.APPLY_ROW_LOCK: {
+            const { rowId } = action.payload || {};
+            return produce(gameState, (draft) => {
+                draft.rows[rowId].locked = true;
+            });
+        }
+
+        // Clear all row locks (end of round cleanup)
+        case ACTIONS.CLEAR_ROW_LOCKS: {
+            return produce(gameState, (draft) => {
+                ['1f','1m','1b','2f','2m','2b'].forEach(rid => {
+                    if (draft.rows[rid]) draft.rows[rid].locked = false;
+                });
+            });
+        }
+
         // Moves a card within or between rows
         case ACTIONS.MOVE_CARD: {
             // Variables from payload
@@ -268,6 +287,11 @@ function reducer(gameState, action) {
             // Variables from game state
             const startRow = gameState.rows[startRowId];
             const finishRow = gameState.rows[finishRowId];
+
+            // Prevent movement if destination or source row is locked
+            if ((finishRow && finishRow.locked) || (startRow && startRow.locked)) {
+                return gameState; // movement blocked by Cage Fight
+            }
 
             // Enforce max row capacity (4)
             if (finishRow && Array.isArray(finishRow.cardIds) && finishRow.cardIds.length >= 4 && startRowId !== finishRowId) {
@@ -1025,6 +1049,10 @@ function checkOnEnterAbilities(playerHeroId, rowId, playerNum) {
     }
     if (heroId === 'hazard' && abilitiesIndex?.hazard?.onEnter) {
         abilitiesIndex.hazard.onEnter({ playerHeroId, rowId });
+        return;
+    }
+    if (heroId === 'mauga' && abilitiesIndex?.mauga?.onEnter) {
+        abilitiesIndex.mauga.onEnter({ playerHeroId, rowId });
         return;
     }
 
@@ -2013,6 +2041,13 @@ export default function App() {
         } catch (e) {
             console.log('Error executing HAZARD ultimate:', e);
         }
+    } else if (heroId === 'mauga' && abilitiesIndex?.mauga?.onUltimate) {
+        try {
+            window.__ow_trackUltimateUsed?.(heroId, 'Mauga', 'Cage Fight', playerNum, rowId, adjustedCost);
+            abilitiesIndex.mauga.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
+        } catch (e) {
+            console.log('Error executing MAUGA ultimate:', e);
+        }
     } else if (heroId === 'reinhardt' && abilitiesIndex?.reinhardt?.onUltimate) {
         try {
             window.__ow_trackUltimateUsed?.(heroId, 'Reinhardt', 'Earthshatter', playerNum, rowId, adjustedCost);
@@ -2367,6 +2402,11 @@ export default function App() {
         // If not moving card within player's hand (i.e. moving into a row),
         // Set new row synergy and set card to played
         if (finishRowId[0] !== 'p' && parseInt(finishRowId[0]) === playerNum) {
+            // Block deployment into locked rows before any onEnter logic triggers
+            if (gameState.rows[finishRowId]?.locked) {
+                console.log(`Row ${finishRowId} is locked. Cannot place ${draggableId}.`);
+                return;
+            }
             // Check deployment limit (6 heroes maximum per player)
             const deployedHeroes = gameState.rows[`${playerNum}f`].cardIds.length + 
                                   gameState.rows[`${playerNum}m`].cardIds.length + 

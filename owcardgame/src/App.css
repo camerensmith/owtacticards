@@ -218,3 +218,12 @@ body {
     animation: chainHookAnimation 1s ease-in-out;
 }
 
+/* Mauga Cage Fight Row Lock Styling */
+.row.row-locked {
+    position: relative;
+}
+.row.row-locked .boardrow {
+    border: 3px solid #6e6e6e;
+    box-shadow: inset 0 0 10px rgba(50,50,50,0.7);
+}
+

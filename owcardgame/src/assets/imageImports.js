@@ -39,6 +39,7 @@ import wreckingball from './heroes/cards/wreckingball.webp';
 import zarya from './heroes/cards/zarya.webp';
 import zenyatta from './heroes/cards/zenyatta.webp';
 import hazard from './heroes/cards/hazard.jpg';
+import mauga from './heroes/cards/mauga.webp';
 import cardBack from './heroes/cards/card-back.webp';
 import ramattra from './heroes/cards/ramattra.webp';
 import nemesis from './heroes/cards/nemesis.webp';
@@ -100,6 +101,7 @@ import wreckingballFocus from './heroes/cardfocus/wreckingball.webp';
 import zaryaFocus from './heroes/cardfocus/zarya.webp';
 import zenyattaFocus from './heroes/cardfocus/zenyatta.webp';
 import hazardFocus from './heroes/cardfocus/hazard.webp';
+import maugaFocus from './heroes/cardfocus/mauga.webp';
 
 // Other images
 import owlogo from './owlogo-small.webp';
@@ -114,8 +116,11 @@ import overwatchTheme from './audio/overwatch-theme.mp3';
 import placement from './audio/placement.mp3';
 import endturn from './audio/endturn.mp3';
 import hazardIntro from './audio/hazard-intro.mp3';
+import maugaIntro from './audio/mauga-intro.mp3';
 import hazardEnter from './audio/hazard-enter.mp3';
+import maugaEnter from './audio/mauga-enter.mp3';
 import hazardUltimate from './audio/hazard-ultimate.mp3';
+import maugaUltimate from './audio/mauga-ultimate.mp3';
 
 // (moved exports below all imports to satisfy import/first rule)
 
@@ -306,7 +311,7 @@ import zenyattaUltimate from './audio/zenyatta-ultimate.mp3';
 
 // Create mapping objects
 export const heroCardImages = {
-    ana, ashe, baptiste, bastion, bob, brigitte, doomfist, dva, dvameka, echo, genji, hanzo, junkrat, lifeweaver, lucio, mccree, mei, mercy, moira, orisa, pharah, reaper, reinhardt, roadhog, sigma, soldier, sombra, symmetra, torbjorn, tracer, widowmaker, winston, wreckingball, zarya, zenyatta, ramattra, nemesis, turret, hazard, 'card-back': cardBack
+    ana, ashe, baptiste, bastion, bob, brigitte, doomfist, dva, dvameka, echo, genji, hanzo, junkrat, lifeweaver, lucio, mccree, mei, mercy, moira, orisa, pharah, reaper, reinhardt, roadhog, sigma, soldier, sombra, symmetra, torbjorn, tracer, widowmaker, winston, wreckingball, zarya, zenyatta, ramattra, nemesis, turret, hazard, mauga, 'card-back': cardBack
 };
 
 export const clearDeadCursor = clearDead;
@@ -316,7 +321,7 @@ export const heroIconImages = {
 };
 
 export const heroCardFocusImages = {
-    ana: anaFocus, ashe: asheFocus, baptiste: baptisteFocus, bastion: bastionFocus, bob: bobFocus, brigitte: brigitteFocus, doomfist: doomfistFocus, dva: dvaFocus, dvameka: dvamekaFocus, echo: echoFocus, genji: genjiFocus, hanzo: hanzoFocus, junkrat: junkratFocus, lifeweaver: lifeweaverFocus, lucio: lucioFocus, mccree: mccreeFocus, mei: meiFocus, mercy: mercyFocus, moira: moiraFocus, orisa: orisaFocus, pharah: pharahFocus, ramattra: ramattraFocus, nemesis: nemesisFocus, reaper: reaperFocus, reinhardt: reinhardtFocus, roadhog: roadhogFocus, sigma: sigmaFocus, soldier: soldierFocus, sombra: sombraFocus, symmetra: symmetraFocus, torbjorn: torbjornFocus, tracer: tracerFocus, widowmaker: widowmakerFocus, winston: winstonFocus, wreckingball: wreckingballFocus, zarya: zaryaFocus, zenyatta: zenyattaFocus, hazard: hazardFocus
+    ana: anaFocus, ashe: asheFocus, baptiste: baptisteFocus, bastion: bastionFocus, bob: bobFocus, brigitte: brigitteFocus, doomfist: doomfistFocus, dva: dvaFocus, dvameka: dvamekaFocus, echo: echoFocus, genji: genjiFocus, hanzo: hanzoFocus, junkrat: junkratFocus, lifeweaver: lifeweaverFocus, lucio: lucioFocus, mccree: mccreeFocus, mei: meiFocus, mercy: mercyFocus, moira: moiraFocus, orisa: orisaFocus, pharah: pharahFocus, ramattra: ramattraFocus, nemesis: nemesisFocus, reaper: reaperFocus, reinhardt: reinhardtFocus, roadhog: roadhogFocus, sigma: sigmaFocus, soldier: soldierFocus, sombra: sombraFocus, symmetra: symmetraFocus, torbjorn: torbjornFocus, tracer: tracerFocus, widowmaker: widowmakerFocus, winston: winstonFocus, wreckingball: wreckingballFocus, zarya: zaryaFocus, zenyatta: zenyattaFocus, hazard: hazardFocus, mauga: maugaFocus
 };
 
 export const otherImages = {
@@ -530,6 +535,9 @@ export const abilityAudioFiles = {
     'hazard-enter': hazardEnter,
     'hazard-ultimate': hazardUltimate,
     // no resolve sound for Hazard ultimate (instant)
+    'mauga-intro': maugaIntro,
+    'mauga-enter': maugaEnter,
+    'mauga-ultimate': maugaUltimate,
 };
 
 // Simple per-key debounce for audio playback to avoid accidental double-plays

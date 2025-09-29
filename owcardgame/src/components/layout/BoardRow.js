@@ -76,8 +76,10 @@ export default function BoardRow(props) {
     //   resizeObserver.observe(boardRow);
     // });
 
+    const isLocked = !!gameState.rows[rowId]?.locked;
+
     return (
-        <div id={rowId} className='rowarea row'>
+        <div id={rowId} className={`rowarea row ${isLocked ? 'row-locked' : ''}`}>
             <div className='rowcountercontainer'>
                 <SynergyCounter synergy={synergyValue} />
                 <div className='rowcountercontainer2'>

@@ -173,6 +173,19 @@
     "ultimate": "RIP-Tire (4): Move Junkrat to any of your rows and deal [Row Synergy] damage to all enemies in opposing row."
   },
   {
+    "name": "Junker Queen",
+    "class": "offense",
+    "hp": 3,
+    "front_power": 1,
+    "front_synergy": 2,
+    "middle_power": 3,
+    "middle_synergy": 2,
+    "back_power": 2,
+    "back_synergy": 1,
+    "on_enter1": "Jagged Blade — Apply Wounds to all Unshielded Heroes. They can't gain Shields and take 1 damage at the start of their turn.",
+    "ultimate": "Rampage (4): Deal damage to all Heroes split up as evenly as possible based on the total Wound damage dealt."
+  },
+  {
     "name": "Lifeweaver",
     "class": "support",
     "hp": 3,
@@ -198,6 +211,19 @@
     "on_enter1": "Crossfade — You may move any number of allies in Lúcio’s row to another adjacent row",
     "on_enter2": "Crossfade — Place Lucio Token near target row and heal all Heroes in that row by 1 health at the start of each of your turns.",
     "ultimate": "Sound Barrier (3): All Heroes in Lúcio’s row gain 2 shield tokens."
+  },
+  {
+    "name": "Mauga",
+    "class": "tank",
+    "hp": 4,
+    "front_power": 3,
+    "front_synergy": 3,
+    "middle_power": 1,
+    "middle_synergy": 1,
+    "back_power": 1,
+    "back_synergy": 1,
+    "on_enter1": "Berserker — When an ally Hero deals damage, add a counter and +1 HP to Mauga. Mauga cannot gain Shields.",
+    "ultimate": "Cage Fight (3): Mauga's opposing row becomes locked; Mauga deals damage to the unit directly opposite his column for the difference between HP."
   },
   {
     "name": "McCree",

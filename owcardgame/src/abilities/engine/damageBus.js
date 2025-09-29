@@ -181,6 +181,14 @@ export function dealDamage(targetCardId, targetRow, amount, ignoreShields = fals
                 console.log(`DamageBus - Mercy damage boost added ${mercyDamageBoost.value || 1} damage (total: ${finalAmount})`);
             }
         }
+
+        // Notify Mauga module that an ally did direct ability damage (only when sourceCardId is present)
+        try {
+            const maugaMod = require('../heroes/mauga');
+            if (maugaMod && typeof maugaMod.onAllyDirectDamageDealt === 'function') {
+                maugaMod.onAllyDirectDamageDealt(sourceCardId);
+            }
+        } catch {}
     }
     
     // Check for Widowmaker Infra-Sight damage amplification

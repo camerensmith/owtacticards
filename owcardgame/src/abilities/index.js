@@ -41,6 +41,7 @@ import wreckingball from './heroes/wreckingball';
 import zarya from './heroes/zarya';
 import zenyatta from './heroes/zenyatta';
 import hazard from './heroes/hazard';
+import mauga from './heroes/mauga';
 
 export const abilities = {
     ashe,
@@ -82,6 +83,7 @@ export const abilities = {
     zarya,
     zenyatta,
     hazard,
+    mauga,
 };
 
 export default abilities;
