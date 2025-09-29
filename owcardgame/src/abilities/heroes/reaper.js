@@ -1,5 +1,6 @@
 import { showOnEnterChoice } from '../engine/modalController';
 import { dealDamage } from '../engine/damageBus';
+import effectsBus, { Effects } from '../engine/effectsBus';
 import { showMessage as showToast, clearMessage as clearToast } from '../engine/targetingBus';
 import { playAudioByKey } from '../../assets/imageImports';
 
@@ -82,6 +83,7 @@ async function handleSingleTarget(playerHeroId, rowId, playerNum) {
         
         // Deal 3 damage (respects shields)
         dealDamage(targetCardId, opposingRowId, 3, false, playerHeroId);
+        try { effectsBus.publish(Effects.showDamage(targetCardId, 3)); } catch {}
         
         showToast('Reaper: Hellfire Shotguns fired!');
         setTimeout(() => clearToast(), 2000);
@@ -135,6 +137,7 @@ async function handleSplitTarget(playerHeroId, rowId, playerNum) {
         
         // Deal 2 damage to primary target (respects shields)
         dealDamage(primaryTargetId, opposingRowId, 2, false, playerHeroId);
+        try { effectsBus.publish(Effects.showDamage(primaryTargetId, 2)); } catch {}
         
         // Find enemy directly behind primary target
         let behindRowId = null;
@@ -154,6 +157,7 @@ async function handleSplitTarget(playerHeroId, rowId, playerNum) {
                 if (behindTarget && behindTarget.health > 0) {
                     // Deal 1 damage to enemy behind (respects shields)
                     dealDamage(behindTargetId, behindRowId, 1, false, playerHeroId);
+                    try { effectsBus.publish(Effects.showDamage(behindTargetId, 1)); } catch {}
                 }
             }
         }
@@ -213,6 +217,7 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
         // Deal damage to all enemies
         livingEnemies.forEach(enemyCardId => {
             dealDamage(enemyCardId, opposingRowId, 3, true, playerHeroId); // ignoreShields = true
+            try { effectsBus.publish(Effects.showDamage(enemyCardId, 3)); } catch {}
         });
         
         // Play ultimate resolve sound

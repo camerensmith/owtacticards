@@ -96,6 +96,12 @@ async function handleHealingAbility(playerHeroId, rowId, playerNum) {
         setTimeout(() => clearToast(), 1500);
         return;
     }
+    // Prevent turrets from being healed (exception: Brigitte's armor pack only)
+    if (targetCard.turret === true) {
+        showToast('Mercy: Cannot target turrets');
+        setTimeout(() => clearToast(), 1500);
+        return;
+    }
     
     // Check if target is friendly
     const targetPlayerNum = parseInt(target.cardId[0]);

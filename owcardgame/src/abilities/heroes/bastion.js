@@ -3,6 +3,7 @@ import { showOnEnterChoice } from '../engine/modalController';
 import { selectCardTarget, selectRowTarget } from '../engine/targeting';
 import { showMessage as showToast, clearMessage as clearToast } from '../engine/targetingBus';
 import { dealDamage } from '../engine/damageBus';
+import effectsBus, { Effects } from '../engine/effectsBus';
 import { getAudioFile, playAudioByKey } from '../../assets/imageImports';
 
 // On Enter - Modal choice between two options
@@ -48,6 +49,7 @@ async function handleOption1(playerHeroId, rowId, playerNum) {
         const target = await selectCardTarget();
         if (target) {
             dealDamage(target.cardId, target.rowId, 1, false, playerHeroId);
+            try { effectsBus.publish(Effects.showDamage(target.cardId, 1)); } catch {}
             // Play audio after damage is dealt
             try {
                 playAudioByKey('bastion-ability1');
@@ -122,6 +124,7 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
         
         // Deal 2 damage to primary target
         dealDamage(primaryTarget.cardId, primaryTarget.rowId, 2, false, playerHeroId);
+        try { effectsBus.publish(Effects.showDamage(primaryTarget.cardId, 2)); } catch {}
         
         showToast('Bastion: Select up to 2 additional targets');
         
@@ -133,6 +136,7 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
                 if (target) {
                     additionalTargets.push(target);
                     dealDamage(target.cardId, target.rowId, 2, false, playerHeroId);
+                    try { effectsBus.publish(Effects.showDamage(target.cardId, 2)); } catch {}
                 } else {
                     break; // User cancelled, stop selecting
                 }

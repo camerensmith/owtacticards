@@ -1,6 +1,7 @@
 import $ from 'jquery';
 import { showOnEnterChoice } from '../engine/modalController';
 import { dealDamage } from '../engine/damageBus';
+import effectsBus, { Effects } from '../engine/effectsBus';
 import crosshair from '../../assets/crosshair.svg';
 import { showMessage, clearMessage } from '../engine/targetingBus';
 import { getAudioFile, playAudioByKey } from '../../assets/imageImports';
@@ -56,6 +57,7 @@ export function onEnter({ playerHeroId, rowId }) {
                 
                 console.log('Ashe Ability 1 - Applying damage:', { targetCardId, targetRow, amount: 2, ignoreShields: true });
                 dealDamage(targetCardId, targetRow, 2, true, playerHeroId);
+                try { effectsBus.publish(Effects.showDamage(targetCardId, 2)); } catch {}
                 playAbilitySound(1); // voice line
                 playAudioByKey('ashe-shoot1');
                 setTargetingCursor(false);
@@ -83,6 +85,8 @@ export function onEnter({ playerHeroId, rowId }) {
                     // Apply damage to both targets
                     dealDamage(selected[0].targetCardId, selected[0].targetRow, 1, true, playerHeroId);
                     dealDamage(selected[1].targetCardId, selected[1].targetRow, 1, true, playerHeroId);
+                    try { effectsBus.publish(Effects.showDamage(selected[0].targetCardId, 1)); } catch {}
+                    try { effectsBus.publish(Effects.showDamage(selected[1].targetCardId, 1)); } catch {}
                     playAbilitySound(2); // voice line
                     playAudioByKey('ashe-shoot2');
                     setTargetingCursor(false);

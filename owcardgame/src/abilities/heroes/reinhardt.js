@@ -1,4 +1,5 @@
 import { dealDamage } from '../engine/damageBus';
+import effectsBus, { Effects } from '../engine/effectsBus';
 import { showMessage as showToast, clearMessage as clearToast } from '../engine/targetingBus';
 import { selectCardTarget } from '../engine/targeting';
 import { playAudioByKey } from '../../assets/imageImports';
@@ -88,6 +89,7 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
                 
                 if (enemyCard && enemyCard.health > 0) {
                     dealDamage(enemyCardId, enemyRowId, 2, false, playerHeroId);
+                    try { effectsBus.publish(Effects.showDamage(enemyCardId, 2)); } catch {}
                     enemiesHit++;
                 }
             }

@@ -121,8 +121,8 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
             const target = targets[i];
             const damage = damageAmounts[i];
             
-            // Use fixed damage - cannot be mitigated or amplified
-            dealDamage(target.cardId, target.rowId, damage, false, playerHeroId, true);
+            // Normal damage (respects shields and modifiers)
+            dealDamage(target.cardId, target.rowId, damage, false, playerHeroId, false);
             effectsBus.publish(Effects.showDamage(target.cardId, damage));
             
             console.log(`Soldier: Tactical Visor dealt ${damage} fixed damage to ${target.cardId}`);

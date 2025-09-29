@@ -75,6 +75,7 @@ export async function onEnter({ playerHeroId, rowId }) {
         // Deal damage (only to living heroes)
         if (targetCard && targetCard.health > 0) {
             dealDamage(target.cardId, destinationRow || target.rowId, 2, false, playerHeroId);
+            try { effectsBus.publish(Effects.showDamage(target.cardId, 2)); } catch {}
         }
         
         // Play ability sound
