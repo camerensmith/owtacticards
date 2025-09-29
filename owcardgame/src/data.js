@@ -39,7 +39,8 @@ const heroRoles = {
     winston: 'tank',
     wreckingball: 'tank',
     zarya: 'tank',
-    zenyatta: 'support'
+    zenyatta: 'support',
+    hazard: 'defense'
 };
 
 /* hero effects API is as follows:
@@ -925,6 +926,17 @@ const data = {
                 b: 3,
             },
             isImplemented: false,
+        },
+
+        hazard: {
+            id: 'hazard',
+            name: 'Hazard',
+            image: 'assets/heroes/hazard.png',
+            icon: 'assets/heroes/hazard-icon.png',
+            health: 4,
+            power: { f: 1, m: 2, b: 2 },
+            synergy: { f: 2, m: 2, b: 2 },
+            isImplemented: true,
         },
     },
     playerCards: {

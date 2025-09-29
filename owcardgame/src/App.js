@@ -1023,6 +1023,10 @@ function checkOnEnterAbilities(playerHeroId, rowId, playerNum) {
         abilitiesIndex.wreckingball.onEnter({ playerHeroId, rowId });
         return;
     }
+    if (heroId === 'hazard' && abilitiesIndex?.hazard?.onEnter) {
+        abilitiesIndex.hazard.onEnter({ playerHeroId, rowId });
+        return;
+    }
 
     if (heroId === 'zarya' && abilitiesIndex?.zarya?.onEnter) {
         abilitiesIndex.zarya.onEnter({ playerHeroId, rowId });
@@ -2001,6 +2005,13 @@ export default function App() {
             abilitiesIndex.reaper.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
         } catch (e) {
             console.log('Error executing REAPER ultimate:', e);
+        }
+    } else if (heroId === 'hazard' && abilitiesIndex?.hazard?.onUltimate) {
+        try {
+            window.__ow_trackUltimateUsed?.(heroId, 'Hazard', 'Downpour', playerNum, rowId, adjustedCost);
+            abilitiesIndex.hazard.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
+        } catch (e) {
+            console.log('Error executing HAZARD ultimate:', e);
         }
     } else if (heroId === 'reinhardt' && abilitiesIndex?.reinhardt?.onUltimate) {
         try {

@@ -40,6 +40,7 @@ import winston from './heroes/winston';
 import wreckingball from './heroes/wreckingball';
 import zarya from './heroes/zarya';
 import zenyatta from './heroes/zenyatta';
+import hazard from './heroes/hazard';
 
 export const abilities = {
     ashe,
@@ -80,6 +81,7 @@ export const abilities = {
     wreckingball,
     zarya,
     zenyatta,
+    hazard,
 };
 
 export default abilities;

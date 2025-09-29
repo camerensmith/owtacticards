@@ -1,4 +1,5 @@
 // Central damage bus: decouples hero modules from UI/components.
+import effectsBus, { Effects } from './effectsBus';
 // Publish a damage intent; HeroAbilities subscribes and applies real damage.
 
 const listeners = new Set();
@@ -48,6 +49,31 @@ export function dealDamage(targetCardId, targetRow, amount, ignoreShields = fals
         }
     }
     
+    // Spike Guard (Hazard): reflect 1 fixed damage to direct attackers only
+    // Conditions:
+    // - Target has spike-guard effect
+    // - sourceCardId exists and is an opposing unit
+    // - Not from row tokens or environmental effects (we assume those have null or missing sourceCardId or special ids)
+    let shouldReflectSpike = false;
+    if (sourceCardId && targetCard) {
+        const isOpposing = parseInt(sourceCardId[0]) !== parseInt(targetCardId[0]);
+        if (isOpposing && Array.isArray(targetCard.effects)) {
+            const spike = targetCard.effects.find(e => e?.hero === 'hazard' && e?.id === 'spike-guard');
+            if (spike) {
+                shouldReflectSpike = true;
+                console.log(`DamageBus - Spike Guard detected on ${targetCardId}; will reflect 1 to attacker ${sourceCardId}`);
+            } else {
+                console.log(`DamageBus - No Spike Guard effect found on ${targetCardId}`);
+            }
+        } else {
+            if (!isOpposing) console.log(`DamageBus - Spike Guard: attacker ${sourceCardId} not opposing ${targetCardId}`);
+            if (!Array.isArray(targetCard.effects)) console.log(`DamageBus - Spike Guard: target ${targetCardId} has no effects array`);
+        }
+    } else {
+        if (!sourceCardId) console.log('DamageBus - Spike Guard: Missing sourceCardId; assuming non-direct damage');
+        if (!targetCard) console.log(`DamageBus - Spike Guard: Could not resolve target card ${targetCardId}`);
+    }
+
     // Check for Tracer Ultimate (avoid fatal damage)
     if (targetCard && targetCard.id === 'tracer') {
         const currentHealth = targetCard.health || 0;
@@ -201,6 +227,7 @@ export function dealDamage(targetCardId, targetRow, amount, ignoreShields = fals
         }
     }
     
+    // Publish damage and apply to health
     // Check for Reinhardt Barrier Field damage absorption
     let absorbedAmount = 0;
     if (finalAmount > 0 && window.__ow_getRow) {
@@ -273,6 +300,28 @@ export function dealDamage(targetCardId, targetRow, amount, ignoreShields = fals
                 
                 console.log(`DamageBus - Sigma Token absorbed ${shieldsToUse} damage, remaining shields: ${newShieldCount}`);
             }
+        }
+    }
+
+    // Apply spike guard reflection AFTER computing finalAmount (independent fixed damage)
+    if (shouldReflectSpike && sourceCardId) {
+        try {
+            // Find the attacker's current row to use correct row context
+            let sourceRowId = null;
+            if (window.__ow_getRow) {
+                const allRows = ['1f', '1m', '1b', '2f', '2m', '2b'];
+                for (const r of allRows) {
+                    const row = window.__ow_getRow(r);
+                    if (row && row.cardIds && row.cardIds.includes(sourceCardId)) { sourceRowId = r; break; }
+                }
+            }
+            const reflectRow = sourceRowId || targetRow;
+            console.log(`DamageBus - Spike Guard reflecting 1 fixed damage to ${sourceCardId} on row ${reflectRow}`);
+            // Fixed damage that respects shields: fixedDamage=true, ignoreShields=false
+            dealDamage(sourceCardId, reflectRow, 1, false, targetCardId, true);
+            try { effectsBus.publish(Effects.showDamage(sourceCardId, 1)); } catch {}
+        } catch (e) {
+            console.log('DamageBus - Spike Guard reflection error', e);
         }
     }
     

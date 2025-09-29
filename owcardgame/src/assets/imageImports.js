@@ -38,6 +38,7 @@ import winston from './heroes/cards/winston.webp';
 import wreckingball from './heroes/cards/wreckingball.webp';
 import zarya from './heroes/cards/zarya.webp';
 import zenyatta from './heroes/cards/zenyatta.webp';
+import hazard from './heroes/cards/hazard.jpg';
 import cardBack from './heroes/cards/card-back.webp';
 import ramattra from './heroes/cards/ramattra.webp';
 import nemesis from './heroes/cards/nemesis.webp';
@@ -98,6 +99,7 @@ import winstonFocus from './heroes/cardfocus/winston.webp';
 import wreckingballFocus from './heroes/cardfocus/wreckingball.webp';
 import zaryaFocus from './heroes/cardfocus/zarya.webp';
 import zenyattaFocus from './heroes/cardfocus/zenyatta.webp';
+import hazardFocus from './heroes/cardfocus/hazard.webp';
 
 // Other images
 import owlogo from './owlogo-small.webp';
@@ -111,6 +113,9 @@ import howToPlayPdf from './how-to-play.pdf';
 import overwatchTheme from './audio/overwatch-theme.mp3';
 import placement from './audio/placement.mp3';
 import endturn from './audio/endturn.mp3';
+import hazardIntro from './audio/hazard-intro.mp3';
+import hazardEnter from './audio/hazard-enter.mp3';
+import hazardUltimate from './audio/hazard-ultimate.mp3';
 
 // (moved exports below all imports to satisfy import/first rule)
 
@@ -301,7 +306,7 @@ import zenyattaUltimate from './audio/zenyatta-ultimate.mp3';
 
 // Create mapping objects
 export const heroCardImages = {
-    ana, ashe, baptiste, bastion, bob, brigitte, doomfist, dva, dvameka, echo, genji, hanzo, junkrat, lifeweaver, lucio, mccree, mei, mercy, moira, orisa, pharah, reaper, reinhardt, roadhog, sigma, soldier, sombra, symmetra, torbjorn, tracer, widowmaker, winston, wreckingball, zarya, zenyatta, ramattra, nemesis, turret, 'card-back': cardBack
+    ana, ashe, baptiste, bastion, bob, brigitte, doomfist, dva, dvameka, echo, genji, hanzo, junkrat, lifeweaver, lucio, mccree, mei, mercy, moira, orisa, pharah, reaper, reinhardt, roadhog, sigma, soldier, sombra, symmetra, torbjorn, tracer, widowmaker, winston, wreckingball, zarya, zenyatta, ramattra, nemesis, turret, hazard, 'card-back': cardBack
 };
 
 export const clearDeadCursor = clearDead;
@@ -311,7 +316,7 @@ export const heroIconImages = {
 };
 
 export const heroCardFocusImages = {
-    ana: anaFocus, ashe: asheFocus, baptiste: baptisteFocus, bastion: bastionFocus, bob: bobFocus, brigitte: brigitteFocus, doomfist: doomfistFocus, dva: dvaFocus, dvameka: dvamekaFocus, echo: echoFocus, genji: genjiFocus, hanzo: hanzoFocus, junkrat: junkratFocus, lifeweaver: lifeweaverFocus, lucio: lucioFocus, mccree: mccreeFocus, mei: meiFocus, mercy: mercyFocus, moira: moiraFocus, orisa: orisaFocus, pharah: pharahFocus, ramattra: ramattraFocus, nemesis: nemesisFocus, reaper: reaperFocus, reinhardt: reinhardtFocus, roadhog: roadhogFocus, sigma: sigmaFocus, soldier: soldierFocus, sombra: sombraFocus, symmetra: symmetraFocus, torbjorn: torbjornFocus, tracer: tracerFocus, widowmaker: widowmakerFocus, winston: winstonFocus, wreckingball: wreckingballFocus, zarya: zaryaFocus, zenyatta: zenyattaFocus
+    ana: anaFocus, ashe: asheFocus, baptiste: baptisteFocus, bastion: bastionFocus, bob: bobFocus, brigitte: brigitteFocus, doomfist: doomfistFocus, dva: dvaFocus, dvameka: dvamekaFocus, echo: echoFocus, genji: genjiFocus, hanzo: hanzoFocus, junkrat: junkratFocus, lifeweaver: lifeweaverFocus, lucio: lucioFocus, mccree: mccreeFocus, mei: meiFocus, mercy: mercyFocus, moira: moiraFocus, orisa: orisaFocus, pharah: pharahFocus, ramattra: ramattraFocus, nemesis: nemesisFocus, reaper: reaperFocus, reinhardt: reinhardtFocus, roadhog: roadhogFocus, sigma: sigmaFocus, soldier: soldierFocus, sombra: sombraFocus, symmetra: symmetraFocus, torbjorn: torbjornFocus, tracer: tracerFocus, widowmaker: widowmakerFocus, winston: winstonFocus, wreckingball: wreckingballFocus, zarya: zaryaFocus, zenyatta: zenyattaFocus, hazard: hazardFocus
 };
 
 export const otherImages = {
@@ -520,6 +525,11 @@ export const abilityAudioFiles = {
     'zenyatta-ability1': zenyattaAbility1,
     'zenyatta-ability2': zenyattaAbility2,
     'zenyatta-ultimate': zenyattaUltimate,
+    // Hazard audio
+    'hazard-intro': hazardIntro,
+    'hazard-enter': hazardEnter,
+    'hazard-ultimate': hazardUltimate,
+    // no resolve sound for Hazard ultimate (instant)
 };
 
 // Simple per-key debounce for audio playback to avoid accidental double-plays
