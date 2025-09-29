@@ -41,7 +41,8 @@ const heroRoles = {
     zarya: 'tank',
     zenyatta: 'support',
     hazard: 'defense',
-    mauga: 'tank'
+    mauga: 'tank',
+    junkerqueen: 'offense'
 };
 
 /* hero effects API is as follows:
@@ -948,6 +949,17 @@ const data = {
             health: 4,
             power: { f: 3, m: 1, b: 1 },
             synergy: { f: 3, m: 1, b: 1 },
+            isImplemented: true,
+        },
+
+        junkerqueen: {
+            id: 'junkerqueen',
+            name: 'Junker Queen',
+            image: 'assets/heroes/junkerqueen.png',
+            icon: 'assets/heroes/junkerqueen-icon.png',
+            health: 3,
+            power: { f: 1, m: 3, b: 2 },
+            synergy: { f: 2, m: 2, b: 1 },
             isImplemented: true,
         },
     },

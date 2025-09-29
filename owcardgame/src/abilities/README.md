@@ -4440,3 +4440,408 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
 **Zarya's implementation demonstrates the gold standard for custom token systems.** The single-token-with-amount pattern, shield-piercing integration, and proper visual updates make it a perfect reference for future hero implementations that require similar mechanics.
 
 The key lesson is that custom effects should behave identically to built-in systems (shields, damage, etc.) while providing the flexibility to add custom visual and mechanical elements.
+
+---
+
+## Junker Queen Implementation Guide
+
+### Overview
+Junker Queen introduces **damage-over-time (DoT) mechanics** and **damage tracking systems** that fundamentally change how damage is calculated and distributed. Her implementation demonstrates advanced state management, turn-based effects, and complex ultimate calculations.
+
+### Core Mechanics
+
+#### 1. **Wound System (Damage Over Time)**
+- **Effect Type**: Card-level effect (`jq-wound`)
+- **Trigger**: Start of wounded hero's turn
+- **Damage**: 1 piercing damage (ignores shields)
+- **Restrictions**: Prevents shield gain while wounded
+- **Visual**: Red "W" badge overlay
+
+#### 2. **Damage Tracking System**
+- **Storage**: Internal Map (`roundWoundDamageByCard`) + Card Effect (`jq-rampage-counter`)
+- **Purpose**: Track total wound damage for ultimate calculation
+- **Persistence**: Resets each round
+- **Visual**: Counter overlay on Junker Queen
+
+#### 3. **Rampage Ultimate**
+- **Cost**: 4 synergy
+- **Calculation**: Total wound damage dealt this round
+- **Distribution**: Split evenly among all living enemies
+- **Timing**: 3-second damage distribution (like Roadhog)
+- **Cleanup**: Removes all wounds after ultimate
+
+### Implementation Details
+
+#### File Structure
+```
+src/abilities/heroes/junkerqueen.js
+src/components/effects/JunkerQueenWoundOverlay.js
+src/components/effects/JunkerQueenRampageCounterOverlay.js
+```
+
+#### Key Functions
+
+```javascript
+// Main ability functions
+export function onEnter({ playerHeroId, rowId })
+export async function onUltimate({ playerHeroId, rowId, cost })
+export function processWoundsAtTurnStart(cardId, rowId)
+export function onRoundStart()
+export function getRampageTotal(playerHeroId)
+
+// Integration points
+export function cleanseWoundsFromCard(cardId)
+```
+
+#### State Management Pattern
+
+```javascript
+// Dual storage system for reliability
+const roundWoundDamageByCard = new Map(); // Internal tracking
+// + Card effect with value/amount properties // UI consistency
+
+// Update both systems when wound damage occurs
+roundWoundDamageByCard.set(sourceCardId, next);
+window.__ow_appendCardEffect?.(sourceCardId, {
+    id: 'jq-rampage-counter',
+    value: next,
+    amount: next
+});
+```
+
+#### Turn-Based Effect Integration
+
+```javascript
+// In TurnEffectsRunner.js
+if (hasWound && abilities.junkerqueen?.processWoundsAtTurnStart) {
+    abilities.junkerqueen.processWoundsAtTurnStart(cardId, rowId);
+}
+```
+
+### Visual System
+
+#### Wound Overlay
+- **Component**: `JunkerQueenWoundOverlay`
+- **Position**: Top-left of card
+- **Style**: Red "W" badge
+- **Trigger**: Card has `jq-wound` effect
+
+#### Rampage Counter
+- **Component**: `JunkerQueenRampageCounterOverlay`
+- **Position**: Center of Junker Queen card
+- **Style**: Orange counter badge
+- **Data Source**: Card effect `value`/`amount` properties
+
+### Audio Integration
+
+```javascript
+// Required audio files
+'junkerqueen-intro'    // On draw
+'junkerqueen-enter'    // On placement
+'junkerqueen-ultimate' // On ultimate activation
+// No ability1 or ultimate-resolve sounds
+```
+
+### Advanced Patterns
+
+#### 1. **Dual State Management**
+- **Problem**: UI needs immediate updates, internal logic needs reliability
+- **Solution**: Maintain both Map and card effect, prioritize card effect for UI
+- **Benefit**: Consistent display even with async updates
+
+#### 2. **Damage Distribution Algorithm**
+```javascript
+// Split damage evenly with remainder distribution
+const base = Math.floor(total / livingEnemies.length);
+let remainder = total % livingEnemies.length;
+
+livingEnemies.forEach((enemy, index) => {
+    const dmg = base + (remainder > 0 ? 1 : 0);
+    if (remainder > 0) remainder -= 1;
+    // Apply damage with timing
+});
+```
+
+#### 3. **Effect Cleanup Strategy**
+```javascript
+// Cleanup all wounds after ultimate
+const allRows = ['1f', '1m', '1b', '2f', '2m', '2b'];
+allRows.forEach(rId => {
+    const row = window.__ow_getRow?.(rId);
+    row.cardIds.forEach(cid => {
+        window.__ow_removeCardEffect?.(cid, 'jq-wound');
+    });
+});
+```
+
+### Integration Points
+
+#### Damage Bus Integration
+- **Wound Application**: Called from `onEnter` after shield checks
+- **Wound Damage**: Called from `TurnEffectsRunner` at turn start
+- **Shield Prevention**: Wounded heroes cannot gain shields
+
+#### Turn System Integration
+- **Turn Start**: Process wound damage for all wounded heroes
+- **Round Start**: Reset damage tracking counters
+- **Round End**: Cleanup all wound effects
+
+#### Shield System Integration
+- **Sigma Barrier**: Prevents wound application to protected rows
+- **Shield Gain**: Blocked while wounded
+- **Shield Piercing**: Wound damage ignores all shields
+
+### Testing Checklist
+
+#### Basic Functionality
+- [ ] Wounds apply to unshielded enemies on enter
+- [ ] Wounds prevent shield gain
+- [ ] Wound damage triggers at turn start
+- [ ] Counter increments with wound damage
+- [ ] Ultimate distributes correct total damage
+- [ ] All wounds clean up after ultimate
+
+#### Visual System
+- [ ] Wound overlay appears on affected heroes
+- [ ] Counter overlay shows correct value
+- [ ] Overlays update in real-time
+- [ ] Overlays disappear when effects end
+
+#### Edge Cases
+- [ ] Sigma barrier prevents wound application
+- [ ] Junker Queen doesn't wound herself
+- [ ] No living enemies (ultimate does nothing)
+- [ ] Round resets counter correctly
+- [ ] Multiple Junker Queens track separately
+
+### Common Pitfalls
+
+#### 1. **State Synchronization**
+- **Problem**: UI shows stale data
+- **Solution**: Use `key` prop with changing values to force re-renders
+- **Pattern**: `key={`counter-${value}`}`
+
+#### 2. **Async Updates**
+- **Problem**: `setTimeout(0)` not reliable
+- **Solution**: Use `setTimeout(10)` for deferred updates
+- **Pattern**: Remove effect, then add updated effect
+
+#### 3. **Effect Cleanup**
+- **Problem**: Wounds persist after round/ultimate
+- **Solution**: Explicit cleanup in multiple places
+- **Pattern**: Cleanup in `onUltimate`, `onRoundStart`, and `onDeath`
+
+### Future Enhancements
+
+#### Advanced DoT Systems
+- **Stacking Wounds**: Multiple wound sources
+- **Wound Types**: Different wound effects
+- **Wound Interactions**: Wounds affecting other abilities
+
+#### Visual Improvements
+- **Wound Animation**: Pulsing effect on wounded heroes
+- **Damage Preview**: Show ultimate damage before activation
+- **Counter Animation**: Smooth counter transitions
+
+---
+
+## Mauga Implementation Guide
+
+### Overview
+Mauga introduces **permanent additional HP mechanics** and **row locking systems** that create unique strategic gameplay. His implementation demonstrates advanced HP management, movement restrictions, and conditional damage systems.
+
+### Core Mechanics
+
+#### 1. **Berserker System (Permanent Additional HP)**
+- **Trigger**: Ally hero deals direct ability damage
+- **Effect**: +1 HP to Mauga (up to 12 max)
+- **Restriction**: Cannot gain direct shields (card shields or Zarya tokens)
+- **Visual**: Counter overlay in bottom-left
+- **Persistence**: Permanent until Mauga dies
+
+#### 2. **Cage Fight Ultimate (Row Locking)**
+- **Cost**: 3 synergy
+- **Target**: Automatically targets opposing row
+- **Effect**: Locks row (prevents movement in/out)
+- **Damage**: HP difference damage to opposing column
+- **Visual**: Grey border around locked row
+- **Duration**: Until end of round
+
+### Implementation Details
+
+#### File Structure
+```
+src/abilities/heroes/mauga.js
+src/components/effects/MaugaBerserkerOverlay.js
+src/components/effects/MaugaCageFightOverlay.js
+```
+
+#### Key Functions
+
+```javascript
+// Main ability functions
+export function onEnter({ playerHeroId, rowId })
+export async function onUltimate({ playerHeroId, rowId, cost })
+export function onDeath({ playerHeroId })
+
+// Integration points
+export function processBerserkerGain(sourceCardId, targetCardId)
+```
+
+#### HP Management System
+
+```javascript
+// Berserker HP gain logic
+const maugaMaxHealth = 12; // Mauga's max HP with Berserker
+const currentHealth = card.health || 0;
+const baseHealth = data.heroes.mauga.health; // Mauga's base HP
+
+if (currentHealth < maugaMaxHealth) {
+    const newHealth = Math.min(currentHealth + 1, maugaMaxHealth);
+    const healingAmount = newHealth - currentHealth;
+    if (healingAmount > 0) {
+        window.__ow_setCardHealth?.(cardId, newHealth);
+        // Update counter overlay
+    }
+}
+```
+
+#### Row Locking System
+
+```javascript
+// Add row lock effect
+window.__ow_appendRowEffect?.(targetRowId, 'enemyEffects', {
+    id: 'cage-fight-lock',
+    hero: 'mauga',
+    type: 'lock',
+    tooltip: 'Row locked by Mauga\'s Cage Fight'
+});
+
+// Visual styling
+row.classList.add('mauga-cage-fight-locked');
+```
+
+### Visual System
+
+#### Berserker Counter
+- **Component**: `MaugaBerserkerOverlay`
+- **Position**: Bottom-left of Mauga card
+- **Style**: Orange counter badge
+- **Data**: Additional HP gained this round
+
+#### Row Lock Border
+- **Component**: `MaugaCageFightOverlay`
+- **Position**: Around entire row
+- **Style**: Grey border with subtle glow
+- **Trigger**: Row has `cage-fight-lock` effect
+
+### Audio Integration
+
+```javascript
+// Required audio files
+'mauga-intro'    // On draw
+'mauga-enter'    // On placement
+'mauga-ultimate' // On ultimate activation
+// No ability1 or ultimate-resolve sounds
+```
+
+### Advanced Patterns
+
+#### 1. **Permanent HP System**
+- **Problem**: Distinguish between base HP and additional HP
+- **Solution**: Track additional HP separately, display as counter
+- **Benefit**: Clear visual distinction, proper HP management
+
+#### 2. **Movement Prevention**
+- **Problem**: Prevent cards from entering locked rows
+- **Solution**: Validation in `handleOnDragEnd` before `onEnter` calls
+- **Pattern**: Check for lock effect, show toast, cancel operation
+
+#### 3. **Conditional Damage**
+- **Problem**: Only damage if Mauga's HP > target's HP
+- **Solution**: Compare HP values before damage calculation
+- **Pattern**: `if (maugaHP > targetHP) { dealDamage(difference) }`
+
+### Integration Points
+
+#### Damage Bus Integration
+- **Berserker Trigger**: Called when ally deals direct ability damage
+- **HP Gain**: Updates Mauga's health and counter
+- **Shield Restriction**: Prevents direct shield gain
+
+#### Movement System Integration
+- **Drag Prevention**: Validates row locks before placement
+- **Toast Feedback**: Informs player why movement is blocked
+- **Effect Cleanup**: Removes locks at round end
+
+#### HP System Integration
+- **Base HP**: Respects Mauga's original health value
+- **Max HP**: Enforces 12 HP limit
+- **Healing**: Works normally for base HP, special for additional HP
+
+### Testing Checklist
+
+#### Basic Functionality
+- [ ] Berserker triggers on ally damage
+- [ ] HP gain respects 12 max limit
+- [ ] Counter updates correctly
+- [ ] Ultimate locks opposing row
+- [ ] HP difference damage works
+- [ ] Movement blocked into locked row
+
+#### Visual System
+- [ ] Berserker counter appears and updates
+- [ ] Row lock border appears
+- [ ] Counter shows correct additional HP
+- [ ] Border persists until round end
+
+#### Edge Cases
+- [ ] No opposing unit (row still locks)
+- [ ] Mauga HP <= target HP (no damage)
+- [ ] Mauga dies (locks persist)
+- [ ] Round end (locks clear)
+- [ ] Direct shields blocked
+
+### Common Pitfalls
+
+#### 1. **Movement Validation Timing**
+- **Problem**: `onEnter` triggers before movement validation
+- **Solution**: Validate in `handleOnDragEnd` before any ability calls
+- **Pattern**: Check effects, show toast, return early
+
+#### 2. **HP State Management**
+- **Problem**: Additional HP not properly tracked
+- **Solution**: Use card effects for persistent state
+- **Pattern**: Store additional HP in effect, update counter
+
+#### 3. **Effect Cleanup**
+- **Problem**: Row locks persist indefinitely
+- **Solution**: Cleanup in `TurnEffectsRunner` at round end
+- **Pattern**: Remove all lock effects from all rows
+
+### Future Enhancements
+
+#### Advanced HP Systems
+- **HP Decay**: Additional HP reduces over time
+- **HP Transfer**: Share additional HP with allies
+- **HP Interactions**: Additional HP affects other abilities
+
+#### Row Lock Variations
+- **Partial Locks**: Lock specific columns
+- **Conditional Locks**: Locks based on conditions
+- **Lock Interactions**: Locks affecting other abilities
+
+#### Visual Improvements
+- **HP Animation**: Smooth HP gain transitions
+- **Lock Effects**: More dramatic visual feedback
+- **Counter Animation**: Animated counter updates
+
+### Recommendation
+
+**Mauga's implementation demonstrates advanced state management and movement restriction systems.** The permanent HP mechanics and row locking create unique strategic depth while maintaining clear visual feedback and proper integration with existing systems.
+
+The key lessons are:
+1. **Complex state requires multiple storage systems** (internal + card effects)
+2. **Movement restrictions need early validation** (before ability triggers)
+3. **Visual feedback is crucial** for complex mechanics (counters, borders)
+4. **Cleanup must be comprehensive** (multiple cleanup points)

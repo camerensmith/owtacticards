@@ -849,6 +849,10 @@ function reducer(gameState, action) {
                 draft.ultimateUsage.player1 = [];
                 draft.ultimateUsage.player2 = [];
                 draft.lastUltimateUsed = null; // Reset last ultimate used
+                // Clear row locks at round start
+                ['1f','1m','1b','2f','2m','2b'].forEach(rid => {
+                    if (draft.rows[rid]) draft.rows[rid].locked = false;
+                });
             });
         }
 
@@ -1053,6 +1057,10 @@ function checkOnEnterAbilities(playerHeroId, rowId, playerNum) {
     }
     if (heroId === 'mauga' && abilitiesIndex?.mauga?.onEnter) {
         abilitiesIndex.mauga.onEnter({ playerHeroId, rowId });
+        return;
+    }
+    if (heroId === 'junkerqueen' && abilitiesIndex?.junkerqueen?.onEnter) {
+        abilitiesIndex.junkerqueen.onEnter({ playerHeroId, rowId });
         return;
     }
 
@@ -2047,6 +2055,13 @@ export default function App() {
             abilitiesIndex.mauga.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
         } catch (e) {
             console.log('Error executing MAUGA ultimate:', e);
+        }
+    } else if (heroId === 'junkerqueen' && abilitiesIndex?.junkerqueen?.onUltimate) {
+        try {
+            window.__ow_trackUltimateUsed?.(heroId, 'Junker Queen', 'Rampage', playerNum, rowId, adjustedCost);
+            abilitiesIndex.junkerqueen.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
+        } catch (e) {
+            console.log('Error executing JUNKER QUEEN ultimate:', e);
         }
     } else if (heroId === 'reinhardt' && abilitiesIndex?.reinhardt?.onUltimate) {
         try {

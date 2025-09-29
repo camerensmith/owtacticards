@@ -3,6 +3,7 @@ import gameContext from 'context/gameContext';
 import turnContext from 'context/turnContext';
 import abilities from '../index';
 import { processAnnihilation } from '../heroes/nemesis';
+import junkerqueen from '../heroes/junkerqueen';
 import { cleanupTemporaryHP } from '../heroes/lifeweaver';
 import { processTurretDamage } from '../heroes/turret';
 
@@ -38,6 +39,9 @@ export default function TurnEffectsRunner() {
             console.log('TurnEffectsRunner: Turn changed, processing effects');
             
             const playerTurn = turnState.playerTurn;
+
+            // Junker Queen: apply wound ticks at wounded hero's turn start
+            try { junkerqueen.processWoundsAtTurnStart?.(playerTurn); } catch {}
             
             // Clean up temporary HP effects at the start of each turn
             try {

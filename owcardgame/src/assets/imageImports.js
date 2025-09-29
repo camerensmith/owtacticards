@@ -39,6 +39,7 @@ import wreckingball from './heroes/cards/wreckingball.webp';
 import zarya from './heroes/cards/zarya.webp';
 import zenyatta from './heroes/cards/zenyatta.webp';
 import hazard from './heroes/cards/hazard.jpg';
+import junkerqueen from './heroes/cards/junkerqueen.webp';
 import mauga from './heroes/cards/mauga.webp';
 import cardBack from './heroes/cards/card-back.webp';
 import ramattra from './heroes/cards/ramattra.webp';
@@ -61,6 +62,7 @@ import widowmakerIcon from './heroes/cards/widowmaker-icon.webp';
 import wreckingballIcon from './heroes/cards/wreckingball-icon.webp';
 import zaryaIcon from './heroes/cards/zarya-icon.webp';
 import zenyattaIcon from './heroes/cards/zenyatta-icon.jpg';
+// import junkerqueenIcon from './heroes/cards/junkerqueen-icon.webp'; // File doesn't exist yet
 
 // Hero card focus images
 import anaFocus from './heroes/cardfocus/ana.webp';
@@ -101,6 +103,7 @@ import wreckingballFocus from './heroes/cardfocus/wreckingball.webp';
 import zaryaFocus from './heroes/cardfocus/zarya.webp';
 import zenyattaFocus from './heroes/cardfocus/zenyatta.webp';
 import hazardFocus from './heroes/cardfocus/hazard.webp';
+import junkerqueenFocus from './heroes/cardfocus/junkerqueen.webp';
 import maugaFocus from './heroes/cardfocus/mauga.webp';
 
 // Other images
@@ -308,10 +311,13 @@ import zenyattaEnter from './audio/zenyatta-enter.mp3';
 import zenyattaAbility1 from './audio/zenyatta-ability1.mp3';
 import zenyattaAbility2 from './audio/zenyatta-ability2.mp3';
 import zenyattaUltimate from './audio/zenyatta-ultimate.mp3';
+import junkerqueenIntro from './audio/junkerqueen-intro.mp3';
+import junkerqueenEnter from './audio/junkerqueen-enter.mp3';
+import junkerqueenUltimate from './audio/junkerqueen-ultimate.mp3';
 
 // Create mapping objects
 export const heroCardImages = {
-    ana, ashe, baptiste, bastion, bob, brigitte, doomfist, dva, dvameka, echo, genji, hanzo, junkrat, lifeweaver, lucio, mccree, mei, mercy, moira, orisa, pharah, reaper, reinhardt, roadhog, sigma, soldier, sombra, symmetra, torbjorn, tracer, widowmaker, winston, wreckingball, zarya, zenyatta, ramattra, nemesis, turret, hazard, mauga, 'card-back': cardBack
+    ana, ashe, baptiste, bastion, bob, brigitte, doomfist, dva, dvameka, echo, genji, hanzo, junkrat, lifeweaver, lucio, mccree, mei, mercy, moira, orisa, pharah, reaper, reinhardt, roadhog, sigma, soldier, sombra, symmetra, torbjorn, tracer, widowmaker, winston, wreckingball, zarya, zenyatta, ramattra, nemesis, turret, hazard, mauga, junkerqueen, 'card-back': cardBack
 };
 
 export const clearDeadCursor = clearDead;
@@ -321,7 +327,7 @@ export const heroIconImages = {
 };
 
 export const heroCardFocusImages = {
-    ana: anaFocus, ashe: asheFocus, baptiste: baptisteFocus, bastion: bastionFocus, bob: bobFocus, brigitte: brigitteFocus, doomfist: doomfistFocus, dva: dvaFocus, dvameka: dvamekaFocus, echo: echoFocus, genji: genjiFocus, hanzo: hanzoFocus, junkrat: junkratFocus, lifeweaver: lifeweaverFocus, lucio: lucioFocus, mccree: mccreeFocus, mei: meiFocus, mercy: mercyFocus, moira: moiraFocus, orisa: orisaFocus, pharah: pharahFocus, ramattra: ramattraFocus, nemesis: nemesisFocus, reaper: reaperFocus, reinhardt: reinhardtFocus, roadhog: roadhogFocus, sigma: sigmaFocus, soldier: soldierFocus, sombra: sombraFocus, symmetra: symmetraFocus, torbjorn: torbjornFocus, tracer: tracerFocus, widowmaker: widowmakerFocus, winston: winstonFocus, wreckingball: wreckingballFocus, zarya: zaryaFocus, zenyatta: zenyattaFocus, hazard: hazardFocus, mauga: maugaFocus
+    ana: anaFocus, ashe: asheFocus, baptiste: baptisteFocus, bastion: bastionFocus, bob: bobFocus, brigitte: brigitteFocus, doomfist: doomfistFocus, dva: dvaFocus, dvameka: dvamekaFocus, echo: echoFocus, genji: genjiFocus, hanzo: hanzoFocus, junkrat: junkratFocus, lifeweaver: lifeweaverFocus, lucio: lucioFocus, mccree: mccreeFocus, mei: meiFocus, mercy: mercyFocus, moira: moiraFocus, orisa: orisaFocus, pharah: pharahFocus, ramattra: ramattraFocus, nemesis: nemesisFocus, reaper: reaperFocus, reinhardt: reinhardtFocus, roadhog: roadhogFocus, sigma: sigmaFocus, soldier: soldierFocus, sombra: sombraFocus, symmetra: symmetraFocus, torbjorn: torbjornFocus, tracer: tracerFocus, widowmaker: widowmakerFocus, winston: winstonFocus, wreckingball: wreckingballFocus, zarya: zaryaFocus, zenyatta: zenyattaFocus, hazard: hazardFocus, mauga: maugaFocus, junkerqueen: junkerqueenFocus
 };
 
 export const otherImages = {
@@ -538,6 +544,9 @@ export const abilityAudioFiles = {
     'mauga-intro': maugaIntro,
     'mauga-enter': maugaEnter,
     'mauga-ultimate': maugaUltimate,
+    'junkerqueen-intro': junkerqueenIntro,
+    'junkerqueen-enter': junkerqueenEnter,
+    'junkerqueen-ultimate': junkerqueenUltimate,
 };
 
 // Simple per-key debounce for audio playback to avoid accidental double-plays

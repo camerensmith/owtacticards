@@ -479,6 +479,19 @@
     "turret": true
   },
   {
+    "name": "Venture",
+    "class": "offense",
+    "hp": 4,
+    "front_power": 2,
+    "front_synergy": 1,
+    "middle_power": 3,
+    "middle_synergy": 1,
+    "back_power": 2,
+    "back_synergy": 2,
+    "on_enter1": "Drill Dash — Deal up to 3 damage to a target enemy based on the distance between Venture and the enemy target.",
+    "ultimate": "Tectonic Shock (4): Shuffle all enemies and deal 2 damage to the enemy sharing Venture's column index."
+  },
+  {
     "name": "Widowmaker",
     "class": "defense",
     "hp": 3,

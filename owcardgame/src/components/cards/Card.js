@@ -16,6 +16,8 @@ import ZaryaTokenOverlay from '../effects/ZaryaTokenOverlay';
 import HarmonyTokenOverlay from '../effects/HarmonyTokenOverlay';
 import DiscordTokenOverlay from '../effects/DiscordTokenOverlay';
 import ZenyattaImmunityOverlay from '../effects/ZenyattaImmunityOverlay';
+import JunkerQueenWoundOverlay from '../effects/JunkerQueenWoundOverlay';
+import JunkerQueenRampageCounterOverlay from '../effects/JunkerQueenRampageCounterOverlay';
 import { heroCardImages } from '../../assets/imageImports';
 import ContextMenu from './ContextMenu';
 import actionsBus, { Actions } from '../../abilities/engine/actionsBus';
@@ -266,6 +268,12 @@ export default function Card(props) {
                             )}
                             {health > 0 && Array.isArray(effects) && effects.some(e => e?.id === 'forge-hammer' && e?.hero === 'torbjorn') && (
                                 <ForgeHammerOverlay playerHeroId={playerHeroId} rowId={rowId} />
+                            )}
+                            {health > 0 && Array.isArray(effects) && effects.some(e => e?.id === 'jq-wound') && (
+                                <JunkerQueenWoundOverlay cardId={playerHeroId} effects={effects} />
+                            )}
+                            {id === 'junkerqueen' && health > 0 && (
+                                <JunkerQueenRampageCounterOverlay playerHeroId={playerHeroId} effects={effects} />
                             )}
                             {chainHookEffect && (
                                 <ChainHookOverlay 
