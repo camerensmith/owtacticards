@@ -1,0 +1,740 @@
+ Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+ Warning: Connect(Droppable): Support for defaultProps will be removed from memo components in a future major release. Use JavaScript default parameters instead.
+    at div
+    at CardDisplay (http://localhost:3000/owcardgame/static/js/bundle.js:98890:56)
+    at div
+    at div
+    at PlayerArea (http://localhost:3000/owcardgame/static/js/bundle.js:99392:56)
+    at div
+    at PlayerHalf (http://localhost:3000/owcardgame/static/js/bundle.js:99968:56)
+    at Provider (http://localhost:3000/owcardgame/static/js/bundle.js:66817:20)
+    at App (http://localhost:3000/owcardgame/static/js/bundle.js:39199:25)
+    at ErrorBoundary (http://localhost:3000/owcardgame/static/js/bundle.js:33412:35)
+    at DragDropContext (http://localhost:3000/owcardgame/static/js/bundle.js:39323:19)
+    at div
+    at div
+    at App (http://localhost:3000/owcardgame/static/js/bundle.js:78279:82)
+printWarning @ bundle.js:40754
+ CardDisplay mounted with droppableId: player1hand rowId: player1hand
+ CardDisplay mounted with droppableId: 1b rowId: 1b
+ CardDisplay mounted with droppableId: 1m rowId: 1m
+ CardDisplay mounted with droppableId: 1f rowId: 1f
+ CardDisplay mounted with droppableId: 2f rowId: 2f
+ CardDisplay mounted with droppableId: 2m rowId: 2m
+ CardDisplay mounted with droppableId: 2b rowId: 2b
+ CardDisplay mounted with droppableId: player2hand rowId: player2hand
+ TurnEffectsRunner: useEffect triggered Object
+ TurnEffectsRunner: Turn change check Object
+ ZaryaTokenOverlay: Card 2soldier has Zarya token: undefined
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ ZaryaTokenOverlay: Card 2zenyatta has Zarya token: undefined
+ ZaryaTokenOverlay: Card 2junkrat has Zarya token: undefined
+ TurnEffectsRunner: useEffect triggered Object
+ TurnEffectsRunner: Turn change check Object
+ ZaryaTokenOverlay: Card 2soldier has Zarya token: undefined
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ ZaryaTokenOverlay: Card 2zenyatta has Zarya token: undefined
+ ZaryaTokenOverlay: Card 2junkrat has Zarya token: undefined
+ HealthCounter for 2soldier: Object
+ HealthCounter: Showing normal HP 4 for 2soldier
+ ZaryaTokenOverlay: Card 2soldier has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zenyatta: Object
+ HealthCounter: Showing normal HP 2 for 2zenyatta
+ ZaryaTokenOverlay: Card 2zenyatta has Zarya token: undefined
+ HealthCounter for 2junkrat: Object
+ HealthCounter: Showing normal HP 3 for 2junkrat
+ ZaryaTokenOverlay: Card 2junkrat has Zarya token: undefined
+ HealthCounter for 2soldier: Object
+ HealthCounter: Showing normal HP 4 for 2soldier
+ ZaryaTokenOverlay: Card 2soldier has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zenyatta: Object
+ HealthCounter: Showing normal HP 2 for 2zenyatta
+ ZaryaTokenOverlay: Card 2zenyatta has Zarya token: undefined
+ HealthCounter for 2junkrat: Object
+ HealthCounter: Showing normal HP 3 for 2junkrat
+ ZaryaTokenOverlay: Card 2junkrat has Zarya token: undefined
+ Object
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2soldier: Object
+ HealthCounter: Showing normal HP 4 for 2soldier
+ ZaryaTokenOverlay: Card 2soldier has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zenyatta: Object
+ HealthCounter: Showing normal HP 2 for 2zenyatta
+ ZaryaTokenOverlay: Card 2zenyatta has Zarya token: undefined
+ HealthCounter for 2junkrat: Object
+ HealthCounter: Showing normal HP 3 for 2junkrat
+ ZaryaTokenOverlay: Card 2junkrat has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2soldier: Object
+ HealthCounter: Showing normal HP 4 for 2soldier
+ ZaryaTokenOverlay: Card 2soldier has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zenyatta: Object
+ HealthCounter: Showing normal HP 2 for 2zenyatta
+ ZaryaTokenOverlay: Card 2zenyatta has Zarya token: undefined
+ HealthCounter for 2junkrat: Object
+ HealthCounter: Showing normal HP 3 for 2junkrat
+ ZaryaTokenOverlay: Card 2junkrat has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2soldier: Object
+ HealthCounter: Showing normal HP 4 for 2soldier
+ ZaryaTokenOverlay: Card 2soldier has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zenyatta: Object
+ HealthCounter: Showing normal HP 2 for 2zenyatta
+ ZaryaTokenOverlay: Card 2zenyatta has Zarya token: undefined
+ HealthCounter for 2junkrat: Object
+ HealthCounter: Showing normal HP 3 for 2junkrat
+ ZaryaTokenOverlay: Card 2junkrat has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ Attempting to play placement sound...
+ Placement audio source: /owcardgame/static/media/placement.445605f26d71501234a7.mp3
+ Created placement audio object: 
+ Playing zarya enter sound...
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2soldier: Object
+ HealthCounter: Showing normal HP 4 for 2soldier
+ ZaryaTokenOverlay: Card 2soldier has Zarya token: undefined
+ HealthCounter for 2zenyatta: Object
+ HealthCounter: Showing normal HP 2 for 2zenyatta
+ ZaryaTokenOverlay: Card 2zenyatta has Zarya token: undefined
+ HealthCounter for 2junkrat: Object
+ HealthCounter: Showing normal HP 3 for 2junkrat
+ ZaryaTokenOverlay: Card 2junkrat has Zarya token: undefined
+ TurnEffectsRunner: useEffect triggered Object
+ TurnEffectsRunner: Turn change check Object
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2soldier: Object
+ HealthCounter: Showing normal HP 4 for 2soldier
+ ZaryaTokenOverlay: Card 2soldier has Zarya token: undefined
+ HealthCounter for 2zenyatta: Object
+ HealthCounter: Showing normal HP 2 for 2zenyatta
+ ZaryaTokenOverlay: Card 2zenyatta has Zarya token: undefined
+ HealthCounter for 2junkrat: Object
+ HealthCounter: Showing normal HP 3 for 2junkrat
+ ZaryaTokenOverlay: Card 2junkrat has Zarya token: undefined
+ TurnEffectsRunner: useEffect triggered Object
+ TurnEffectsRunner: Turn change check Object
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: undefined
+ HealthCounter for 2soldier: Object
+ HealthCounter: Showing normal HP 4 for 2soldier
+ ZaryaTokenOverlay: Card 2soldier has Zarya token: undefined
+ HealthCounter for 2zenyatta: Object
+ HealthCounter: Showing normal HP 2 for 2zenyatta
+ ZaryaTokenOverlay: Card 2zenyatta has Zarya token: undefined
+ HealthCounter for 2junkrat: Object
+ HealthCounter: Showing normal HP 3 for 2junkrat
+ ZaryaTokenOverlay: Card 2junkrat has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: Object
+ HealthCounter for 2soldier: Object
+ HealthCounter: Showing normal HP 4 for 2soldier
+ ZaryaTokenOverlay: Card 2soldier has Zarya token: undefined
+ HealthCounter for 2zenyatta: Object
+ HealthCounter: Showing normal HP 2 for 2zenyatta
+ ZaryaTokenOverlay: Card 2zenyatta has Zarya token: undefined
+ HealthCounter for 2junkrat: Object
+ HealthCounter: Showing normal HP 3 for 2junkrat
+ ZaryaTokenOverlay: Card 2junkrat has Zarya token: undefined
+ TurnEffectsRunner: useEffect triggered Object
+ TurnEffectsRunner: Turn change check Object
+ Placement sound played successfully
+ zarya enter sound played successfully
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: Object
+ HealthCounter for 2soldier: Object
+ HealthCounter: Showing normal HP 4 for 2soldier
+ ZaryaTokenOverlay: Card 2soldier has Zarya token: undefined
+ HealthCounter for 2zenyatta: Object
+ HealthCounter: Showing normal HP 2 for 2zenyatta
+ ZaryaTokenOverlay: Card 2zenyatta has Zarya token: undefined
+ HealthCounter for 2junkrat: Object
+ HealthCounter: Showing normal HP 3 for 2junkrat
+ ZaryaTokenOverlay: Card 2junkrat has Zarya token: undefined
+ HealthCounter for 1sombra: Object
+ HealthCounter: Showing normal HP 3 for 1sombra
+ ZaryaTokenOverlay: Card 1sombra has Zarya token: undefined
+ HealthCounter for 1zarya: Object
+ HealthCounter: Showing normal HP 4 for 1zarya
+ ZaryaTokenOverlay: Card 1zarya has Zarya token: undefined
+ HealthCounter for 1brigitte: Object
+ HealthCounter: Showing normal HP 4 for 1brigitte
+ ZaryaTokenOverlay: Card 1brigitte has Zarya token: undefined
+ HealthCounter for 1mei: Object
+ HealthCounter: Showing normal HP 4 for 1mei
+ ZaryaTokenOverlay: Card 1mei has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: Object
+ Player 1 drew ana
+ Playing ana intro sound...
+ TurnEffectsRunner: useEffect triggered Object
+ TurnEffectsRunner: Turn change check Object
+ TurnEffectsRunner: Turn changed, processing effects
+ Lifeweaver: Starting temporary HP cleanup for player 1
+ Lifeweaver: No temporary HP effects found to clean up for player 1
+ Lifeweaver: Temporary HP cleanup completed
+ TurnEffectsRunner: Checking row 1b with 0 ally effects and 0 enemy effects
+ TurnEffectsRunner: Checking row 1m with 0 ally effects and 0 enemy effects
+ TurnEffectsRunner: Checking row 1f with 0 ally effects and 0 enemy effects
+ HealthCounter for 1sombra: Object
+ HealthCounter: Showing normal HP 3 for 1sombra
+ ZaryaTokenOverlay: Card 1sombra has Zarya token: undefined
+ HealthCounter for 1zarya: Object
+ HealthCounter: Showing normal HP 4 for 1zarya
+ ZaryaTokenOverlay: Card 1zarya has Zarya token: undefined
+ HealthCounter for 1brigitte: Object
+ HealthCounter: Showing normal HP 4 for 1brigitte
+ ZaryaTokenOverlay: Card 1brigitte has Zarya token: undefined
+ HealthCounter for 1mei: Object
+ HealthCounter: Showing normal HP 4 for 1mei
+ ZaryaTokenOverlay: Card 1mei has Zarya token: undefined
+ ZaryaTokenOverlay: Card 1ana has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: Object
+ TurnEffectsRunner: useEffect triggered Object
+ TurnEffectsRunner: Turn change check Object
+ HealthCounter for 1sombra: Object
+ HealthCounter: Showing normal HP 3 for 1sombra
+ ZaryaTokenOverlay: Card 1sombra has Zarya token: undefined
+ HealthCounter for 1zarya: Object
+ HealthCounter: Showing normal HP 4 for 1zarya
+ ZaryaTokenOverlay: Card 1zarya has Zarya token: undefined
+ HealthCounter for 1brigitte: Object
+ HealthCounter: Showing normal HP 4 for 1brigitte
+ ZaryaTokenOverlay: Card 1brigitte has Zarya token: undefined
+ HealthCounter for 1mei: Object
+ HealthCounter: Showing normal HP 4 for 1mei
+ ZaryaTokenOverlay: Card 1mei has Zarya token: undefined
+ ZaryaTokenOverlay: Card 1ana has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: Object
+ HealthCounter for 1ana: Object
+ HealthCounter: Showing normal HP 3 for 1ana
+ ZaryaTokenOverlay: Card 1ana has Zarya token: undefined
+ ana intro sound played successfully
+ HealthCounter for 1sombra: Object
+ HealthCounter: Showing normal HP 3 for 1sombra
+ ZaryaTokenOverlay: Card 1sombra has Zarya token: undefined
+ HealthCounter for 1zarya: Object
+ HealthCounter: Showing normal HP 4 for 1zarya
+ ZaryaTokenOverlay: Card 1zarya has Zarya token: undefined
+ HealthCounter for 1brigitte: Object
+ HealthCounter: Showing normal HP 4 for 1brigitte
+ ZaryaTokenOverlay: Card 1brigitte has Zarya token: undefined
+ HealthCounter for 1mei: Object
+ HealthCounter: Showing normal HP 4 for 1mei
+ ZaryaTokenOverlay: Card 1mei has Zarya token: undefined
+ HealthCounter for 1ana: Object
+ HealthCounter: Showing normal HP 3 for 1ana
+ ZaryaTokenOverlay: Card 1ana has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: Object
+ Object
+ HealthCounter for 1ana: Object
+ HealthCounter: Showing normal HP 3 for 1ana
+ ZaryaTokenOverlay: Card 1ana has Zarya token: undefined
+ HealthCounter for 1ana: Object
+ HealthCounter: Showing normal HP 3 for 1ana
+ ZaryaTokenOverlay: Card 1ana has Zarya token: undefined
+ HealthCounter for 1sombra: Object
+ HealthCounter: Showing normal HP 3 for 1sombra
+ ZaryaTokenOverlay: Card 1sombra has Zarya token: undefined
+ HealthCounter for 1ana: Object
+ HealthCounter: Showing normal HP 3 for 1ana
+ ZaryaTokenOverlay: Card 1ana has Zarya token: undefined
+ HealthCounter for 1ana: Object
+ HealthCounter: Showing normal HP 3 for 1ana
+ ZaryaTokenOverlay: Card 1ana has Zarya token: undefined
+ HealthCounter for 1ana: Object
+ HealthCounter: Showing normal HP 3 for 1ana
+ ZaryaTokenOverlay: Card 1ana has Zarya token: undefined
+ HealthCounter for 1ana: Object
+ HealthCounter: Showing normal HP 3 for 1ana
+ ZaryaTokenOverlay: Card 1ana has Zarya token: undefined
+ HealthCounter for 1ana: Object
+ HealthCounter: Showing normal HP 3 for 1ana
+ ZaryaTokenOverlay: Card 1ana has Zarya token: undefined
+ HealthCounter for 1ana: Object
+ HealthCounter: Showing normal HP 3 for 1ana
+ ZaryaTokenOverlay: Card 1ana has Zarya token: undefined
+ HealthCounter for 1ana: Object
+ HealthCounter: Showing normal HP 3 for 1ana
+ ZaryaTokenOverlay: Card 1ana has Zarya token: undefined
+ HealthCounter for 1ana: Object
+ HealthCounter: Showing normal HP 3 for 1ana
+ ZaryaTokenOverlay: Card 1ana has Zarya token: undefined
+ HealthCounter for 1ana: Object
+ HealthCounter: Showing normal HP 3 for 1ana
+ ZaryaTokenOverlay: Card 1ana has Zarya token: undefined
+ HealthCounter for 1sombra: Object
+ HealthCounter: Showing normal HP 3 for 1sombra
+ ZaryaTokenOverlay: Card 1sombra has Zarya token: undefined
+ HealthCounter for 1zarya: Object
+ HealthCounter: Showing normal HP 4 for 1zarya
+ ZaryaTokenOverlay: Card 1zarya has Zarya token: undefined
+ HealthCounter for 1brigitte: Object
+ HealthCounter: Showing normal HP 4 for 1brigitte
+ ZaryaTokenOverlay: Card 1brigitte has Zarya token: undefined
+ HealthCounter for 1mei: Object
+ HealthCounter: Showing normal HP 4 for 1mei
+ ZaryaTokenOverlay: Card 1mei has Zarya token: undefined
+ HealthCounter for 1ana: Object
+ HealthCounter: Showing normal HP 3 for 1ana
+ ZaryaTokenOverlay: Card 1ana has Zarya token: undefined
+ HealthCounter for 1ana: Object
+ HealthCounter: Showing normal HP 3 for 1ana
+ ZaryaTokenOverlay: Card 1ana has Zarya token: undefined
+ HealthCounter for 1sombra: Object
+ HealthCounter: Showing normal HP 3 for 1sombra
+ ZaryaTokenOverlay: Card 1sombra has Zarya token: undefined
+ HealthCounter for 1zarya: Object
+ HealthCounter: Showing normal HP 4 for 1zarya
+ ZaryaTokenOverlay: Card 1zarya has Zarya token: undefined
+ HealthCounter for 1brigitte: Object
+ HealthCounter: Showing normal HP 4 for 1brigitte
+ ZaryaTokenOverlay: Card 1brigitte has Zarya token: undefined
+ HealthCounter for 1mei: Object
+ HealthCounter: Showing normal HP 4 for 1mei
+ ZaryaTokenOverlay: Card 1mei has Zarya token: undefined
+ HealthCounter for 1ana: Object
+ HealthCounter: Showing normal HP 3 for 1ana
+ ZaryaTokenOverlay: Card 1ana has Zarya token: undefined
+ HealthCounter for 1sombra: Object
+ HealthCounter: Showing normal HP 3 for 1sombra
+ ZaryaTokenOverlay: Card 1sombra has Zarya token: undefined
+ HealthCounter for 1zarya: Object
+ HealthCounter: Showing normal HP 4 for 1zarya
+ ZaryaTokenOverlay: Card 1zarya has Zarya token: undefined
+ HealthCounter for 1brigitte: Object
+ HealthCounter: Showing normal HP 4 for 1brigitte
+ ZaryaTokenOverlay: Card 1brigitte has Zarya token: undefined
+ HealthCounter for 1mei: Object
+ HealthCounter: Showing normal HP 4 for 1mei
+ ZaryaTokenOverlay: Card 1mei has Zarya token: undefined
+ HealthCounter for 1ana: Object
+ HealthCounter: Showing normal HP 3 for 1ana
+ ZaryaTokenOverlay: Card 1ana has Zarya token: undefined
+ HealthCounter for 1ana: Object
+ HealthCounter: Showing normal HP 3 for 1ana
+ ZaryaTokenOverlay: Card 1ana has Zarya token: undefined
+ HealthCounter for 1ana: Object
+ HealthCounter: Showing normal HP 3 for 1ana
+ ZaryaTokenOverlay: Card 1ana has Zarya token: undefined
+ HealthCounter for 1ana: Object
+ HealthCounter: Showing normal HP 3 for 1ana
+ ZaryaTokenOverlay: Card 1ana has Zarya token: undefined
+ HealthCounter for 1ana: Object
+ HealthCounter: Showing normal HP 3 for 1ana
+ ZaryaTokenOverlay: Card 1ana has Zarya token: undefined
+ HealthCounter for 1ana: Object
+ HealthCounter: Showing normal HP 3 for 1ana
+ ZaryaTokenOverlay: Card 1ana has Zarya token: undefined
+ HealthCounter for 1ana: Object
+ HealthCounter: Showing normal HP 3 for 1ana
+ ZaryaTokenOverlay: Card 1ana has Zarya token: undefined
+ HealthCounter for 1ana: Object
+ HealthCounter: Showing normal HP 3 for 1ana
+ ZaryaTokenOverlay: Card 1ana has Zarya token: undefined
+ HealthCounter for 1ana: Object
+ HealthCounter: Showing normal HP 3 for 1ana
+ ZaryaTokenOverlay: Card 1ana has Zarya token: undefined
+ HealthCounter for 1ana: Object
+ HealthCounter: Showing normal HP 3 for 1ana
+ ZaryaTokenOverlay: Card 1ana has Zarya token: undefined
+ HealthCounter for 1ana: Object
+ HealthCounter: Showing normal HP 3 for 1ana
+ ZaryaTokenOverlay: Card 1ana has Zarya token: undefined
+ HealthCounter for 1ana: Object
+ HealthCounter: Showing normal HP 3 for 1ana
+ ZaryaTokenOverlay: Card 1ana has Zarya token: undefined
+ HealthCounter for 1ana: Object
+ HealthCounter: Showing normal HP 3 for 1ana
+ ZaryaTokenOverlay: Card 1ana has Zarya token: undefined
+ HealthCounter for 1ana: Object
+ HealthCounter: Showing normal HP 3 for 1ana
+ ZaryaTokenOverlay: Card 1ana has Zarya token: undefined
+ HealthCounter for 1ana: Object
+ HealthCounter: Showing normal HP 3 for 1ana
+ ZaryaTokenOverlay: Card 1ana has Zarya token: undefined
+ HealthCounter for 1ana: Object
+ HealthCounter: Showing normal HP 3 for 1ana
+ ZaryaTokenOverlay: Card 1ana has Zarya token: undefined
+ HealthCounter for 1ana: Object
+ HealthCounter: Showing normal HP 3 for 1ana
+ ZaryaTokenOverlay: Card 1ana has Zarya token: undefined
+ HealthCounter for 1ana: Object
+ HealthCounter: Showing normal HP 3 for 1ana
+ ZaryaTokenOverlay: Card 1ana has Zarya token: undefined
+ HealthCounter for 1ana: Object
+ HealthCounter: Showing normal HP 3 for 1ana
+ ZaryaTokenOverlay: Card 1ana has Zarya token: undefined
+ HealthCounter for 1ana: Object
+ HealthCounter: Showing normal HP 3 for 1ana
+ ZaryaTokenOverlay: Card 1ana has Zarya token: undefined
+ HealthCounter for 1ana: Object
+ HealthCounter: Showing normal HP 3 for 1ana
+ ZaryaTokenOverlay: Card 1ana has Zarya token: undefined
+ HealthCounter for 1ana: Object
+ HealthCounter: Showing normal HP 3 for 1ana
+ ZaryaTokenOverlay: Card 1ana has Zarya token: undefined
+ HealthCounter for 1ana: Object
+ HealthCounter: Showing normal HP 3 for 1ana
+ ZaryaTokenOverlay: Card 1ana has Zarya token: undefined
+ HealthCounter for 1ana: Object
+ HealthCounter: Showing normal HP 3 for 1ana
+ ZaryaTokenOverlay: Card 1ana has Zarya token: undefined
+ HealthCounter for 1ana: Object
+ HealthCounter: Showing normal HP 3 for 1ana
+ ZaryaTokenOverlay: Card 1ana has Zarya token: undefined
+ HealthCounter for 1ana: Object
+ HealthCounter: Showing normal HP 3 for 1ana
+ ZaryaTokenOverlay: Card 1ana has Zarya token: undefined
+ Attempting to play placement sound...
+ Placement audio source: /owcardgame/static/media/placement.445605f26d71501234a7.mp3
+ Created placement audio object: 
+ Playing ana enter sound...
+ HealthCounter for 1sombra: Object
+ HealthCounter: Showing normal HP 3 for 1sombra
+ ZaryaTokenOverlay: Card 1sombra has Zarya token: undefined
+ HealthCounter for 1zarya: Object
+ HealthCounter: Showing normal HP 4 for 1zarya
+ ZaryaTokenOverlay: Card 1zarya has Zarya token: undefined
+ HealthCounter for 1brigitte: Object
+ HealthCounter: Showing normal HP 4 for 1brigitte
+ ZaryaTokenOverlay: Card 1brigitte has Zarya token: undefined
+ HealthCounter for 1mei: Object
+ HealthCounter: Showing normal HP 4 for 1mei
+ ZaryaTokenOverlay: Card 1mei has Zarya token: undefined
+ ZaryaTokenOverlay: Card 1ana has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: Object
+ TurnEffectsRunner: useEffect triggered Object
+ TurnEffectsRunner: Turn change check Object
+ HealthCounter for 1sombra: Object
+ HealthCounter: Showing normal HP 3 for 1sombra
+ ZaryaTokenOverlay: Card 1sombra has Zarya token: undefined
+ HealthCounter for 1zarya: Object
+ HealthCounter: Showing normal HP 4 for 1zarya
+ ZaryaTokenOverlay: Card 1zarya has Zarya token: undefined
+ HealthCounter for 1brigitte: Object
+ HealthCounter: Showing normal HP 4 for 1brigitte
+ ZaryaTokenOverlay: Card 1brigitte has Zarya token: undefined
+ HealthCounter for 1mei: Object
+ HealthCounter: Showing normal HP 4 for 1mei
+ ZaryaTokenOverlay: Card 1mei has Zarya token: undefined
+ HealthCounter for 1ana: Object
+ HealthCounter: Showing normal HP 3 for 1ana
+ ZaryaTokenOverlay: Card 1ana has Zarya token: undefined
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ ZaryaTokenOverlay: Card 2zarya has Zarya token: Object
+ TurnEffectsRunner: useEffect triggered Object
+ TurnEffectsRunner: Turn change check Object
+HealthCounter.js:6 HealthCounter for 1sombra: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 3 for 1sombra
+ZaryaTokenOverlay.js:19 ZaryaTokenOverlay: Card 1sombra has Zarya token: undefined
+HealthCounter.js:6 HealthCounter for 1zarya: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 4 for 1zarya
+ZaryaTokenOverlay.js:19 ZaryaTokenOverlay: Card 1zarya has Zarya token: undefined
+HealthCounter.js:6 HealthCounter for 1brigitte: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 4 for 1brigitte
+ZaryaTokenOverlay.js:19 ZaryaTokenOverlay: Card 1brigitte has Zarya token: undefined
+HealthCounter.js:6 HealthCounter for 1mei: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 4 for 1mei
+ZaryaTokenOverlay.js:19 ZaryaTokenOverlay: Card 1mei has Zarya token: undefined
+HealthCounter.js:6 HealthCounter for 1ana: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 3 for 1ana
+ZaryaTokenOverlay.js:19 ZaryaTokenOverlay: Card 1ana has Zarya token: undefined
+HealthCounter.js:6 HealthCounter for 2zarya: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 4 for 2zarya
+ZaryaTokenOverlay.js:19 ZaryaTokenOverlay: Card 2zarya has Zarya token: Object
+App.js:2385 Placement sound played successfully
+App.js:2400 ana enter sound played successfully
+damageBus.js:24 DamageBus - Checking invulnerability for 2zarya at index 0 in row 2f Object
+damageBus.js:33 DamageBus - Target 2zarya is NOT invulnerable, proceeding with damage
+damageBus.js:327 DamageBus - Zarya Token on 2zarya absorbed 1 damage for 2zarya, remaining tokens: 2
+damageBus.js:343 DamageBus - Updated Zarya token on 2zarya to 2 charges
+damageBus.js:357 DamageBus - Publishing damage event: Object
+HealthCounter.js:6 HealthCounter for 1sombra: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 3 for 1sombra
+ZaryaTokenOverlay.js:19 ZaryaTokenOverlay: Card 1sombra has Zarya token: undefined
+HealthCounter.js:6 HealthCounter for 1zarya: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 4 for 1zarya
+ZaryaTokenOverlay.js:19 ZaryaTokenOverlay: Card 1zarya has Zarya token: undefined
+HealthCounter.js:6 HealthCounter for 1brigitte: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 4 for 1brigitte
+ZaryaTokenOverlay.js:19 ZaryaTokenOverlay: Card 1brigitte has Zarya token: undefined
+HealthCounter.js:6 HealthCounter for 1mei: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 4 for 1mei
+ZaryaTokenOverlay.js:19 ZaryaTokenOverlay: Card 1mei has Zarya token: undefined
+HealthCounter.js:6 HealthCounter for 1ana: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 3 for 1ana
+ZaryaTokenOverlay.js:19 ZaryaTokenOverlay: Card 1ana has Zarya token: undefined
+HealthCounter.js:6 HealthCounter for 2zarya: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 4 for 2zarya
+ZaryaTokenOverlay.js:19 ZaryaTokenOverlay: Card 2zarya has Zarya token: Object
+TurnEffectsRunner.js:16 TurnEffectsRunner: useEffect triggered Object
+TurnEffectsRunner.js:27 TurnEffectsRunner: Turn change check Object

@@ -1,0 +1,688 @@
+ Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+ Warning: Connect(Droppable): Support for defaultProps will be removed from memo components in a future major release. Use JavaScript default parameters instead.
+    at div
+    at CardDisplay (http://localhost:3000/owcardgame/static/js/bundle.js:98843:56)
+    at div
+    at div
+    at PlayerArea (http://localhost:3000/owcardgame/static/js/bundle.js:99345:56)
+    at div
+    at PlayerHalf (http://localhost:3000/owcardgame/static/js/bundle.js:99921:56)
+    at Provider (http://localhost:3000/owcardgame/static/js/bundle.js:66817:20)
+    at App (http://localhost:3000/owcardgame/static/js/bundle.js:39199:25)
+    at ErrorBoundary (http://localhost:3000/owcardgame/static/js/bundle.js:33412:35)
+    at DragDropContext (http://localhost:3000/owcardgame/static/js/bundle.js:39323:19)
+    at div
+    at div
+    at App (http://localhost:3000/owcardgame/static/js/bundle.js:78279:82)
+printWarning @ bundle.js:40754
+ CardDisplay mounted with droppableId: player1hand rowId: player1hand
+ CardDisplay mounted with droppableId: 1b rowId: 1b
+ CardDisplay mounted with droppableId: 1m rowId: 1m
+ CardDisplay mounted with droppableId: 1f rowId: 1f
+ CardDisplay mounted with droppableId: 2f rowId: 2f
+ CardDisplay mounted with droppableId: 2m rowId: 2m
+ CardDisplay mounted with droppableId: 2b rowId: 2b
+ CardDisplay mounted with droppableId: player2hand rowId: player2hand
+ TurnEffectsRunner: useEffect triggered Object
+ TurnEffectsRunner: Turn change check Object
+ TurnEffectsRunner: useEffect triggered Object
+ TurnEffectsRunner: Turn change check Object
+ HealthCounter for 1ashe: Object
+ HealthCounter: Showing normal HP 3 for 1ashe
+ HealthCounter for 1dva: Object
+ HealthCounter: Showing normal HP 2 for 1dva
+ HealthCounter for 1zenyatta: Object
+ HealthCounter: Showing normal HP 2 for 1zenyatta
+ HealthCounter for 1widowmaker: Object
+ HealthCounter: Showing normal HP 3 for 1widowmaker
+ HealthCounter for 2sombra: Object
+ HealthCounter: Showing normal HP 3 for 2sombra
+ HealthCounter for 2sigma: Object
+ HealthCounter: Showing normal HP 4 for 2sigma
+ HealthCounter for 2brigitte: Object
+ HealthCounter: Showing normal HP 4 for 2brigitte
+ HealthCounter for 2torbjorn: Object
+ HealthCounter: Showing normal HP 3 for 2torbjorn
+ Player 2 drew zarya
+ Playing zarya intro sound...
+ TurnEffectsRunner: useEffect triggered Object
+ TurnEffectsRunner: Turn change check Object
+ TurnEffectsRunner: Turn changed, processing effects
+ Lifeweaver: Starting temporary HP cleanup for player 2
+ Lifeweaver: No temporary HP effects found to clean up for player 2
+ Lifeweaver: Temporary HP cleanup completed
+ TurnEffectsRunner: Checking row 2b with 0 ally effects and 0 enemy effects
+ TurnEffectsRunner: Checking row 2m with 0 ally effects and 0 enemy effects
+ TurnEffectsRunner: Checking row 2f with 0 ally effects and 0 enemy effects
+ HealthCounter for 2sombra: Object
+ HealthCounter: Showing normal HP 3 for 2sombra
+ HealthCounter for 2sigma: Object
+ HealthCounter: Showing normal HP 4 for 2sigma
+ HealthCounter for 2brigitte: Object
+ HealthCounter: Showing normal HP 4 for 2brigitte
+ HealthCounter for 2torbjorn: Object
+ HealthCounter: Showing normal HP 3 for 2torbjorn
+ TurnEffectsRunner: useEffect triggered Object
+ TurnEffectsRunner: Turn change check Object
+ HealthCounter for 2sombra: Object
+ HealthCounter: Showing normal HP 3 for 2sombra
+ HealthCounter for 2sigma: Object
+ HealthCounter: Showing normal HP 4 for 2sigma
+ HealthCounter for 2brigitte: Object
+ HealthCounter: Showing normal HP 4 for 2brigitte
+ HealthCounter for 2torbjorn: Object
+ HealthCounter: Showing normal HP 3 for 2torbjorn
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ zarya intro sound played successfully
+ HealthCounter for 2sombra: Object
+ HealthCounter: Showing normal HP 3 for 2sombra
+ HealthCounter for 2sigma: Object
+ HealthCounter: Showing normal HP 4 for 2sigma
+ HealthCounter for 2brigitte: Object
+ HealthCounter: Showing normal HP 4 for 2brigitte
+ HealthCounter for 2torbjorn: Object
+ HealthCounter: Showing normal HP 3 for 2torbjorn
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ Object
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2sombra: Object
+ HealthCounter: Showing normal HP 3 for 2sombra
+ HealthCounter for 2sigma: Object
+ HealthCounter: Showing normal HP 4 for 2sigma
+ HealthCounter for 2brigitte: Object
+ HealthCounter: Showing normal HP 4 for 2brigitte
+ HealthCounter for 2torbjorn: Object
+ HealthCounter: Showing normal HP 3 for 2torbjorn
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2sombra: Object
+ HealthCounter: Showing normal HP 3 for 2sombra
+ HealthCounter for 2sigma: Object
+ HealthCounter: Showing normal HP 4 for 2sigma
+ HealthCounter for 2brigitte: Object
+ HealthCounter: Showing normal HP 4 for 2brigitte
+ HealthCounter for 2torbjorn: Object
+ HealthCounter: Showing normal HP 3 for 2torbjorn
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2sombra: Object
+ HealthCounter: Showing normal HP 3 for 2sombra
+ HealthCounter for 2sigma: Object
+ HealthCounter: Showing normal HP 4 for 2sigma
+ HealthCounter for 2brigitte: Object
+ HealthCounter: Showing normal HP 4 for 2brigitte
+ HealthCounter for 2torbjorn: Object
+ HealthCounter: Showing normal HP 3 for 2torbjorn
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2sombra: Object
+ HealthCounter: Showing normal HP 3 for 2sombra
+ HealthCounter for 2sigma: Object
+ HealthCounter: Showing normal HP 4 for 2sigma
+ HealthCounter for 2brigitte: Object
+ HealthCounter: Showing normal HP 4 for 2brigitte
+ HealthCounter for 2torbjorn: Object
+ HealthCounter: Showing normal HP 3 for 2torbjorn
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2sombra: Object
+ HealthCounter: Showing normal HP 3 for 2sombra
+ HealthCounter for 2sigma: Object
+ HealthCounter: Showing normal HP 4 for 2sigma
+ HealthCounter for 2brigitte: Object
+ HealthCounter: Showing normal HP 4 for 2brigitte
+ HealthCounter for 2torbjorn: Object
+ HealthCounter: Showing normal HP 3 for 2torbjorn
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ Attempting to play placement sound...
+ Placement audio source: /owcardgame/static/media/placement.445605f26d71501234a7.mp3
+ Created placement audio object: 
+ Playing zarya enter sound...
+ HealthCounter for 2sombra: Object
+ HealthCounter: Showing normal HP 3 for 2sombra
+ HealthCounter for 2sigma: Object
+ HealthCounter: Showing normal HP 4 for 2sigma
+ HealthCounter for 2brigitte: Object
+ HealthCounter: Showing normal HP 4 for 2brigitte
+ HealthCounter for 2torbjorn: Object
+ HealthCounter: Showing normal HP 3 for 2torbjorn
+ TurnEffectsRunner: useEffect triggered Object
+ TurnEffectsRunner: Turn change check Object
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2sombra: Object
+ HealthCounter: Showing normal HP 3 for 2sombra
+ HealthCounter for 2sigma: Object
+ HealthCounter: Showing normal HP 4 for 2sigma
+ HealthCounter for 2brigitte: Object
+ HealthCounter: Showing normal HP 4 for 2brigitte
+ HealthCounter for 2torbjorn: Object
+ HealthCounter: Showing normal HP 3 for 2torbjorn
+ TurnEffectsRunner: useEffect triggered Object
+ TurnEffectsRunner: Turn change check Object
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2sombra: Object
+ HealthCounter: Showing normal HP 3 for 2sombra
+ HealthCounter for 2sigma: Object
+ HealthCounter: Showing normal HP 4 for 2sigma
+ HealthCounter for 2brigitte: Object
+ HealthCounter: Showing normal HP 4 for 2brigitte
+ HealthCounter for 2torbjorn: Object
+ HealthCounter: Showing normal HP 3 for 2torbjorn
+ Placement sound played successfully
+ zarya enter sound played successfully
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2sombra: Object
+ HealthCounter: Showing normal HP 3 for 2sombra
+ HealthCounter for 2sigma: Object
+ HealthCounter: Showing normal HP 4 for 2sigma
+ HealthCounter for 2brigitte: Object
+ HealthCounter: Showing normal HP 4 for 2brigitte
+ HealthCounter for 2torbjorn: Object
+ HealthCounter: Showing normal HP 3 for 2torbjorn
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2sombra: Object
+ HealthCounter: Showing normal HP 3 for 2sombra
+ HealthCounter for 2sigma: Object
+ HealthCounter: Showing normal HP 4 for 2sigma
+ HealthCounter for 2brigitte: Object
+ HealthCounter: Showing normal HP 4 for 2brigitte
+ HealthCounter for 2torbjorn: Object
+ HealthCounter: Showing normal HP 3 for 2torbjorn
+ HealthCounter for 1ashe: Object
+ HealthCounter: Showing normal HP 3 for 1ashe
+ HealthCounter for 1dva: Object
+ HealthCounter: Showing normal HP 2 for 1dva
+ HealthCounter for 1zenyatta: Object
+ HealthCounter: Showing normal HP 2 for 1zenyatta
+ HealthCounter for 1widowmaker: Object
+ HealthCounter: Showing normal HP 3 for 1widowmaker
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ Player 1 drew symmetra
+ Playing symmetra intro sound...
+ TurnEffectsRunner: useEffect triggered Object
+ TurnEffectsRunner: Turn change check Object
+ TurnEffectsRunner: Turn changed, processing effects
+ Lifeweaver: Starting temporary HP cleanup for player 1
+ Lifeweaver: No temporary HP effects found to clean up for player 1
+ Lifeweaver: Temporary HP cleanup completed
+ TurnEffectsRunner: Checking row 1b with 0 ally effects and 0 enemy effects
+ TurnEffectsRunner: Checking row 1m with 0 ally effects and 0 enemy effects
+ TurnEffectsRunner: Checking row 1f with 0 ally effects and 0 enemy effects
+ HealthCounter for 1ashe: Object
+ HealthCounter: Showing normal HP 3 for 1ashe
+ HealthCounter for 1dva: Object
+ HealthCounter: Showing normal HP 2 for 1dva
+ HealthCounter for 1zenyatta: Object
+ HealthCounter: Showing normal HP 2 for 1zenyatta
+ HealthCounter for 1widowmaker: Object
+ HealthCounter: Showing normal HP 3 for 1widowmaker
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ TurnEffectsRunner: useEffect triggered Object
+ TurnEffectsRunner: Turn change check Object
+ HealthCounter for 1ashe: Object
+ HealthCounter: Showing normal HP 3 for 1ashe
+ HealthCounter for 1dva: Object
+ HealthCounter: Showing normal HP 2 for 1dva
+ HealthCounter for 1zenyatta: Object
+ HealthCounter: Showing normal HP 2 for 1zenyatta
+ HealthCounter for 1widowmaker: Object
+ HealthCounter: Showing normal HP 3 for 1widowmaker
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 1symmetra: Object
+ HealthCounter: Showing normal HP 3 for 1symmetra
+ symmetra intro sound played successfully
+ HealthCounter for 1ashe: Object
+ HealthCounter: Showing normal HP 3 for 1ashe
+ HealthCounter for 1dva: Object
+ HealthCounter: Showing normal HP 2 for 1dva
+ HealthCounter for 1zenyatta: Object
+ HealthCounter: Showing normal HP 2 for 1zenyatta
+ HealthCounter for 1widowmaker: Object
+ HealthCounter: Showing normal HP 3 for 1widowmaker
+ HealthCounter for 1symmetra: Object
+ HealthCounter: Showing normal HP 3 for 1symmetra
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ Object
+ HealthCounter for 1ashe: Object
+ HealthCounter: Showing normal HP 3 for 1ashe
+ HealthCounter for 1dva: Object
+ HealthCounter: Showing normal HP 2 for 1dva
+ HealthCounter for 1zenyatta: Object
+ HealthCounter: Showing normal HP 2 for 1zenyatta
+ HealthCounter for 1widowmaker: Object
+ HealthCounter: Showing normal HP 3 for 1widowmaker
+ HealthCounter for 1symmetra: Object
+ HealthCounter: Showing normal HP 3 for 1symmetra
+ HealthCounter for 1ashe: Object
+ HealthCounter: Showing normal HP 3 for 1ashe
+ HealthCounter for 1ashe: Object
+ HealthCounter: Showing normal HP 3 for 1ashe
+ HealthCounter for 1ashe: Object
+ HealthCounter: Showing normal HP 3 for 1ashe
+ HealthCounter for 1ashe: Object
+ HealthCounter: Showing normal HP 3 for 1ashe
+ HealthCounter for 1dva: Object
+ HealthCounter: Showing normal HP 2 for 1dva
+ HealthCounter for 1zenyatta: Object
+ HealthCounter: Showing normal HP 2 for 1zenyatta
+ HealthCounter for 1widowmaker: Object
+ HealthCounter: Showing normal HP 3 for 1widowmaker
+ HealthCounter for 1symmetra: Object
+ HealthCounter: Showing normal HP 3 for 1symmetra
+ HealthCounter for 1ashe: Object
+ HealthCounter: Showing normal HP 3 for 1ashe
+ HealthCounter for 1ashe: Object
+ HealthCounter: Showing normal HP 3 for 1ashe
+ HealthCounter for 1ashe: Object
+ HealthCounter: Showing normal HP 3 for 1ashe
+ HealthCounter for 1ashe: Object
+ HealthCounter: Showing normal HP 3 for 1ashe
+ HealthCounter for 1ashe: Object
+ HealthCounter: Showing normal HP 3 for 1ashe
+ HealthCounter for 1ashe: Object
+ HealthCounter: Showing normal HP 3 for 1ashe
+ HealthCounter for 1ashe: Object
+ HealthCounter: Showing normal HP 3 for 1ashe
+ HealthCounter for 1ashe: Object
+ HealthCounter: Showing normal HP 3 for 1ashe
+ HealthCounter for 1ashe: Object
+ HealthCounter: Showing normal HP 3 for 1ashe
+ HealthCounter for 1ashe: Object
+ HealthCounter: Showing normal HP 3 for 1ashe
+ HealthCounter for 1ashe: Object
+ HealthCounter: Showing normal HP 3 for 1ashe
+ HealthCounter for 1ashe: Object
+ HealthCounter: Showing normal HP 3 for 1ashe
+ HealthCounter for 1ashe: Object
+ HealthCounter: Showing normal HP 3 for 1ashe
+ HealthCounter for 1ashe: Object
+ HealthCounter: Showing normal HP 3 for 1ashe
+ HealthCounter for 1ashe: Object
+ HealthCounter: Showing normal HP 3 for 1ashe
+ HealthCounter for 1ashe: Object
+ HealthCounter: Showing normal HP 3 for 1ashe
+ HealthCounter for 1ashe: Object
+ HealthCounter: Showing normal HP 3 for 1ashe
+ HealthCounter for 1ashe: Object
+ HealthCounter: Showing normal HP 3 for 1ashe
+ HealthCounter for 1ashe: Object
+ HealthCounter: Showing normal HP 3 for 1ashe
+ HealthCounter for 1ashe: Object
+ HealthCounter: Showing normal HP 3 for 1ashe
+ HealthCounter for 1ashe: Object
+ HealthCounter: Showing normal HP 3 for 1ashe
+ Attempting to play placement sound...
+ Placement audio source: /owcardgame/static/media/placement.445605f26d71501234a7.mp3
+ Created placement audio object: 
+ Playing ashe enter sound...
+ HealthCounter for 1dva: Object
+ HealthCounter: Showing normal HP 2 for 1dva
+ HealthCounter for 1zenyatta: Object
+ HealthCounter: Showing normal HP 2 for 1zenyatta
+ HealthCounter for 1widowmaker: Object
+ HealthCounter: Showing normal HP 3 for 1widowmaker
+ HealthCounter for 1symmetra: Object
+ HealthCounter: Showing normal HP 3 for 1symmetra
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ TurnEffectsRunner: useEffect triggered Object
+ TurnEffectsRunner: Turn change check Object
+ HealthCounter for 1dva: Object
+ HealthCounter: Showing normal HP 2 for 1dva
+ HealthCounter for 1zenyatta: Object
+ HealthCounter: Showing normal HP 2 for 1zenyatta
+ HealthCounter for 1widowmaker: Object
+ HealthCounter: Showing normal HP 3 for 1widowmaker
+ HealthCounter for 1symmetra: Object
+ HealthCounter: Showing normal HP 3 for 1symmetra
+ HealthCounter for 1ashe: Object
+ HealthCounter: Showing normal HP 3 for 1ashe
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ TurnEffectsRunner: useEffect triggered Object
+ TurnEffectsRunner: Turn change check Object
+ HealthCounter for 1dva: Object
+ HealthCounter: Showing normal HP 2 for 1dva
+HealthCounter.js:6 HealthCounter for 1zenyatta: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 2 for 1zenyatta
+HealthCounter.js:6 HealthCounter for 1widowmaker: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 3 for 1widowmaker
+HealthCounter.js:6 HealthCounter for 1symmetra: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 3 for 1symmetra
+HealthCounter.js:6 HealthCounter for 1ashe: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 3 for 1ashe
+HealthCounter.js:6 HealthCounter for 2zarya: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 4 for 2zarya
+App.js:2384 Placement sound played successfully
+App.js:2399 ashe enter sound played successfully
+HealthCounter.js:6 HealthCounter for 1dva: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 2 for 1dva
+HealthCounter.js:6 HealthCounter for 1zenyatta: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 2 for 1zenyatta
+HealthCounter.js:6 HealthCounter for 1widowmaker: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 3 for 1widowmaker
+HealthCounter.js:6 HealthCounter for 1symmetra: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 3 for 1symmetra
+HealthCounter.js:6 HealthCounter for 1ashe: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 3 for 1ashe
+HealthCounter.js:6 HealthCounter for 2zarya: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 4 for 2zarya
+ashe.js:50 Ashe Ability 1 - Target clicked: Object
+ashe.js:57 Ashe Ability 1 - Applying damage: Object
+damageBus.js:24 DamageBus - Checking invulnerability for 2zarya at index 0 in row 2b Object
+damageBus.js:33 DamageBus - Target 2zarya is NOT invulnerable, proceeding with damage
+damageBus.js:306 DamageBus - Publishing damage event: Object
+ashe.js:22 Playing Ashe ability 1 sound...
+HealthCounter.js:6 HealthCounter for 1dva: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 2 for 1dva
+HealthCounter.js:6 HealthCounter for 1zenyatta: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 2 for 1zenyatta
+HealthCounter.js:6 HealthCounter for 1widowmaker: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 3 for 1widowmaker
+HealthCounter.js:6 HealthCounter for 1symmetra: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 3 for 1symmetra
+HealthCounter.js:6 HealthCounter for 1ashe: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 3 for 1ashe
+HealthCounter.js:6 HealthCounter for 2zarya: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 2 for 2zarya
+TurnEffectsRunner.js:16 TurnEffectsRunner: useEffect triggered Object
+TurnEffectsRunner.js:27 TurnEffectsRunner: Turn change check Object
+ashe.js:25 Ashe ability 1 sound played successfully

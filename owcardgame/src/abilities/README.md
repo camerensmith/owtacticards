@@ -3795,3 +3795,648 @@ playAudioByKey('wreckingball-ultimate');
 5. **Single Token with Charges**: Efficient token management for count-based effects
 6. **Dynamic Cost Calculation**: Ultimate costs that change based on game state
 7. **Comprehensive Floating Text**: Visual feedback for all damage, healing, and shield changes
+
+## AI Controller Implementation Guide
+
+### Overview
+Implementing an AI controller for "player 2" is a complex undertaking that requires overriding the interactive targeting system and implementing strategic decision-making logic. This guide outlines the technical challenges, implementation approach, and development timeline.
+
+### Complexity Assessment
+**Level: HIGH** 🔴 - Due to the game's sophisticated targeting system and interactive nature.
+
+### Core Challenges
+
+#### 1. Interactive Targeting System Override 🎯
+**Current System**: The game uses jQuery-based click handlers for targeting:
+- `selectCardTarget()` - Waits for user to click a card
+- `selectRowTarget()` - Waits for user to click a row
+- Both return `null` if user right-clicks to cancel
+
+**AI Challenge**: Need to replace these with AI decision-making logic.
+
+#### 2. Complex Game State Analysis 🧠
+**Required AI Capabilities**:
+- **Board State Evaluation**: Analyze all 6 rows (1f, 1m, 1b, 2f, 2m, 2b)
+- **Card Value Assessment**: Evaluate each card's power, synergy, health, shields, effects
+- **Threat Assessment**: Identify high-value targets and dangerous enemy cards
+- **Synergy Management**: Plan ultimate usage based on row synergy
+- **Effect Interaction**: Understand complex ability interactions (shields, immunity, etc.)
+
+#### 3. Turn Action Decision Tree 🌳
+**AI Must Decide**:
+1. **Which card to play** from hand (8 cards max)
+2. **Which row to place it** (front/middle/back)
+3. **Whether to use onEnter ability** (if available)
+4. **Whether to use ultimate** (if synergy available)
+5. **Target selection** for abilities (cards/rows)
+
+### Implementation Approach
+
+#### Phase 1: Basic AI Framework (2-3 weeks)
+```javascript
+// AI Controller Structure
+class AIController {
+    constructor(playerNum) {
+        this.playerNum = playerNum;
+        this.gameState = null;
+        this.strategy = 'aggressive'; // or 'defensive', 'balanced'
+    }
+    
+    // Main AI decision function
+    async makeTurnDecision(gameState) {
+        this.gameState = gameState;
+        
+        // 1. Analyze current board state
+        const boardAnalysis = this.analyzeBoard();
+        
+        // 2. Choose card to play
+        const cardToPlay = this.selectCardToPlay(boardAnalysis);
+        
+        // 3. Choose row placement
+        const targetRow = this.selectRowPlacement(cardToPlay, boardAnalysis);
+        
+        // 4. Decide on abilities
+        const abilityDecisions = this.decideAbilities(cardToPlay, targetRow);
+        
+        return {
+            cardToPlay,
+            targetRow,
+            useOnEnter: abilityDecisions.useOnEnter,
+            useUltimate: abilityDecisions.useUltimate,
+            ultimateTarget: abilityDecisions.ultimateTarget
+        };
+    }
+}
+```
+
+#### Phase 2: Targeting System Override (1-2 weeks)
+```javascript
+// Override targeting functions for AI
+export function selectCardTargetAI(validTargets, strategy = 'random') {
+    return new Promise((resolve) => {
+        // AI logic instead of click handler
+        const target = chooseBestTarget(validTargets, strategy);
+        resolve(target);
+    });
+}
+
+export function selectRowTargetAI(validRows, strategy = 'random') {
+    return new Promise((resolve) => {
+        // AI logic instead of click handler
+        const target = chooseBestRow(validRows, strategy);
+        resolve(target);
+    });
+}
+```
+
+#### Phase 3: Strategy Implementation (2-3 weeks)
+```javascript
+// Different AI strategies
+const strategies = {
+    aggressive: {
+        priority: ['damage', 'elimination', 'board_control'],
+        riskTolerance: 'high'
+    },
+    defensive: {
+        priority: ['survival', 'shields', 'healing'],
+        riskTolerance: 'low'
+    },
+    balanced: {
+        priority: ['value', 'flexibility', 'adaptation'],
+        riskTolerance: 'medium'
+    }
+};
+```
+
+### Technical Implementation Details
+
+#### 1. Game State Access
+```javascript
+// AI needs access to current game state
+const getGameState = () => {
+    return {
+        rows: window.__ow_getAllRows?.(),
+        playerCards: window.__ow_getPlayerCards?.(),
+        currentTurn: window.__ow_getCurrentTurn?.(),
+        // ... other state
+    };
+};
+```
+
+#### 2. Card Evaluation System
+```javascript
+// Evaluate card value for AI decision making
+const evaluateCard = (card, boardState) => {
+    return {
+        powerValue: card.power,
+        synergyValue: card.synergy,
+        healthValue: card.health,
+        abilityValue: evaluateAbility(card.abilities),
+        threatLevel: calculateThreat(card, boardState),
+        placementValue: calculatePlacementValue(card, boardState)
+    };
+};
+```
+
+#### 3. Target Selection Logic
+```javascript
+// AI target selection for abilities
+const selectTarget = (ability, validTargets, strategy) => {
+    switch (ability.type) {
+        case 'damage':
+            return selectHighestValueTarget(validTargets);
+        case 'healing':
+            return selectLowestHealthAlly(validTargets);
+        case 'utility':
+            return selectMostStrategicTarget(validTargets);
+        default:
+            return selectRandomTarget(validTargets);
+    }
+};
+```
+
+### Development Timeline
+
+#### Minimum Viable AI (4-6 weeks)
+- Basic card playing
+- Simple targeting (random/priority-based)
+- No complex strategy
+
+#### Competent AI (8-12 weeks)
+- Strategic decision making
+- Multiple difficulty levels
+- Complex ability usage
+- Synergy management
+
+#### Advanced AI (16-20 weeks)
+- Machine learning integration
+- Adaptive strategies
+- Tournament-level play
+- Psychological elements
+
+### Key Files to Modify
+
+1. **`targeting.js`** - Override targeting functions
+2. **`App.js`** - Add AI turn handling
+3. **`PlayerButtons.js`** - Add AI mode toggle
+4. **New: `AIController.js`** - Main AI logic
+5. **New: `AIStrategies.js`** - Different AI behaviors
+6. **New: `AITargeting.js`** - AI targeting logic
+
+### Alternative: Simpler Approach
+
+#### Rule-Based AI (2-3 weeks)
+Instead of complex decision trees, use simple rules:
+- Always play highest power card
+- Always target lowest health enemy
+- Use ultimates when synergy available
+- Random row placement
+
+This would be much simpler but less strategic.
+
+### Integration with Existing Systems
+
+#### Turn Management
+```javascript
+// In App.js - Add AI turn handling
+if (gameState.playerTurn === 2 && gameState.aiMode) {
+    const aiDecision = await AIController.makeTurnDecision(gameState);
+    // Execute AI decisions
+    executeAITurn(aiDecision);
+}
+```
+
+#### Targeting Override
+```javascript
+// In targeting.js - Add AI targeting functions
+export function selectCardTarget() {
+    if (window.__ow_aiMode && window.__ow_currentPlayer === 2) {
+        return selectCardTargetAI();
+    }
+    // ... existing click handler logic
+}
+```
+
+#### UI Integration
+```javascript
+// In PlayerButtons.js - Add AI mode toggle
+const toggleAIMode = () => {
+    setAIMode(!aiMode);
+    if (!aiMode) {
+        // Start AI turn
+        AIController.startAITurn();
+    }
+};
+```
+
+### Common Pitfalls
+
+#### 1. Targeting System Integration
+**Problem**: AI needs to work with existing targeting system
+**Solution**: Create AI-specific targeting functions that bypass click handlers
+
+#### 2. Game State Synchronization
+**Problem**: AI needs real-time access to game state
+**Solution**: Expose game state through window functions or context
+
+#### 3. Turn Timing
+**Problem**: AI needs to respect turn timing and animations
+**Solution**: Add delays and respect existing turn flow
+
+#### 4. Ability Complexity
+**Problem**: Some abilities have complex targeting requirements
+**Solution**: Create ability-specific AI logic for complex cases
+
+### Testing Strategy
+
+#### Unit Tests
+- Test individual AI decision functions
+- Test targeting logic with various board states
+- Test strategy implementations
+
+#### Integration Tests
+- Test AI vs human gameplay
+- Test AI vs AI gameplay
+- Test different difficulty levels
+
+#### Performance Tests
+- Ensure AI decisions are fast enough
+- Test with complex board states
+- Monitor memory usage
+
+### Future Enhancements
+
+#### Machine Learning Integration
+- Train AI on human gameplay data
+- Implement reinforcement learning
+- Adaptive difficulty based on player skill
+
+#### Advanced Features
+- Personality-based AI (aggressive, defensive, etc.)
+- Learning from player patterns
+- Tournament mode with multiple AI opponents
+
+### Recommendation
+
+**Start with a simple rule-based AI** to get basic functionality, then gradually add complexity. The targeting system override is the biggest technical hurdle, but once that's solved, the AI logic itself is manageable.
+
+The rule-based approach would provide immediate value while allowing for future enhancement with more sophisticated decision-making algorithms.
+
+## Zarya Implementation Guide
+
+### Overview
+Zarya demonstrates advanced patterns including custom token systems, shield-piercing mechanics, multi-target selection, dynamic damage reduction, and proper visual token overlays. Her implementation showcases how to create shield-like effects that behave identically to normal shields.
+
+### Key Abilities
+
+#### Particle Barrier (onEnter1)
+- **Targeting**: Point-based selection of self or one ally hero
+- **Token Placement**: Places 3 Zarya tokens as card effects
+- **Token Behavior**: Functions exactly like shields (absorbs damage, respects shield-piercing)
+- **Audio**: `zarya-enter` and `zarya-ability1` play on successful placement
+- **Visual**: Custom orange circular badge with token count
+
+#### Particle Cannon (Ultimate, Cost 3)
+- **Multi-Target**: Select up to 3 enemy heroes with right-click cancel
+- **Damage Calculation**: 4 damage per target, reduced by 1 for each Zarya token on your side
+- **Minimum Damage**: Always deals at least 1 damage per target
+- **Audio**: `zarya-ultimate` and `zarya-ultimate-resolve` play on activation and resolution
+- **Floating Text**: Individual damage numbers for each target
+
+### Custom Token System Implementation
+
+#### Token Creation Pattern
+```javascript
+// Helper function to place Zarya tokens on a hero
+function placeZaryaTokens(cardId, amount) {
+    // Create a single token with the total amount
+    const tokenId = `zarya-token-${Date.now()}`;
+    const zaryaToken = {
+        id: tokenId,
+        hero: 'zarya',
+        type: 'zarya-shield',
+        amount: amount, // Total number of tokens
+        sourceCardId: cardId,
+        tooltip: `Zarya Token: Absorbs damage like shields, reduces Particle Cannon damage (${amount} charges)`,
+        visual: 'zarya-icon'
+    };
+    
+    // Add to card effects using the proper function
+    window.__ow_appendCardEffect?.(cardId, zaryaToken);
+}
+```
+
+#### Token Counting Pattern
+```javascript
+// Helper function to count Zarya tokens on your side
+function countZaryaTokensOnSide(playerNum) {
+    let totalTokens = 0;
+    const yourRows = playerNum === 1 ? ['1f', '1m', '1b'] : ['2f', '2m', '2b'];
+    yourRows.forEach(rowId => {
+        const row = window.__ow_getRow?.(rowId);
+        if (row && row.cardIds) {
+            row.cardIds.forEach(cardId => {
+                const card = window.__ow_getCard?.(cardId);
+                if (card && Array.isArray(card.effects)) {
+                    const zaryaToken = card.effects.find(effect => 
+                        effect?.hero === 'zarya' && effect?.type === 'zarya-shield'
+                    );
+                    if (zaryaToken) {
+                        totalTokens += zaryaToken.amount || 0;
+                    }
+                }
+            });
+        }
+    });
+    return totalTokens;
+}
+```
+
+### Shield-Piercing Integration
+
+#### Damage Bus Integration
+```javascript
+// In damageBus.js - Zarya token absorption respects shield-piercing
+if (finalAmount > 0 && !ignoreShields && window.__ow_getRow) {
+    // Check all friendly cards for Zarya tokens
+    for (const rowId of friendlyRows) {
+        const row = window.__ow_getRow(rowId);
+        if (row && row.cardIds) {
+            for (const cardId of row.cardIds) {
+                const card = window.__ow_getCard?.(cardId);
+                if (card && Array.isArray(card.effects)) {
+                    const zaryaToken = card.effects.find(effect => 
+                        effect?.hero === 'zarya' && effect?.type === 'zarya-shield'
+                    );
+                    
+                    if (zaryaToken && zaryaToken.amount > 0) {
+                        const useZarya = Math.min(zaryaToken.amount, finalAmount);
+                        const newAmount = zaryaToken.amount - useZarya;
+                        finalAmount = Math.max(0, finalAmount - useZarya);
+                        absorbedAmount += useZarya;
+                        
+                        // Update or remove token using proper game state functions
+                        if (newAmount <= 0) {
+                            window.__ow_removeCardEffect?.(cardId, zaryaToken.id);
+                        } else {
+                            const updatedToken = {
+                                ...zaryaToken,
+                                amount: newAmount,
+                                tooltip: `Zarya Token: Absorbs damage like shields, reduces Particle Cannon damage (${newAmount} charges)`
+                            };
+                            window.__ow_removeCardEffect?.(cardId, zaryaToken.id);
+                            setTimeout(() => {
+                                window.__ow_appendCardEffect?.(cardId, updatedToken);
+                            }, 10);
+                        }
+                        
+                        if (finalAmount <= 0) break;
+                    }
+                }
+            }
+        }
+        if (finalAmount <= 0) break;
+    }
+}
+```
+
+### Visual Token Overlay System
+
+#### Custom Overlay Component
+```javascript
+// ZaryaTokenOverlay.js
+import React, { useContext } from 'react';
+import gameContext from '../../context/gameContext';
+import { heroIconImages } from '../../assets/imageImports';
+
+export default function ZaryaTokenOverlay({ cardId }) {
+    const { gameState } = useContext(gameContext);
+
+    // Get the card data
+    const playerNum = parseInt(cardId[0]);
+    const card = gameState.playerCards[`player${playerNum}cards`]?.cards?.[cardId];
+    
+    if (!card || !Array.isArray(card.effects)) return null;
+
+    // Find Zarya token on this card
+    const zaryaToken = card.effects.find(effect => 
+        effect?.hero === 'zarya' && effect?.type === 'zarya-shield'
+    );
+
+    if (!zaryaToken || zaryaToken.amount <= 0) return null;
+
+    return (
+        <div key={`zarya-token-${cardId}-${zaryaToken.amount}`} className="zarya-token-overlay" style={{
+            position: 'absolute',
+            bottom: '5px',
+            right: '5px',
+            zIndex: 15,
+            pointerEvents: 'none',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+        }}>
+            <div className="zarya-token-icon" style={{
+                width: '24px',
+                height: '24px',
+                backgroundImage: `url(${heroIconImages['zarya-icon']})`,
+                backgroundSize: 'contain',
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'center',
+                position: 'relative',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border: '2px solid #ff6b35',
+                borderRadius: '50%',
+                backgroundColor: 'rgba(0, 0, 0, 0.7)'
+            }}>
+                <span style={{
+                    fontSize: '12px',
+                    fontWeight: 'bold',
+                    color: '#ff6b35',
+                    textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+                    position: 'absolute',
+                    top: '-8px',
+                    right: '-8px',
+                    background: 'rgba(0, 0, 0, 0.8)',
+                    borderRadius: '50%',
+                    width: '16px',
+                    height: '16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    border: '1px solid #ff6b35'
+                }}>
+                    {zaryaToken.amount}
+                </span>
+            </div>
+        </div>
+    );
+}
+```
+
+#### Card Integration
+```javascript
+// In Card.js - Add Zarya token overlay
+import ZaryaTokenOverlay from '../effects/ZaryaTokenOverlay';
+
+// Inside the card component
+<ZaryaTokenOverlay cardId={playerHeroId} />
+```
+
+### Multi-Target Selection Pattern
+
+#### Ultimate Implementation
+```javascript
+export async function onUltimate({ playerHeroId, rowId, cost }) {
+    try {
+        // Play ultimate audio
+        playAudioByKey('zarya-ultimate');
+        
+        // Get current Zarya tokens on your side
+        const playerNum = parseInt(playerHeroId[0]);
+        const totalZaryaTokens = countZaryaTokensOnSide(playerNum);
+        
+        // Calculate damage per target (4 - tokens, minimum 1)
+        const damagePerTarget = Math.max(1, 4 - totalZaryaTokens);
+        
+        // Select up to 3 enemy heroes
+        const targets = [];
+        for (let i = 0; i < 3; i++) {
+            const target = await selectCardTarget('enemy');
+            if (!target) break; // Right-click cancel
+            targets.push(target);
+        }
+        
+        if (targets.length === 0) {
+            showToast('Particle Cannon: No targets selected');
+            return;
+        }
+        
+        // Play resolve audio
+        playAudioByKey('zarya-ultimate-resolve');
+        
+        // Deal damage to each target
+        targets.forEach(target => {
+            dealDamage(target.cardId, target.rowId, damagePerTarget, false, playerHeroId);
+            
+            // Show floating combat text
+            effectsBus.publish(Effects.showDamage({
+                cardId: target.cardId,
+                amount: damagePerTarget
+            }));
+        });
+        
+        // Track ultimate usage
+        window.__ow_trackUltimateUsed?.(playerHeroId);
+        
+    } catch (error) {
+        console.error('Zarya Ultimate Error:', error);
+    }
+}
+```
+
+### Key Implementation Patterns
+
+#### 1. Single Token with Amount
+- **Pattern**: Create one token with `amount` property instead of multiple individual tokens
+- **Benefits**: Easier to manage, better performance, cleaner state
+- **Usage**: `zaryaToken.amount` represents total charges
+
+#### 2. Shield-Piercing Respect
+- **Pattern**: Check `!ignoreShields` before token absorption
+- **Benefits**: Tokens behave identically to normal shields
+- **Usage**: `if (finalAmount > 0 && !ignoreShields && window.__ow_getRow)`
+
+#### 3. Token State Updates
+- **Pattern**: Remove old token, add updated token with delay
+- **Benefits**: Avoids read-only property errors, ensures proper state updates
+- **Usage**: `setTimeout(() => { window.__ow_appendCardEffect?.(cardId, updatedToken); }, 10);`
+
+#### 4. Visual Re-rendering
+- **Pattern**: Use `key` prop with changing values to force re-renders
+- **Benefits**: Ensures overlay updates when token amount changes
+- **Usage**: `key={\`zarya-token-${cardId}-${zaryaToken.amount}\`}`
+
+#### 5. Icon Import System
+- **Pattern**: Use `heroIconImages` mapping instead of hardcoded paths
+- **Benefits**: Consistent with other icons, proper file format handling
+- **Usage**: `backgroundImage: \`url(${heroIconImages['zarya-icon']})\``
+
+### Common Pitfalls
+
+#### 1. Read-Only Property Errors
+**Problem**: Directly mutating `zaryaToken.amount` causes errors
+**Solution**: Create new token object and use proper state update functions
+
+#### 2. Visual Update Issues
+**Problem**: Overlay doesn't update when token amount changes
+**Solution**: Use `key` prop with changing values to force re-renders
+
+#### 3. Shield-Piercing Bypass
+**Problem**: Tokens absorb damage even when `ignoreShields = true`
+**Solution**: Add `!ignoreShields` condition to token absorption logic
+
+#### 4. Token Duplication
+**Problem**: Multiple tokens created instead of updating existing one
+**Solution**: Remove old token before adding updated one
+
+#### 5. File Format Mismatch
+**Problem**: Using wrong file extension (`.png` vs `.jpg`)
+**Solution**: Use proper import system with `heroIconImages` mapping
+
+### Testing Checklist
+
+#### Basic Functionality
+- [ ] Particle Barrier places 3 tokens on selected hero
+- [ ] Tokens display correct count in overlay
+- [ ] Tokens absorb damage like shields
+- [ ] Tokens respect shield-piercing abilities
+- [ ] Tokens deplete correctly when taking damage
+- [ ] Tokens disappear when depleted
+
+#### Ultimate Functionality
+- [ ] Particle Cannon selects up to 3 targets
+- [ ] Right-click cancels target selection
+- [ ] Damage calculation includes token reduction
+- [ ] Minimum 1 damage per target
+- [ ] Floating combat text shows for each target
+- [ ] Audio plays correctly
+
+#### Visual System
+- [ ] Token overlay appears on correct cards
+- [ ] Overlay updates when token count changes
+- [ ] Correct icon displays (zarya-icon.jpg)
+- [ ] Orange styling matches design
+- [ ] Overlay disappears when tokens depleted
+
+#### Edge Cases
+- [ ] No tokens on side (damage = 4)
+- [ ] All tokens depleted (damage = 1)
+- [ ] Shield-piercing abilities bypass tokens
+- [ ] Multiple Zarya tokens on different cards
+- [ ] Token updates during damage absorption
+
+### Future Enhancements
+
+#### Advanced Token Systems
+- **Token Transfer**: Allow tokens to move between heroes
+- **Token Decay**: Tokens reduce over time
+- **Token Interactions**: Tokens affect other abilities
+
+#### Visual Improvements
+- **Animation**: Smooth token count transitions
+- **Effects**: Glow effects for active tokens
+- **Particles**: Visual effects when tokens absorb damage
+
+#### Balance Considerations
+- **Token Limits**: Maximum tokens per hero
+- **Cost Scaling**: Ultimate cost based on tokens
+- **Synergy Integration**: Tokens affect row synergy
+
+### Recommendation
+
+**Zarya's implementation demonstrates the gold standard for custom token systems.** The single-token-with-amount pattern, shield-piercing integration, and proper visual updates make it a perfect reference for future hero implementations that require similar mechanics.
+
+The key lesson is that custom effects should behave identically to built-in systems (shields, damage, etc.) while providing the flexibility to add custom visual and mechanical elements.

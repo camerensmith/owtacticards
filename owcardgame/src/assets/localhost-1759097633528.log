@@ -1,0 +1,462 @@
+ Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+ Warning: Connect(Droppable): Support for defaultProps will be removed from memo components in a future major release. Use JavaScript default parameters instead.
+    at div
+    at CardDisplay (http://localhost:3000/owcardgame/static/js/bundle.js:98887:56)
+    at div
+    at div
+    at PlayerArea (http://localhost:3000/owcardgame/static/js/bundle.js:99389:56)
+    at div
+    at PlayerHalf (http://localhost:3000/owcardgame/static/js/bundle.js:99965:56)
+    at Provider (http://localhost:3000/owcardgame/static/js/bundle.js:66817:20)
+    at App (http://localhost:3000/owcardgame/static/js/bundle.js:39199:25)
+    at ErrorBoundary (http://localhost:3000/owcardgame/static/js/bundle.js:33412:35)
+    at DragDropContext (http://localhost:3000/owcardgame/static/js/bundle.js:39323:19)
+    at div
+    at div
+    at App (http://localhost:3000/owcardgame/static/js/bundle.js:78279:82)
+printWarning @ bundle.js:40754
+ CardDisplay mounted with droppableId: player1hand rowId: player1hand
+ CardDisplay mounted with droppableId: 1b rowId: 1b
+ CardDisplay mounted with droppableId: 1m rowId: 1m
+ CardDisplay mounted with droppableId: 1f rowId: 1f
+ CardDisplay mounted with droppableId: 2f rowId: 2f
+ CardDisplay mounted with droppableId: 2m rowId: 2m
+ CardDisplay mounted with droppableId: 2b rowId: 2b
+ CardDisplay mounted with droppableId: player2hand rowId: player2hand
+ TurnEffectsRunner: useEffect triggered Object
+ TurnEffectsRunner: Turn change check Object
+ TurnEffectsRunner: useEffect triggered Object
+ TurnEffectsRunner: Turn change check Object
+ HealthCounter for 2mccree: Object
+ HealthCounter: Showing normal HP 3 for 2mccree
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zenyatta: Object
+ HealthCounter: Showing normal HP 2 for 2zenyatta
+ HealthCounter for 2mei: Object
+ HealthCounter: Showing normal HP 4 for 2mei
+ HealthCounter for 2mccree: Object
+ HealthCounter: Showing normal HP 3 for 2mccree
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zenyatta: Object
+ HealthCounter: Showing normal HP 2 for 2zenyatta
+ HealthCounter for 2mei: Object
+ HealthCounter: Showing normal HP 4 for 2mei
+ Object
+ HealthCounter for 2mccree: Object
+ HealthCounter: Showing normal HP 3 for 2mccree
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zenyatta: Object
+ HealthCounter: Showing normal HP 2 for 2zenyatta
+ HealthCounter for 2mei: Object
+ HealthCounter: Showing normal HP 4 for 2mei
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2mccree: Object
+ HealthCounter: Showing normal HP 3 for 2mccree
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zenyatta: Object
+ HealthCounter: Showing normal HP 2 for 2zenyatta
+ HealthCounter for 2mei: Object
+ HealthCounter: Showing normal HP 4 for 2mei
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2mccree: Object
+ HealthCounter: Showing normal HP 3 for 2mccree
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zenyatta: Object
+ HealthCounter: Showing normal HP 2 for 2zenyatta
+ HealthCounter for 2mei: Object
+ HealthCounter: Showing normal HP 4 for 2mei
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ Attempting to play placement sound...
+ Placement audio source: /owcardgame/static/media/placement.445605f26d71501234a7.mp3
+ Created placement audio object: 
+ Playing zarya enter sound...
+ HealthCounter for 2mccree: Object
+ HealthCounter: Showing normal HP 3 for 2mccree
+ HealthCounter for 2zenyatta: Object
+ HealthCounter: Showing normal HP 2 for 2zenyatta
+ HealthCounter for 2mei: Object
+ HealthCounter: Showing normal HP 4 for 2mei
+ TurnEffectsRunner: useEffect triggered Object
+ TurnEffectsRunner: Turn change check Object
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2mccree: Object
+ HealthCounter: Showing normal HP 3 for 2mccree
+ HealthCounter for 2zenyatta: Object
+ HealthCounter: Showing normal HP 2 for 2zenyatta
+ HealthCounter for 2mei: Object
+ HealthCounter: Showing normal HP 4 for 2mei
+ TurnEffectsRunner: useEffect triggered Object
+ TurnEffectsRunner: Turn change check Object
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2mccree: Object
+ HealthCounter: Showing normal HP 3 for 2mccree
+ HealthCounter for 2zenyatta: Object
+ HealthCounter: Showing normal HP 2 for 2zenyatta
+ HealthCounter for 2mei: Object
+ HealthCounter: Showing normal HP 4 for 2mei
+ Placement sound played successfully
+ zarya enter sound played successfully
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2mccree: Object
+ HealthCounter: Showing normal HP 3 for 2mccree
+ HealthCounter for 2zenyatta: Object
+ HealthCounter: Showing normal HP 2 for 2zenyatta
+ HealthCounter for 2mei: Object
+ HealthCounter: Showing normal HP 4 for 2mei
+ TurnEffectsRunner: useEffect triggered Object
+ TurnEffectsRunner: Turn change check Object
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 2mccree: Object
+ HealthCounter: Showing normal HP 3 for 2mccree
+ HealthCounter for 2zenyatta: Object
+ HealthCounter: Showing normal HP 2 for 2zenyatta
+ HealthCounter for 2mei: Object
+ HealthCounter: Showing normal HP 4 for 2mei
+ HealthCounter for 1doomfist: Object
+ HealthCounter: Showing normal HP 4 for 1doomfist
+ HealthCounter for 1roadhog: Object
+ HealthCounter: Showing normal HP 5 for 1roadhog
+ HealthCounter for 1lifeweaver: Object
+ HealthCounter: Showing normal HP 3 for 1lifeweaver
+ HealthCounter for 1bastion: Object
+ HealthCounter: Showing normal HP 4 for 1bastion
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ Player 1 drew zarya
+ Playing zarya intro sound...
+ TurnEffectsRunner: useEffect triggered Object
+ TurnEffectsRunner: Turn change check Object
+ TurnEffectsRunner: Turn changed, processing effects
+ Lifeweaver: Starting temporary HP cleanup for player 1
+ Lifeweaver: No temporary HP effects found to clean up for player 1
+ Lifeweaver: Temporary HP cleanup completed
+ TurnEffectsRunner: Checking row 1b with 0 ally effects and 0 enemy effects
+ TurnEffectsRunner: Checking row 1m with 0 ally effects and 0 enemy effects
+ TurnEffectsRunner: Checking row 1f with 0 ally effects and 0 enemy effects
+ HealthCounter for 1doomfist: Object
+ HealthCounter: Showing normal HP 4 for 1doomfist
+ HealthCounter for 1roadhog: Object
+ HealthCounter: Showing normal HP 5 for 1roadhog
+ HealthCounter for 1lifeweaver: Object
+ HealthCounter: Showing normal HP 3 for 1lifeweaver
+ HealthCounter for 1bastion: Object
+ HealthCounter: Showing normal HP 4 for 1bastion
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ TurnEffectsRunner: useEffect triggered Object
+ TurnEffectsRunner: Turn change check Object
+ HealthCounter for 1doomfist: Object
+ HealthCounter: Showing normal HP 4 for 1doomfist
+ HealthCounter for 1roadhog: Object
+ HealthCounter: Showing normal HP 5 for 1roadhog
+ HealthCounter for 1lifeweaver: Object
+ HealthCounter: Showing normal HP 3 for 1lifeweaver
+ HealthCounter for 1bastion: Object
+ HealthCounter: Showing normal HP 4 for 1bastion
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ HealthCounter for 1zarya: Object
+ HealthCounter: Showing normal HP 4 for 1zarya
+ zarya intro sound played successfully
+ HealthCounter for 1doomfist: Object
+ HealthCounter: Showing normal HP 4 for 1doomfist
+ HealthCounter for 1roadhog: Object
+ HealthCounter: Showing normal HP 5 for 1roadhog
+ HealthCounter for 1lifeweaver: Object
+ HealthCounter: Showing normal HP 3 for 1lifeweaver
+ HealthCounter for 1bastion: Object
+ HealthCounter: Showing normal HP 4 for 1bastion
+ HealthCounter for 1zarya: Object
+ HealthCounter: Showing normal HP 4 for 1zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ Object
+ HealthCounter for 1bastion: Object
+ HealthCounter: Showing normal HP 4 for 1bastion
+ HealthCounter for 1bastion: Object
+ HealthCounter: Showing normal HP 4 for 1bastion
+ HealthCounter for 1bastion: Object
+ HealthCounter: Showing normal HP 4 for 1bastion
+ HealthCounter for 1bastion: Object
+ HealthCounter: Showing normal HP 4 for 1bastion
+ HealthCounter for 1bastion: Object
+ HealthCounter: Showing normal HP 4 for 1bastion
+ HealthCounter for 1bastion: Object
+ HealthCounter: Showing normal HP 4 for 1bastion
+ HealthCounter for 1bastion: Object
+ HealthCounter: Showing normal HP 4 for 1bastion
+ HealthCounter for 1roadhog: Object
+ HealthCounter: Showing normal HP 5 for 1roadhog
+ HealthCounter for 1lifeweaver: Object
+ HealthCounter: Showing normal HP 3 for 1lifeweaver
+ HealthCounter for 1bastion: Object
+ HealthCounter: Showing normal HP 4 for 1bastion
+ HealthCounter for 1zarya: Object
+ HealthCounter: Showing normal HP 4 for 1zarya
+ HealthCounter for 1bastion: Object
+ HealthCounter: Showing normal HP 4 for 1bastion
+ HealthCounter for 1bastion: Object
+ HealthCounter: Showing normal HP 4 for 1bastion
+ HealthCounter for 1doomfist: Object
+ HealthCounter: Showing normal HP 4 for 1doomfist
+ HealthCounter for 1roadhog: Object
+ HealthCounter: Showing normal HP 5 for 1roadhog
+ HealthCounter for 1lifeweaver: Object
+ HealthCounter: Showing normal HP 3 for 1lifeweaver
+ HealthCounter for 1bastion: Object
+ HealthCounter: Showing normal HP 4 for 1bastion
+ HealthCounter for 1zarya: Object
+ HealthCounter: Showing normal HP 4 for 1zarya
+ HealthCounter for 1bastion: Object
+ HealthCounter: Showing normal HP 4 for 1bastion
+ HealthCounter for 1bastion: Object
+ HealthCounter: Showing normal HP 4 for 1bastion
+ HealthCounter for 1bastion: Object
+ HealthCounter: Showing normal HP 4 for 1bastion
+ HealthCounter for 1bastion: Object
+ HealthCounter: Showing normal HP 4 for 1bastion
+ HealthCounter for 1bastion: Object
+ HealthCounter: Showing normal HP 4 for 1bastion
+ HealthCounter for 1bastion: Object
+ HealthCounter: Showing normal HP 4 for 1bastion
+ HealthCounter for 1bastion: Object
+ HealthCounter: Showing normal HP 4 for 1bastion
+ HealthCounter for 1bastion: Object
+ HealthCounter: Showing normal HP 4 for 1bastion
+ HealthCounter for 1bastion: Object
+ HealthCounter: Showing normal HP 4 for 1bastion
+ HealthCounter for 1bastion: Object
+ HealthCounter: Showing normal HP 4 for 1bastion
+ HealthCounter for 1bastion: Object
+ HealthCounter: Showing normal HP 4 for 1bastion
+ HealthCounter for 1bastion: Object
+ HealthCounter: Showing normal HP 4 for 1bastion
+ HealthCounter for 1bastion: Object
+ HealthCounter: Showing normal HP 4 for 1bastion
+ HealthCounter for 1bastion: Object
+ HealthCounter: Showing normal HP 4 for 1bastion
+ HealthCounter for 1bastion: Object
+ HealthCounter: Showing normal HP 4 for 1bastion
+ HealthCounter for 1bastion: Object
+ HealthCounter: Showing normal HP 4 for 1bastion
+ HealthCounter for 1bastion: Object
+ HealthCounter: Showing normal HP 4 for 1bastion
+ HealthCounter for 1bastion: Object
+ HealthCounter: Showing normal HP 4 for 1bastion
+ HealthCounter for 1bastion: Object
+ HealthCounter: Showing normal HP 4 for 1bastion
+ HealthCounter for 1bastion: Object
+ HealthCounter: Showing normal HP 4 for 1bastion
+ HealthCounter for 1bastion: Object
+ HealthCounter: Showing normal HP 4 for 1bastion
+ HealthCounter for 1bastion: Object
+ HealthCounter: Showing normal HP 4 for 1bastion
+ HealthCounter for 1bastion: Object
+ HealthCounter: Showing normal HP 4 for 1bastion
+ HealthCounter for 1bastion: Object
+ HealthCounter: Showing normal HP 4 for 1bastion
+ HealthCounter for 1bastion: Object
+ HealthCounter: Showing normal HP 4 for 1bastion
+ HealthCounter for 1bastion: Object
+ HealthCounter: Showing normal HP 4 for 1bastion
+ HealthCounter for 1bastion: Object
+ HealthCounter: Showing normal HP 4 for 1bastion
+ HealthCounter for 1bastion: Object
+ HealthCounter: Showing normal HP 4 for 1bastion
+ HealthCounter for 1bastion: Object
+ HealthCounter: Showing normal HP 4 for 1bastion
+ HealthCounter for 1bastion: Object
+ HealthCounter: Showing normal HP 4 for 1bastion
+ HealthCounter for 1bastion: Object
+ HealthCounter: Showing normal HP 4 for 1bastion
+ HealthCounter for 1bastion: Object
+ HealthCounter: Showing normal HP 4 for 1bastion
+ Attempting to play placement sound...
+ Placement audio source: /owcardgame/static/media/placement.445605f26d71501234a7.mp3
+ Created placement audio object: 
+ Playing bastion enter sound...
+ HealthCounter for 1doomfist: Object
+ HealthCounter: Showing normal HP 4 for 1doomfist
+ HealthCounter for 1roadhog: Object
+ HealthCounter: Showing normal HP 5 for 1roadhog
+ HealthCounter for 1lifeweaver: Object
+ HealthCounter: Showing normal HP 3 for 1lifeweaver
+ HealthCounter for 1zarya: Object
+ HealthCounter: Showing normal HP 4 for 1zarya
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ TurnEffectsRunner: useEffect triggered Object
+ TurnEffectsRunner: Turn change check Object
+ HealthCounter for 1doomfist: Object
+ HealthCounter: Showing normal HP 4 for 1doomfist
+ HealthCounter for 1roadhog: Object
+ HealthCounter: Showing normal HP 5 for 1roadhog
+ HealthCounter for 1lifeweaver: Object
+ HealthCounter: Showing normal HP 3 for 1lifeweaver
+ HealthCounter for 1zarya: Object
+ HealthCounter: Showing normal HP 4 for 1zarya
+ HealthCounter for 1bastion: Object
+ HealthCounter: Showing normal HP 4 for 1bastion
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+ TurnEffectsRunner: useEffect triggered Object
+ TurnEffectsRunner: Turn change check Object
+ HealthCounter for 1doomfist: Object
+ HealthCounter: Showing normal HP 4 for 1doomfist
+ HealthCounter for 1roadhog: Object
+ HealthCounter: Showing normal HP 5 for 1roadhog
+ HealthCounter for 1lifeweaver: Object
+ HealthCounter: Showing normal HP 3 for 1lifeweaver
+ HealthCounter for 1zarya: Object
+ HealthCounter: Showing normal HP 4 for 1zarya
+ HealthCounter for 1bastion: Object
+ HealthCounter: Showing normal HP 4 for 1bastion
+ HealthCounter for 2zarya: Object
+ HealthCounter: Showing normal HP 4 for 2zarya
+App.js:2385 Placement sound played successfully
+App.js:2400 bastion enter sound played successfully
+HealthCounter.js:6 HealthCounter for 1doomfist: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 4 for 1doomfist
+HealthCounter.js:6 HealthCounter for 1roadhog: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 5 for 1roadhog
+HealthCounter.js:6 HealthCounter for 1lifeweaver: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 3 for 1lifeweaver
+HealthCounter.js:6 HealthCounter for 1zarya: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 4 for 1zarya
+HealthCounter.js:6 HealthCounter for 1bastion: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 4 for 1bastion
+HealthCounter.js:6 HealthCounter for 2zarya: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 4 for 2zarya
+damageBus.js:24 DamageBus - Checking invulnerability for 2zarya at index 0 in row 2f Object
+damageBus.js:33 DamageBus - Target 2zarya is NOT invulnerable, proceeding with damage
+damageBus.js:327 DamageBus - Zarya Token on 2zarya absorbed 1 damage for 2zarya, remaining tokens: 2
+damageBus.js:343 DamageBus - Updated Zarya token on 2zarya to 2 charges
+damageBus.js:357 DamageBus - Publishing damage event: Object
+HealthCounter.js:6 HealthCounter for 1doomfist: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 4 for 1doomfist
+HealthCounter.js:6 HealthCounter for 1roadhog: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 5 for 1roadhog
+HealthCounter.js:6 HealthCounter for 1lifeweaver: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 3 for 1lifeweaver
+HealthCounter.js:6 HealthCounter for 1zarya: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 4 for 1zarya
+HealthCounter.js:6 HealthCounter for 1bastion: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 4 for 1bastion
+HealthCounter.js:6 HealthCounter for 2zarya: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 4 for 2zarya
+TurnEffectsRunner.js:16 TurnEffectsRunner: useEffect triggered Object
+TurnEffectsRunner.js:27 TurnEffectsRunner: Turn change check Object
+HealthCounter.js:6 HealthCounter for 1doomfist: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 4 for 1doomfist
+HealthCounter.js:6 HealthCounter for 1roadhog: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 5 for 1roadhog
+HealthCounter.js:6 HealthCounter for 1lifeweaver: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 3 for 1lifeweaver
+HealthCounter.js:6 HealthCounter for 1zarya: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 4 for 1zarya
+HealthCounter.js:6 HealthCounter for 1bastion: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 4 for 1bastion
+HealthCounter.js:6 HealthCounter for 2zarya: Object
+HealthCounter.js:25 HealthCounter: Showing normal HP 4 for 2zarya

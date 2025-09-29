@@ -501,8 +501,8 @@
     "middle_synergy": 2,
     "back_power": 1,
     "back_synergy": 3,
-    "on_enter1": "Harmony — Place Zenyatta token on target Ally. That Ally is healed for 1 health now and at the start of each of your turns.",
-    "on_enter2": "Discord — Place Zenyatta token on an enemy Hero. If that Hero takes damage they take +1 damage.",
+    "on_enter1": "Harmony — Place Zenyatta token on target Ally. That Ally is healed for 1 health at the start of your turn, then (if able) jumps to a new Ally.",
+    "on_enter2": "Discord — Place Zenyatta token on an enemy Hero. That Hero takes +1 damage from attacks. Then (if able) jumps to another enemy Hero at the start of their turn.",
     "ultimate": "Transcendence (3): All Allies in Zenyatta’s row are healed by 2. Zenyatta is immune to damage for the remainder of the round."
   }
 ]

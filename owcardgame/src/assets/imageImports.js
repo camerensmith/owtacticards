@@ -58,7 +58,7 @@ import torbjornIcon from './heroes/cards/torbjorn-icon.webp';
 import widowmakerIcon from './heroes/cards/widowmaker-icon.webp';
 import wreckingballIcon from './heroes/cards/wreckingball-icon.webp';
 import zaryaIcon from './heroes/cards/zarya-icon.webp';
-import zenyattaIcon from './heroes/cards/zenyatta-icon.webp';
+import zenyattaIcon from './heroes/cards/zenyatta-icon.jpg';
 
 // Hero card focus images
 import anaFocus from './heroes/cardfocus/ana.webp';
@@ -288,8 +288,11 @@ import winstonUltimateResolve from './audio/winston-ultimate-resolve.mp3';
 import wreckingballIntro from './audio/wreckingball-intro.mp3';
 import wreckingballEnter from './audio/wreckingball-enter.mp3';
 import wreckingballUltimate from './audio/wreckingball-ultimate.mp3';
-import zaryaBarrier from './audio/zarya-barrier.mp3';
-import zaryaUlt from './audio/zarya-ult.mp3';
+import zaryaIntro from './audio/zarya-intro.mp3';
+import zaryaEnter from './audio/zarya-enter.mp3';
+import zaryaAbility1 from './audio/zarya-ability1.mp3';
+import zaryaUltimate from './audio/zarya-ultimate.mp3';
+import zaryaUltimateResolve from './audio/zarya-ultimate-resolve.mp3';
 import zenyattaDiscord from './audio/zenyatta-discord.mp3';
 import zenyattaUlt from './audio/zenyatta-ult.mp3';
 
@@ -504,8 +507,11 @@ export const abilityAudioFiles = {
     'wreckingball-intro': wreckingballIntro,
     'wreckingball-enter': wreckingballEnter,
     'wreckingball-ultimate': wreckingballUltimate,
-    'zarya-barrier': zaryaBarrier,
-    'zarya-ult': zaryaUlt,
+    'zarya-intro': zaryaIntro,
+    'zarya-enter': zaryaEnter,
+    'zarya-ability1': zaryaAbility1,
+    'zarya-ultimate': zaryaUltimate,
+    'zarya-ultimate-resolve': zaryaUltimateResolve,
     'zenyatta-discord': zenyattaDiscord,
     'zenyatta-ult': zenyattaUlt,
 };

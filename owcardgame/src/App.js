@@ -1023,6 +1023,11 @@ function checkOnEnterAbilities(playerHeroId, rowId, playerNum) {
         abilitiesIndex.wreckingball.onEnter({ playerHeroId, rowId });
         return;
     }
+
+    if (heroId === 'zarya' && abilitiesIndex?.zarya?.onEnter) {
+        abilitiesIndex.zarya.onEnter({ playerHeroId, rowId });
+        return;
+    }
     if (heroId === 'turret' && abilitiesIndex?.turret?.onEnter) {
         abilitiesIndex.turret.onEnter({ playerHeroId, rowId });
         return;
@@ -1663,6 +1668,7 @@ export default function App() {
                     const useCard = Math.min(newCardShield, damageLeft);
                     newCardShield -= useCard;
                     damageLeft -= useCard;
+
                 }
 
                 // Apply remaining to health
@@ -2068,6 +2074,13 @@ export default function App() {
             abilitiesIndex.wreckingball.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
         } catch (e) {
             console.log('Error executing WRECKING BALL ultimate:', e);
+        }
+    } else if (heroId === 'zarya' && abilitiesIndex?.zarya?.onUltimate) {
+        try {
+            window.__ow_trackUltimateUsed?.(heroId, 'Zarya', 'Particle Cannon', playerNum, rowId, adjustedCost);
+            abilitiesIndex.zarya.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
+        } catch (e) {
+            console.log('Error executing ZARYA ultimate:', e);
         }
     } else {
                         console.log(`Executing ultimate for ${playerHeroId} in ${rowId} (cost: ${adjustedCost})`);

@@ -12,6 +12,7 @@ import MercyDamageOverlay from '../effects/MercyDamageOverlay';
 import AnnihilationOverlay from '../effects/AnnihilationOverlay';
 import ChainHookOverlay from '../effects/ChainHookOverlay';
 import ForgeHammerOverlay from '../effects/ForgeHammerOverlay';
+import ZaryaTokenOverlay from '../effects/ZaryaTokenOverlay';
 import { heroCardImages } from '../../assets/imageImports';
 import ContextMenu from './ContextMenu';
 import actionsBus, { Actions } from '../../abilities/engine/actionsBus';
@@ -288,6 +289,9 @@ export default function Card(props) {
                                           shield={shield}
                                       />
                                   )
+                                : null}
+                            {turnState.playerTurn === playerNum || isPlayed
+                                ? <ZaryaTokenOverlay cardId={playerHeroId} />
                                 : null}
                             <img
                                 onLoad={() => setImageLoaded(playerHeroId)}
