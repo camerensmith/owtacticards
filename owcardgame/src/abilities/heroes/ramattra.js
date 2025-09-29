@@ -1,4 +1,5 @@
 import { dealDamage } from '../engine/damageBus';
+import effectsBus, { Effects } from '../engine/effectsBus';
 import { showMessage as showToast, clearMessage as clearToast } from '../engine/targetingBus';
 import { selectCardTarget, selectRowTarget } from '../engine/targeting';
 import { playAudioByKey } from '../../assets/imageImports';
@@ -80,24 +81,51 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
         }
         
         const targetRow = window.__ow_getRow?.(target.rowId);
-        const enemyHeroes = targetRow?.cardIds || [];
-        
-        // Check if there are any heroes to shuffle
-        if (enemyHeroes.length === 0) {
+        const cardIds = targetRow?.cardIds ? [...targetRow.cardIds] : [];
+
+        if (cardIds.length === 0) {
             showToast('Ramattra: No enemies in target row - transforming anyway');
             setTimeout(() => clearToast(), 2000);
         } else {
-            // Shuffle the enemy heroes randomly
-            const shuffledHeroes = [...enemyHeroes].sort(() => Math.random() - 0.5);
-            window.__ow_setRowArray?.(target.rowId, shuffledHeroes);
-            
-            // Deal 1 damage to hero in same column as Ramattra
-            const ramattraRow = window.__ow_getRow?.(rowId);
-            const ramattraIndex = ramattraRow?.cardIds?.indexOf(playerHeroId) || 0;
-            
-            if (shuffledHeroes[ramattraIndex]) {
-                const targetHero = shuffledHeroes[ramattraIndex];
-                dealDamage(targetHero, target.rowId, 1, false, playerHeroId);
+            // Determine indices of shufflable units: include living and dead, exclude turrets
+            const shufflableIndices = [];
+            const shufflableIds = [];
+            for (let i = 0; i < cardIds.length; i++) {
+                const cid = cardIds[i];
+                if (!cid) continue;
+                const card = window.__ow_getCard?.(cid);
+                // Exclude turrets (immobile)
+                if (card && card.turret === true) continue;
+                // Include both living and dead units
+                shufflableIndices.push(i);
+                shufflableIds.push(cid);
+            }
+
+            if (shufflableIds.length < 2) {
+                // Nothing to shuffle or damage
+                showToast('Ramattra: Not enough units to shuffle in that row');
+                setTimeout(() => clearToast(), 1500);
+            } else {
+                // Shuffle the list of shufflable IDs
+                const shuffledIds = [...shufflableIds].sort(() => Math.random() - 0.5);
+
+                // Apply shuffled IDs back only to the shufflable indices, leave turrets in place
+                const newCardIds = [...cardIds];
+                shufflableIndices.forEach((idx, k) => {
+                    newCardIds[idx] = shuffledIds[k];
+                });
+
+                // Commit new row order
+                window.__ow_setRowArray?.(target.rowId, newCardIds);
+
+                // Deal 2 damage to all units that were part of the shuffle (respects shields)
+                for (const cid of shuffledIds) {
+                    const current = window.__ow_getCard?.(cid);
+                    // Skip if somehow became turret or nonexistent
+                    if (!current || current.turret === true) continue;
+                    dealDamage(cid, target.rowId, 2, false, playerHeroId);
+                    try { effectsBus.publish(Effects.showDamage(cid, 2)); } catch {}
+                }
             }
         }
         
