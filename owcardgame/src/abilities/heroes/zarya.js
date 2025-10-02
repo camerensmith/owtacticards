@@ -4,7 +4,7 @@ import { playAudioByKey } from '../../assets/imageImports';
 import { dealDamage } from '../engine/damageBus';
 import effectsBus, { Effects } from '../engine/effectsBus';
 
-export function onEnter({ playerHeroId, rowId }) {
+export async function onEnter({ playerHeroId, rowId }) {
     const playerNum = parseInt(playerHeroId[0]);
     
     try {
@@ -13,8 +13,9 @@ export function onEnter({ playerHeroId, rowId }) {
     
     showToast('Zarya: Select ally hero or right-click to place tokens on Zarya');
     
-    // Use async/await for targeting
-    selectCardTarget().then(target => {
+    try {
+        // Use AI targeting system
+        const target = await selectCardTarget({ isBuff: true });
         if (target) {
             // Validate target is on same team
             const targetPlayerNum = parseInt(target.cardId[0]);
@@ -44,7 +45,13 @@ export function onEnter({ playerHeroId, rowId }) {
             showToast('Zarya: Placed 3 Zarya tokens on herself');
             setTimeout(() => clearToast(), 2000);
         }
-    });
+    } catch (error) {
+        console.error('Zarya onEnter error:', error);
+        // Fallback: place tokens on Zarya herself
+        placeZaryaTokens(playerHeroId, 3);
+        showToast('Zarya: Placed 3 Zarya tokens on herself');
+        setTimeout(() => clearToast(), 2000);
+    }
 }
 
 export async function onUltimate({ playerHeroId, rowId, cost }) {
@@ -53,15 +60,48 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
     // Count Zarya tokens on your side of the board
     const zaryaTokens = countZaryaTokensOnSide(playerNum);
     
-    showToast('Zarya: Select up to 3 enemy heroes (right-click when done)');
-    
     const selectedTargets = [];
-    let targetCount = 0;
     const maxTargets = 3;
     
-    // Allow selecting up to 3 targets
-    while (targetCount < maxTargets) {
-        const target = await selectCardTarget();
+    // AI AUTO-SELECT: If AI is triggering, automatically select up to 3 best enemy targets
+    const isAI = window.__ow_isAITurn || window.__ow_aiTriggering;
+    if (isAI) {
+        // Get all enemy heroes
+        const enemyPlayerNum = playerNum === 1 ? 2 : 1;
+        const enemyRows = [`${enemyPlayerNum}f`, `${enemyPlayerNum}m`, `${enemyPlayerNum}b`];
+        const enemyHeroes = [];
+        
+        enemyRows.forEach(enemyRowId => {
+            const row = window.__ow_getRow?.(enemyRowId);
+            if (row && row.cardIds) {
+                row.cardIds.forEach(cardId => {
+                    const card = window.__ow_getCard?.(cardId);
+                    if (card && card.health > 0) {
+                        const power = card[`${enemyRowId[1]}_power`] || 0;
+                        enemyHeroes.push({ cardId, rowId: enemyRowId, power, health: card.health });
+                    }
+                });
+            }
+        });
+        
+        // Sort by priority: high power OR low health
+        enemyHeroes.sort((a, b) => {
+            const scoreA = a.power * 10 + (5 - a.health);
+            const scoreB = b.power * 10 + (5 - b.health);
+            return scoreB - scoreA;
+        });
+        
+        // Select top 3
+        selectedTargets.push(...enemyHeroes.slice(0, maxTargets));
+        console.log('Zarya AI selected targets:', selectedTargets);
+    } else {
+        // MANUAL SELECTION for human player
+        showToast('Zarya: Select up to 3 enemy heroes (right-click when done)');
+        let targetCount = 0;
+        
+        // Allow selecting up to 3 targets
+        while (targetCount < maxTargets) {
+            const target = await selectCardTarget({ isDamage: true });
         
         if (target) {
             // Validate target is enemy
@@ -89,6 +129,8 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
         }
     }
     
+    
+    }  // End of else (manual selection)
     if (selectedTargets.length > 0) {
         // Play ultimate sound
         try {
@@ -119,6 +161,8 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
 
 // Helper function to place Zarya tokens on a hero
 function placeZaryaTokens(cardId, amount) {
+    console.log(`Placing ${amount} Zarya tokens on ${cardId}`);
+    
     // Create a single token with the total amount
     const tokenId = `zarya-token-${Date.now()}`;
     const zaryaToken = {
@@ -131,8 +175,15 @@ function placeZaryaTokens(cardId, amount) {
         visual: 'zarya-icon'
     };
     
-        // Add to card effects using the proper function
-        window.__ow_appendCardEffect?.(cardId, zaryaToken);
+    console.log('Zarya token created:', zaryaToken);
+    
+    // Add to card effects using the proper function
+    if (window.__ow_appendCardEffect) {
+        window.__ow_appendCardEffect(cardId, zaryaToken);
+        console.log(`Zarya token added to ${cardId}`);
+    } else {
+        console.error('window.__ow_appendCardEffect not available');
+    }
 }
 
 // Helper function to count Zarya tokens on your side

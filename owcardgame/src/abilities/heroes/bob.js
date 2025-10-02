@@ -23,7 +23,7 @@ export function onEnter({ playerHeroId, rowId }) {
         showToast('BOB: Place token next to an enemy row');
 
         // Persist until a row is selected
-        selectRowTarget().then(({ rowId: targetRow }) => {
+        selectRowTarget({ isDamage: true }).then(({ rowId: targetRow }) => {
             // Clear visuals
             aimLineBus.clearArrow();
             clearToast();
@@ -60,7 +60,7 @@ export function onUltimate({ playerHeroId, rowId, cost = 1 }) {
     (async () => {
         try {
             showToast('Select target row for Smash');
-            const { rowId: targetRow } = await selectRowTarget();
+            const { rowId: targetRow } = await selectRowTarget({ isDamage: true });
             clearToast();
 
             const picks = [];

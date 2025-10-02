@@ -15,7 +15,7 @@ export async function onEnter({ playerHeroId, rowId }) {
     showToast('Sombra: Select target hero to hack');
     
     try {
-        const target = await selectCardTarget();
+        const target = await selectCardTarget({ isDebuff: true });
         if (!target) {
             clearToast();
             return;

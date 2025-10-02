@@ -14,6 +14,7 @@ let modalState = {
 };
 
 let modalListeners = [];
+let aiAutoSelectCallback = null; // When set, AI automatically selects instead of showing modal
 
 export const subscribeToModal = (listener) => {
     modalListeners.push(listener);
@@ -25,6 +26,18 @@ const notifyModalListeners = () => {
 };
 
 export const showChoiceModal = (heroName, choices, onSelect) => {
+    // If AI auto-select is enabled or AI is acting, let AI choose without showing modal
+    const aiActing = !!window.__ow_isAITurn || !!window.__ow_aiTriggering;
+    if (aiAutoSelectCallback || aiActing) {
+        const chooser = aiAutoSelectCallback || (() => 0);
+        console.log(`AI auto-selecting for ${heroName} from ${choices.length} choices:`, choices.map(c => c.title));
+        const aiChoice = chooser(heroName, choices);
+        console.log(`AI selected choice index ${aiChoice}: "${choices[aiChoice]?.title}"`);
+        const thinkingDelay = Math.floor(300 + Math.random() * 700);
+        setTimeout(() => { onSelect(aiChoice); }, thinkingDelay);
+        return;
+    }
+
     try { document.body.classList.add('modal-open'); } catch (e) {}
     modalState = {
         isOpen: true,
@@ -45,6 +58,15 @@ export const showInterruptModal = (heroName, abilityName, cost, currentSynergy) 
 };
 
 export const showTargetingModal = (heroName, abilityName, targetType, validTargets) => {
+    const aiActing = !!window.__ow_isAITurn || !!window.__ow_aiTriggering;
+    if (aiActing) {
+        // When AI is acting, never show the modal; publish an AI-targeting event instead
+        try {
+            publish('ai-targeting-request', { heroName, abilityName, targetType, validTargets });
+        } catch {}
+        return;
+    }
+
     try { document.body.classList.add('modal-open'); } catch (e) {}
     modalState = {
         isOpen: true,
@@ -87,4 +109,14 @@ export const showInterruptPrompt = (heroName, abilityName, cost, currentSynergy)
         return true;
     }
     return false;
+};
+
+// AI mode: set callback to auto-select choices
+export const setAIAutoSelect = (callback) => {
+    aiAutoSelectCallback = callback;
+};
+
+// AI mode: clear auto-select
+export const clearAIAutoSelect = () => {
+    aiAutoSelectCallback = null;
 };

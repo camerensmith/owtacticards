@@ -3,6 +3,7 @@ import { selectCardTarget } from '../engine/targeting';
 import { showMessage as showToast, clearMessage as clearToast } from '../engine/targetingBus';
 import { dealDamage } from '../engine/damageBus';
 import { getAudioFile } from '../../assets/imageImports';
+import { withAIContext } from '../engine/aiContextHelper';
 
 // Helper function to play audio by key
 function playAudioByKey(audioKey) {
@@ -27,10 +28,18 @@ export async function onEnter({ playerHeroId, rowId }) {
     } catch {}
     
     showToast('Brigitte: Select ally to heal');
-    
+
     try {
-        const target = await selectCardTarget();
+        const target = await selectCardTarget({ isHeal: true });
         if (target) {
+            // Validate target is an ally
+            const targetPlayerNum = parseInt(target.cardId[0]);
+            if (targetPlayerNum !== playerNum) {
+                showToast('Brigitte: Must target an ally!');
+                setTimeout(() => clearToast(), 2000);
+                return;
+            }
+
             // Heal the target
             const currentHealth = window.__ow_getCard?.(target.cardId)?.health || 0;
             const maxHealth = window.__ow_getMaxHealth?.(target.cardId) || 3;
@@ -93,7 +102,7 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
     
     try {
         // Select target enemy
-        const target = await selectCardTarget();
+        const target = await selectCardTarget({ isDamage: true });
         if (!target) {
             showToast('Brigitte ultimate cancelled');
             setTimeout(() => clearToast(), 1500);

@@ -4,7 +4,9 @@ import { dealDamage } from '../engine/damageBus';
 import effectsBus, { Effects } from '../engine/effectsBus';
 import crosshair from '../../assets/crosshair.svg';
 import { showMessage, clearMessage } from '../engine/targetingBus';
+import { selectCardTarget } from '../engine/targeting';
 import { getAudioFile, playAudioByKey } from '../../assets/imageImports';
+import { withAIContext } from '../engine/aiContextHelper';
 
 function setTargetingCursor(active) {
     try {
@@ -36,66 +38,119 @@ function playAbilitySound(abilityNumber) {
 // Ashe modular onEnter implementation
 export function onEnter({ playerHeroId, rowId }) {
     const playerNum = parseInt(playerHeroId[0]);
-    const onEnter1 = { name: 'The Viper', description: 'Deal 2 damage to one enemy ignoring shields.' };
-    const onEnter2 = { name: 'The Viper (Split Fire)', description: 'Deal 1 damage to two enemies in the same row ignoring shields.' };
+    const onEnter1 = {
+        name: 'The Viper',
+        title: 'The Viper',
+        description: 'Deal 2 damage to one enemy ignoring shields.'
+    };
+    const onEnter2 = {
+        name: 'The Viper (Split Fire)',
+        title: 'The Viper (Split Fire)',
+        description: 'Deal 1 damage to two enemies in the same row ignoring shields.'
+    };
 
-    showOnEnterChoice('Ashe', onEnter1, onEnter2, (choiceIndex) => {
+    showOnEnterChoice('Ashe', onEnter1, onEnter2, withAIContext(playerHeroId, async (choiceIndex) => {
         if (choiceIndex === 0) {
             // 2 damage ignoring shields to one enemy
-            setTargetingCursor(true);
-            showMessage('Select One Target!');
-            const handler = (e) => {
-                try { e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation && e.stopImmediatePropagation(); } catch (err) {}
-                const targetCardId = $(e.target).closest('.card').attr('id');
-                const targetRow = $(e.target).closest('.row').attr('id');
-                console.log('Ashe Ability 1 - Target clicked:', { targetCardId, targetRow, playerNum });
-                
-                if (targetRow[0] === 'p' || parseInt(targetRow[0]) === playerNum) {
-                    console.log('Ashe Ability 1 - Invalid target (own row or hand)');
-                    return;
-                }
-                
-                console.log('Ashe Ability 1 - Applying damage:', { targetCardId, targetRow, amount: 2, ignoreShields: true });
-                dealDamage(targetCardId, targetRow, 2, true, playerHeroId);
-                try { effectsBus.publish(Effects.showDamage(targetCardId, 2)); } catch {}
-                playAbilitySound(1); // voice line
-                playAudioByKey('ashe-shoot1');
+            
+            // AI AUTO-SELECT
+            const isAI = (window.__ow_isAITurn || window.__ow_aiTriggering) && playerNum === 2;
+            let target = null;
+            
+            if (isAI && window.__ow_aiUltimateTarget) {
+                target = window.__ow_aiUltimateTarget;
+                console.log("Ashe AI using provided target:", target);
+            } else if (!isAI) {
+                setTargetingCursor(true);
+                showMessage("Ashe: Select One Target!");
+                target = await selectCardTarget({ isDamage: true });
+            }
+            
+            if (!target || !target.cardId) {
+                console.log('Ashe: No valid target selected');
                 setTargetingCursor(false);
                 clearMessage();
-                $('.card').off('click', handler);
-            };
-            $('.card').on('click', handler);
+                return;
+            }
+            
+            try {
+                if (target) {
+                    // Validate target is enemy
+                    const targetPlayerNum = parseInt(target.cardId[0]);
+                    if (targetPlayerNum === playerNum) {
+                        showMessage('Ashe: Must target enemy!');
+                        setTimeout(() => clearMessage(), 2000);
+                        setTargetingCursor(false);
+                        return;
+                    }
+
+                    console.log('Ashe Ability 1 - Applying damage:', { targetCardId: target.cardId, targetRow: target.rowId, amount: 2, ignoreShields: true });
+                    dealDamage(target.cardId, target.rowId, 2, true, playerHeroId);
+                    try { effectsBus.publish(Effects.showDamage(target.cardId, 2)); } catch {}
+                    playAbilitySound(1); // voice line
+                    playAudioByKey('ashe-shoot1');
+                }
+            } catch (error) {
+                console.error('Ashe ability 1 error:', error);
+            }
+
+            setTargetingCursor(false);
+            clearMessage();
         } else if (choiceIndex === 1) {
             // 1 damage ignoring shields to two enemies in the same row
-            let selected = [];
             setTargetingCursor(true);
-            showMessage('Select Two Targets!');
-            const handler = (e) => {
-                try { e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation && e.stopImmediatePropagation(); } catch (err) {}
-                const targetCardId = $(e.target).closest('.card').attr('id');
-                const targetRow = $(e.target).closest('.row').attr('id');
-                if (targetRow[0] === 'p' || parseInt(targetRow[0]) === playerNum) return;
-                if (selected.length === 0) {
-                    selected.push({ targetCardId, targetRow });
-                    showMessage('Select Final Target!');
-                } else if (selected.length === 1) {
-                    if (selected[0].targetRow !== targetRow) return;
-                    selected.push({ targetCardId, targetRow });
-                    $('.card').off('click', handler);
-                    // Apply damage to both targets
-                    dealDamage(selected[0].targetCardId, selected[0].targetRow, 1, true, playerHeroId);
-                    dealDamage(selected[1].targetCardId, selected[1].targetRow, 1, true, playerHeroId);
-                    try { effectsBus.publish(Effects.showDamage(selected[0].targetCardId, 1)); } catch {}
-                    try { effectsBus.publish(Effects.showDamage(selected[1].targetCardId, 1)); } catch {}
-                    playAbilitySound(2); // voice line
-                    playAudioByKey('ashe-shoot2');
+            showMessage('Ashe: Select Two Targets!');
+
+            try {
+                const target1 = await selectCardTarget({ isDamage: true });
+                if (!target1) {
                     setTargetingCursor(false);
                     clearMessage();
+                    return;
                 }
-            };
-            $('.card').on('click', handler);
+
+                // Validate first target is enemy
+                const target1PlayerNum = parseInt(target1.cardId[0]);
+                if (target1PlayerNum === playerNum) {
+                    showMessage('Ashe: Must target enemies!');
+                    setTimeout(() => clearMessage(), 2000);
+                    setTargetingCursor(false);
+                    return;
+                }
+
+                showMessage('Ashe: Select Final Target!');
+                const target2 = await selectCardTarget({ isDamage: true });
+
+                if (!target2) {
+                    setTargetingCursor(false);
+                    clearMessage();
+                    return;
+                }
+
+                // Validate second target is enemy and same row
+                const target2PlayerNum = parseInt(target2.cardId[0]);
+                if (target2PlayerNum === playerNum || target1.rowId !== target2.rowId) {
+                    showMessage('Ashe: Targets must be enemies in the same row!');
+                    setTimeout(() => clearMessage(), 2000);
+                    setTargetingCursor(false);
+                    return;
+                }
+
+                // Apply damage to both targets
+                dealDamage(target1.cardId, target1.rowId, 1, true, playerHeroId);
+                dealDamage(target2.cardId, target2.rowId, 1, true, playerHeroId);
+                try { effectsBus.publish(Effects.showDamage(target1.cardId, 1)); } catch {}
+                try { effectsBus.publish(Effects.showDamage(target2.cardId, 1)); } catch {}
+                playAbilitySound(2); // voice line
+                playAudioByKey('ashe-shoot2');
+            } catch (error) {
+                console.error('Ashe ability 2 error:', error);
+            }
+
+            setTargetingCursor(false);
+            clearMessage();
         }
-    });
+    }));
 }
 
 export default { onEnter };

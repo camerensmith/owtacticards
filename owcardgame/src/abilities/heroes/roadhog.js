@@ -14,16 +14,24 @@ export async function onEnter({ playerHeroId, rowId }) {
     } catch {}
     
     showToast('Roadhog: Select target enemy');
-    
+
     try {
-        const target = await selectCardTarget();
+        const target = await selectCardTarget({ isDamage: true });
         if (!target) {
             clearToast();
             return;
         }
-        
+
+        // Validate target is not owned by the player who played Roadhog
+        const targetPlayerNum = parseInt(target.cardId[0]);
+        if (targetPlayerNum === playerNum) {
+            showToast('Roadhog: Cannot hook your own cards!');
+            setTimeout(() => clearToast(), 2000);
+            return;
+        }
+
         clearToast();
-        
+
         // Check if target is turret (immobile)
         const targetCard = window.__ow_getCard?.(target.cardId);
         if (targetCard && targetCard.id === 'turret') {
@@ -31,9 +39,8 @@ export async function onEnter({ playerHeroId, rowId }) {
             setTimeout(() => clearToast(), 2000);
             return;
         }
-        
+
         // Determine destination row (front -> middle -> back)
-        const targetPlayerNum = parseInt(target.rowId[0]);
         const enemyPlayer = targetPlayerNum;
         const frontRow = `${enemyPlayer}f`;
         const middleRow = `${enemyPlayer}m`;

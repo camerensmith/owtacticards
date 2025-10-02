@@ -14,6 +14,7 @@ export async function onEnter({ playerHeroId, rowId }) {
         type: 'damageReduction',
         value: 1,
         source: 'orisa',
+        sourceCardId: playerHeroId, // CRITICAL: Mark as tethered to Orisa
         hero: 'protectivebarrier', // This will look for 'protectivebarrier-icon' in heroIconImages
         tooltip: 'Protective Barrier: All heroes in this row take 1 less damage from attacks (minimum 1)'
     };
@@ -37,6 +38,7 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
         type: 'synergyBoost',
         value: 1, // +1 per hero
         source: 'orisa',
+        sourceCardId: playerHeroId, // CRITICAL: Mark as tethered to Orisa
         hero: 'orisa', // This will look for 'orisa-icon' in heroIconImages
         tooltip: 'Supercharger: +1 Synergy per Hero in this row'
     };
@@ -102,6 +104,7 @@ export function onMove({ playerHeroId, fromRowId, toRowId }) {
             type: 'damageReduction',
             value: 1,
             source: 'orisa',
+            sourceCardId: playerHeroId, // CRITICAL: Mark as tethered to Orisa
             hero: 'protectivebarrier', // This will look for 'protectivebarrier-icon' in heroIconImages
             tooltip: 'Protective Barrier: All heroes in this row take 1 less damage from attacks (minimum 1)'
         };

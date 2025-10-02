@@ -3,6 +3,7 @@ import { selectRowTarget } from '../engine/targeting';
 import { showMessage as showToast, clearMessage as clearToast } from '../engine/targetingBus';
 import { playAudioByKey } from '../../assets/imageImports';
 import { dealDamage } from '../engine/damageBus';
+import { withAIContext } from '../engine/aiContextHelper';
 
 // onEnter: Crossfade - Choose between movement or token placement
 export function onEnter({ playerHeroId, rowId }) {
@@ -22,31 +23,43 @@ export function onEnter({ playerHeroId, rowId }) {
         description: 'Place Lúcio token near friendly row to heal all heroes by 1 each turn' 
     };
 
-    showOnEnterChoice('Lúcio', opt1, opt2, async (choiceIndex) => {
+    showOnEnterChoice('Lúcio', opt1, opt2, withAIContext(playerHeroId, async (choiceIndex) => {
+        // AI preference: if AI is acting, prefer healing if any ally is wounded
+        if (window.__ow_isAITurn || window.__ow_aiTriggering) {
+            try {
+                const allyRows = [`${playerNum}f`, `${playerNum}m`, `${playerNum}b`];
+                const wounded = allyRows.some(r => (window.__ow_getRow?.(r)?.cardIds || []).some(id => {
+                    const c = window.__ow_getCard?.(id);
+                    return c && c.health < (c.maxHealth || c.health);
+                }));
+                if (wounded) choiceIndex = 1; // Healing
+                else choiceIndex = 0; // Shuffle (but will restrict to enemy rows)
+            } catch {}
+        }
         if (choiceIndex === 0) {
             // Play ability sound immediately on selection
             try {
                 playAudioByKey('lucio-ability1');
             } catch {}
-            
+
             await handleShuffleAbility(playerHeroId, rowId, playerNum);
         } else if (choiceIndex === 1) {
             // Play ability sound immediately on selection
             try {
                 playAudioByKey('lucio-ability2');
             } catch {}
-            
+
             await handleTokenAbility(playerHeroId, rowId, playerNum);
         }
-    });
+    }));
 }
 
 // Crossfade Shuffle: Place token near any row to shuffle positions at turn start
 async function handleShuffleAbility(playerHeroId, rowId, playerNum) {
     try {
         showToast('Lúcio: Select any row for shuffle token');
-        
-        const targetRow = await selectRowTarget();
+
+        const targetRow = await selectRowTarget({ allowAnyRow: false, isDebuff: true });
         if (!targetRow) {
             clearToast();
             return;
@@ -55,9 +68,14 @@ async function handleShuffleAbility(playerHeroId, rowId, playerNum) {
         // Determine if this is an ally or enemy row
         const targetPlayerNum = parseInt(targetRow.rowId[0]);
         const isAllyRow = targetPlayerNum === playerNum;
+        if (isAllyRow) {
+            showToast('Lúcio: Shuffle targets enemy rows only');
+            setTimeout(() => clearToast(), 1500);
+            return;
+        }
         
         // Place Lúcio shuffle token on the target row
-        window.__ow_appendRowEffect?.(targetRow.rowId, isAllyRow ? 'allyEffects' : 'enemyEffects', {
+        window.__ow_appendRowEffect?.(targetRow.rowId, 'enemyEffects', {
             id: 'lucio-shuffle-token',
             hero: 'lucio',
             type: 'shuffle',
@@ -83,8 +101,8 @@ async function handleShuffleAbility(playerHeroId, rowId, playerNum) {
 async function handleTokenAbility(playerHeroId, rowId, playerNum) {
     try {
         showToast('Lúcio: Select friendly row for token');
-        
-        const targetRow = await selectRowTarget();
+
+        const targetRow = await selectRowTarget({ isBuff: true });
         if (!targetRow) {
             clearToast();
             return;

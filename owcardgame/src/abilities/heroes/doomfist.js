@@ -25,7 +25,7 @@ export async function onEnter({ playerHeroId, rowId }) {
 
     showToast('Doomfist: Select target enemy for Rocket Punch');
     try {
-        const target = await selectCardTarget();
+        const target = await selectCardTarget({ isDamage: true });
         if (!target) {
             showToast('Doomfist ability cancelled');
             setTimeout(() => clearToast(), 1500);
@@ -81,7 +81,7 @@ async function handleRocketPunch(playerHeroId, rowId, playerNum) {
     showToast('Doomfist: Select target enemy for Rocket Punch');
     
     try {
-        const target = await selectCardTarget();
+        const target = await selectCardTarget({ isDamage: true });
         if (target) {
             // Check if target is already dead
             const targetHealth = window.__ow_getCard?.(target.cardId)?.health || 0;
@@ -152,7 +152,7 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
     showToast('Doomfist: Meteor Strike - Select target enemy');
     
     try {
-        const target = await selectCardTarget();
+        const target = await selectCardTarget({ isDamage: true });
         if (!target) {
             showToast('Doomfist ultimate cancelled');
             setTimeout(() => clearToast(), 1500);

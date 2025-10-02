@@ -11,7 +11,7 @@ export async function onEnter({ playerHeroId, rowId }) {
     showToast('Sigma: Select friendly row for Experimental Barrier');
     
     try {
-        const target = await selectRowTarget();
+        const target = await selectRowTarget({ isBuff: true });
         if (!target) {
             clearToast();
             return;
@@ -71,7 +71,7 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
     showToast('Sigma: Select enemy row for Gravitic Flux');
     
     try {
-        const target = await selectRowTarget();
+        const target = await selectRowTarget({ isBuff: true });
         if (!target) {
             clearToast();
             return;

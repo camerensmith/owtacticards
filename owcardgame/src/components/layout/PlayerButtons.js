@@ -114,9 +114,15 @@ export default function PlayerHand(props) {
     useEffect(() => {
         // Only draw if it's this player's turn and it's not the first turn of the game
         if (turnState.playerTurn === playerNum && turnState.turnCount > 1) {
-            const currentHandSize = gameState.rows[`player${playerNum}hand`].cardIds.length;
-            if (currentHandSize < gameLogic.maxHandSize) {
-                drawCards();
+            // Prevent duplicate draws within the same player's turn
+            if (!window.__ow_lastDraw || window.__ow_lastDraw.player !== playerNum || window.__ow_lastDraw.turn !== turnState.turnCount) {
+                const currentHandSize = gameState.rows[`player${playerNum}hand`].cardIds.length;
+                if (currentHandSize < gameLogic.maxHandSize) {
+                    // Don't play intro sounds for AI (Player 2) draws
+                    const isAITurn = playerNum === 2;
+                    drawCards(!isAITurn);
+                    window.__ow_lastDraw = { player: playerNum, turn: turnState.turnCount };
+                }
             }
         }
     }, [turnState.playerTurn, turnState.turnCount]);
@@ -232,20 +238,31 @@ export default function PlayerHand(props) {
                             ? () => {
                                   playGameEvent('endturn');
                                   try { cancelTargeting(); } catch {}
+                                  // Prevent duplicate increment in same logical turn
+                                  if (window.__ow_lastTurnAdvance && window.__ow_lastTurnAdvance.turn === turnState.turnCount && window.__ow_lastTurnAdvance.from === 1) {
+                                      console.warn('Skipping duplicate Player 1 end turn advance');
+                                      return;
+                                  }
                                   setTurnState((prevState) => ({
                                       ...prevState,
-                                      turnCount: prevState.turnCount + 1,
+                                      turnCount: Math.min(prevState.turnCount + 1, 14),
                                       playerTurn: 2,
                                   }));
+                                  window.__ow_lastTurnAdvance = { turn: turnState.turnCount, from: 1 };
                               }
                             : () => {
                                   playGameEvent('endturn');
                                   try { cancelTargeting(); } catch {}
+                                  if (window.__ow_lastTurnAdvance && window.__ow_lastTurnAdvance.turn === turnState.turnCount && window.__ow_lastTurnAdvance.from === 2) {
+                                      console.warn('Skipping duplicate Player 2 end turn advance');
+                                      return;
+                                  }
                                   setTurnState((prevState) => ({
                                       ...prevState,
-                                      turnCount: prevState.turnCount + 1,
+                                      turnCount: Math.min(prevState.turnCount + 1, 14),
                                       playerTurn: 1,
                                   }));
+                                  window.__ow_lastTurnAdvance = { turn: turnState.turnCount, from: 2 };
                               }
                     }
                     title={isTargeting ? 'Finish or cancel the current ability first' : ''}

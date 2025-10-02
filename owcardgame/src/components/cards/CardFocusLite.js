@@ -1,11 +1,11 @@
 import React from 'react';
-import { heroCardFocusImages } from '../../assets/imageImports';
+import { heroCardFocusImages, heroCardImages } from '../../assets/imageImports';
 
 export default function CardFocusLite({ focus, onClose }) {
     if (!focus) return null;
     const { playerHeroId } = focus;
     const heroId = playerHeroId.slice(1);
-    const img = heroCardFocusImages[heroId];
+    const img = heroCardFocusImages[heroId] || heroCardImages[heroId];
     if (!img) return null;
 
     const backdrop = {

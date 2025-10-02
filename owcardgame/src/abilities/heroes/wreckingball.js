@@ -52,7 +52,7 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
     }
     
     showToast('Wrecking Ball: Select enemy row to deploy Minefield');
-    const targetRow = await selectRowTarget();
+    const targetRow = await selectRowTarget({ isDamage: true });
     
     if (targetRow) {
         // Validate it's an enemy row

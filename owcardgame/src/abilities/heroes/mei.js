@@ -17,7 +17,7 @@ async function handleBlizzard(playerHeroId, rowId, playerNum) {
     try {
         showToast('Mei: Select an enemy row for Blizzard');
         
-        const targetRow = await selectRowTarget();
+        const targetRow = await selectRowTarget({ isDamage: true });
         if (!targetRow) {
             clearToast();
             return;
@@ -65,7 +65,7 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
         
         showToast('Mei: Cryo Freeze - Select any hero to freeze');
         
-        const target = await selectCardTarget();
+        const target = await selectCardTarget({ isDebuff: true });
         if (!target) {
             clearToast();
             return;

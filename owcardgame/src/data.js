@@ -103,7 +103,8 @@ const data = {
                 m: 2,
                 b: 2,
             },
-            isImplemented: false,
+            ultimate: 'Nano Boost (3): Place an Ana token in Ana\'s row. Token adds power equal to number of heroes in that row.',
+            isImplemented: true,
         },
 
         ashe: {
@@ -151,7 +152,8 @@ const data = {
                 m: 2,
                 b: 3,
             },
-            isImplemented: false,
+            ultimate: 'Immortality Field (3): Makes Baptiste and adjacent slots invulnerable until start of next turn.',
+            isImplemented: true,
         },
 
         bastion: {
@@ -181,7 +183,8 @@ const data = {
                 m: 2,
                 b: 1,
             },
-            isImplemented: false,
+            ultimate: 'Tank Mode (3): Deal 2 damage to one enemy + 2 damage to up to 2 enemies in any row.',
+            isImplemented: true,
         },
 
         bob: {
@@ -211,6 +214,7 @@ const data = {
                 m: 0,
                 b: 0,
             },
+            ultimate: 'Smash (1): Deal 1 damage and 1 Synergy damage to up to 3 adjacent enemies in target row.',
             special: true,
         },
 
@@ -229,7 +233,8 @@ const data = {
                 m: 2,
                 b: 3,
             },
-            isImplemented: false,
+            ultimate: 'Shield Bash (3): Gain 2 shields, turn target enemy 180°, lock their ultimate.',
+            isImplemented: true,
         },
 
         doomfist: {
@@ -247,6 +252,7 @@ const data = {
                 m: 2,
                 b: 3,
             },
+            ultimate: 'Meteor Strike (3): Deal 3 damage to target enemy + 1 damage to adjacent enemies.',
             isImplemented: true,
         },
 
@@ -373,7 +379,8 @@ const data = {
                 m: 2,
                 b: 3,
             },
-            isImplemented: false,
+            ultimate: 'RIP-Tire (4): Choose row to move to, deal synergy damage to opposing row.',
+            isImplemented: true,
         },
 
         lifeweaver: {
@@ -391,6 +398,7 @@ const data = {
                 m: 2,
                 b: 1,
             },
+            ultimate: 'Tree of Life (3): Give temporary HP to Lifeweaver and adjacent friendly heroes.',
             isImplemented: true,
         },
 
@@ -421,6 +429,7 @@ const data = {
                 m: 3,
                 b: 2,
             },
+            ultimate: 'Sound Barrier (3): All heroes in row gain 2 shields.',
             isImplemented: true,
         },
 
@@ -439,6 +448,7 @@ const data = {
                 m: 1,
                 b: 3,
             },
+            ultimate: 'Dead Eye (3): Deal 2 damage to all enemies in target row.',
             isImplemented: true,
         },
 
@@ -469,7 +479,8 @@ const data = {
                 m: 1,
                 b: 3,
             },
-            isImplemented: false,
+            ultimate: 'Cryo Freeze (3): Freeze target hero - immune to damage and abilities for remainder of round.',
+            isImplemented: true,
         },
 
         mercy: {
@@ -508,6 +519,7 @@ const data = {
                 m: 2,
                 b: 2,
             },
+            ultimate: 'Guardian Angel (3): Move to friendly row and resurrect a defeated hero.',
             isImplemented: true,
         },
         moira: {
@@ -525,6 +537,7 @@ const data = {
                 m: 3,
                 b: 2,
             },
+            ultimate: 'Coalescence (3): Heal allies in target column by 2; deal 2 to enemies in opposing column ignoring shields.',
             isImplemented: true,
         },
 
@@ -564,7 +577,8 @@ const data = {
                 m: 2,
                 b: 1,
             },
-            isImplemented: false,
+            ultimate: 'Supercharger (3): Place Supercharger token on Orisa\'s row - +1 Synergy per Hero in this row.',
+            isImplemented: true,
         },
 
         pharah: {
@@ -582,6 +596,7 @@ const data = {
                 m: 1,
                 b: 2,
             },
+            ultimate: 'Barrage (3): Deal damage equal to (total synergy - cost) to up to 3 enemies. Consumes all synergy.',
             isImplemented: true,
         },
 
@@ -593,7 +608,8 @@ const data = {
             health: 4,
             power: { f: 1, m: 2, b: 3 },
             synergy: { f: 3, m: 2, b: 1 },
-            isImplemented: false,
+            ultimate: 'Ravenous Vortex (3): Pull enemies from target enemy row into the opposing ally row.',
+            isImplemented: true,
         },
 
         nemesis: {
@@ -603,7 +619,8 @@ const data = {
             health: 4,
             power: { f: 2, m: 2, b: 2 },
             synergy: { f: 2, m: 1, b: 1 },
-            isImplemented: false,
+            ultimate: 'Annihilation (3): All enemies in opposite row and column take 1 damage at start of turn.',
+            isImplemented: true,
             special: true,
         },
         reaper: {
@@ -621,6 +638,7 @@ const data = {
                 m: 3,
                 b: 1,
             },
+            ultimate: 'Death Blossom (4): Deal 3 damage to all living enemies in opposing row (ignores shields), then discard Reaper.',
             isImplemented: true,
         },
 
@@ -639,6 +657,7 @@ const data = {
                 m: 2,
                 b: 3,
             },
+            ultimate: 'Earthshatter (3): Deal 2 damage to all enemies in target column and remove 1 synergy from all enemy rows.',
             isImplemented: true,
         },
 
@@ -657,6 +676,7 @@ const data = {
                 m: 2,
                 b: 2,
             },
+            ultimate: 'Whole Hog (3)',
             isImplemented: true,
         },
 
@@ -676,6 +696,7 @@ const data = {
                 m: 1,
                 b: 2,
             },
+            ultimate: 'Gravitic Flux (3): Deal 1 damage to all enemies in target row and remove all synergy.',
             isImplemented: true,
         },
 
@@ -694,6 +715,7 @@ const data = {
                 m: 1,
                 b: 3,
             },
+            ultimate: 'Tactical Visor (3): Deal fixed damage to 3 enemies (3, 2, 1 damage).',
             isImplemented: true,
         },
 
@@ -712,6 +734,7 @@ const data = {
                 m: 3,
                 b: 2,
             },
+            ultimate: 'E.M.P. (3): Remove all Hero and Shield Tokens from both sides, destroy turrets.',
             isImplemented: true,
         },
 
@@ -730,6 +753,7 @@ const data = {
                 m: 3,
                 b: 2,
             },
+            ultimate: 'Shield Generator (3): Give 1 shield to all friendly deployed heroes.',
             isImplemented: true,
         },
 
@@ -760,6 +784,7 @@ const data = {
                 m: 3,
                 b: 2,
             },
+            ultimate: 'Forge Hammer (3): Turret now does 2 damage to two Heroes, regardless of row.',
             isImplemented: true,
         },
 
@@ -778,6 +803,7 @@ const data = {
                 m: 2,
                 b: 3,
             },
+            ultimate: 'Recall (2): Automatic - activates when taking fatal damage to avoid death and restore HP.',
             isImplemented: true,
         },
 
@@ -820,6 +846,7 @@ const data = {
                 m: 2,
                 b: 2,
             },
+            ultimate: 'Widow\'s Kiss (3): Defeat target enemy in opposing row.',
             isImplemented: true,
         },
 
@@ -838,6 +865,7 @@ const data = {
                 m: 2,
                 b: 3,
             },
+            ultimate: 'Primal Rage (3): Move to target row and deal 2 damage to all living enemies in selected adjacent enemy row.',
             isImplemented: true,
         },
 
@@ -869,7 +897,8 @@ const data = {
                 m: 1,
                 b: 3,
             },
-            isImplemented: false,
+            ultimate: 'Minefield (varies): Deploy minefield on enemy row with charges equal to current synergy. Deals 2 damage on movement.',
+            isImplemented: true,
         },
 
         zarya: {
@@ -888,7 +917,8 @@ const data = {
                 m: 1,
                 b: 3,
             },
-            isImplemented: false,
+            ultimate: 'Particle Cannon (3): Deal (4 - zarya tokens) damage to up to 3 enemies (minimum 1 damage).',
+            isImplemented: true,
             zaryaShieldRemaining: 0,
         },
 
@@ -928,7 +958,8 @@ const data = {
                 m: 2,
                 b: 3,
             },
-            isImplemented: false,
+            ultimate: 'Transcendence (3): Heal all allies in Zenyatta\'s row by 2, make Zenyatta immune to damage for remainder of round.',
+            isImplemented: true,
         },
 
         hazard: {
@@ -939,6 +970,7 @@ const data = {
             health: 4,
             power: { f: 1, m: 2, b: 2 },
             synergy: { f: 2, m: 2, b: 2 },
+            ultimate: 'Downpour (3): Deal 1 damage to all enemies ignoring shields.',
             isImplemented: true,
         },
 
@@ -950,6 +982,7 @@ const data = {
             health: 4,
             power: { f: 3, m: 1, b: 1 },
             synergy: { f: 3, m: 1, b: 1 },
+            ultimate: 'Cage Fight (3): Lock opposing row until end of round; deal HP difference to enemy opposite Mauga if Mauga HP > target HP.',
             isImplemented: true,
         },
 
@@ -961,6 +994,7 @@ const data = {
             health: 3,
             power: { f: 1, m: 3, b: 2 },
             synergy: { f: 2, m: 2, b: 1 },
+            ultimate: 'Rampage (3): Distribute total wound damage this round evenly among all living enemies.',
             isImplemented: true,
         },
 
@@ -972,6 +1006,7 @@ const data = {
             health: 4,
             power: { f: 2, m: 3, b: 2 },
             synergy: { f: 1, m: 1, b: 2 },
+            ultimate: 'Tectonic Shock (3): Shuffle all enemy positions, then deal 2 damage to enemy in Venture\'s column.',
             isImplemented: true,
         },
     },

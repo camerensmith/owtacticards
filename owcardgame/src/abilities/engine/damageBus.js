@@ -17,6 +17,12 @@ export function publish(event) {
 }
 
 export function dealDamage(targetCardId, targetRow, amount, ignoreShields = false, sourceCardId = null, fixedDamage = false) {
+    // Safety check: ensure targetCardId is valid
+    if (!targetCardId || typeof targetCardId !== 'string') {
+        console.warn('DamageBus - Invalid targetCardId:', targetCardId);
+        return;
+    }
+    
     // Check if the target slot is invulnerable
     if (window.__ow_isSlotInvulnerable) {
         const row = window.__ow_getRow?.(targetRow);
@@ -55,7 +61,7 @@ export function dealDamage(targetCardId, targetRow, amount, ignoreShields = fals
     // - sourceCardId exists and is an opposing unit
     // - Not from row tokens or environmental effects (we assume those have null or missing sourceCardId or special ids)
     let shouldReflectSpike = false;
-    if (sourceCardId && targetCard) {
+    if (sourceCardId && typeof sourceCardId === 'string' && targetCard) {
         const isOpposing = parseInt(sourceCardId[0]) !== parseInt(targetCardId[0]);
         if (isOpposing && Array.isArray(targetCard.effects)) {
             const spike = targetCard.effects.find(e => e?.hero === 'hazard' && e?.id === 'spike-guard');
@@ -265,10 +271,10 @@ export function dealDamage(targetCardId, targetRow, amount, ignoreShields = fals
                             } else {
                                 console.log(`DamageBus - Reinhardt should NOT absorb damage for ${targetCardId}`);
                             }
-                        } else {
+                        } else if (barrierEffect) {
                             console.log(`DamageBus - Reinhardt barrier effect not absorbing:`, barrierEffect);
-                            console.log(`DamageBus - barrierEffect.absorbing value:`, barrierEffect.absorbing);
-                            console.log(`DamageBus - barrierEffect.absorbing type:`, typeof barrierEffect.absorbing);
+                            console.log(`DamageBus - barrierEffect.absorbing value:`, barrierEffect?.absorbing);
+                            console.log(`DamageBus - barrierEffect.absorbing type:`, typeof barrierEffect?.absorbing);
                         }
                     }
                 }
@@ -352,7 +358,7 @@ export function dealDamage(targetCardId, targetRow, amount, ignoreShields = fals
                             const targetPlayerNum = parseInt(targetCardId[0]);
                             const winstonPlayerNum = parseInt(cardId[0]);
                             
-                            if (targetRowData && targetRowData.cardIds.includes(targetCardId) && targetPlayerNum === winstonPlayerNum) {
+                            if (rowId === targetRow && targetPlayerNum === winstonPlayerNum) {
                                 // Check if Winston has shields to absorb with
                                 const winstonShields = card.shield || 0;
                                 if (winstonShields > 0) {
@@ -375,60 +381,28 @@ export function dealDamage(targetCardId, targetRow, amount, ignoreShields = fals
     }
     
     // Check for Zarya token damage absorption (only if not ignoring shields)
-    if (finalAmount > 0 && !ignoreShields && window.__ow_getRow) {
-        const targetPlayerNum = parseInt(targetCardId[0]);
-        const friendlyRows = targetPlayerNum === 1 ? ['1f', '1m', '1b'] : ['2f', '2m', '2b'];
-        
-        // Check all friendly cards for Zarya tokens
-        for (const rowId of friendlyRows) {
-            const row = window.__ow_getRow(rowId);
-            if (row && row.cardIds) {
-                for (const cardId of row.cardIds) {
-                    const card = window.__ow_getCard?.(cardId);
-                    if (card && Array.isArray(card.effects)) {
-                        const zaryaToken = card.effects.find(effect => 
-                            effect?.hero === 'zarya' && effect?.type === 'zarya-shield'
-                        );
-                        
-                        if (zaryaToken && zaryaToken.amount > 0) {
-                            const useZarya = Math.min(zaryaToken.amount, finalAmount);
-                            const newAmount = zaryaToken.amount - useZarya;
-                            finalAmount = Math.max(0, finalAmount - useZarya);
-                            absorbedAmount += useZarya;
-                            
-                            console.log(`DamageBus - Zarya Token on ${cardId} absorbed ${useZarya} damage for ${targetCardId}, remaining tokens: ${newAmount}`);
-                            
-                            // Update or remove token using proper game state functions
-                            if (newAmount <= 0) {
-                                // Remove the token completely
-                                console.log(`DamageBus - Removing token with ID: ${zaryaToken.id}`);
-                                window.__ow_removeCardEffect?.(cardId, zaryaToken.id);
-                                console.log(`DamageBus - Removed depleted Zarya token from ${cardId}`);
-                            } else {
-                                // Update the token with new amount
-                                const updatedToken = {
-                                    ...zaryaToken,
-                                    amount: newAmount,
-                                    tooltip: `Zarya Token: Absorbs damage like shields, reduces Particle Cannon damage (${newAmount} charges)`
-                                };
-                                console.log(`DamageBus - Removing old token with ID: ${zaryaToken.id}`);
-                                window.__ow_removeCardEffect?.(cardId, zaryaToken.id);
-                                
-                                // Add a small delay to ensure the removal completes before adding the new token
-                                setTimeout(() => {
-                                    console.log(`DamageBus - Adding updated token:`, updatedToken);
-                                    window.__ow_appendCardEffect?.(cardId, updatedToken);
-                                    console.log(`DamageBus - Updated Zarya token on ${cardId} to ${newAmount} charges`);
-                                }, 10);
-                            }
-                            
-                            // Break out of loops if all damage absorbed
-                            if (finalAmount <= 0) break;
-                        }
-                    }
+    if (finalAmount > 0 && !ignoreShields && window.__ow_getCard) {
+        const bearerCard = window.__ow_getCard(targetCardId);
+        if (bearerCard && Array.isArray(bearerCard.effects)) {
+            const zaryaToken = bearerCard.effects.find(effect => 
+                effect?.hero === 'zarya' && effect?.type === 'zarya-shield'
+            );
+            if (zaryaToken && zaryaToken.amount > 0) {
+                const useZarya = Math.min(zaryaToken.amount, finalAmount);
+                const newAmount = zaryaToken.amount - useZarya;
+                finalAmount = Math.max(0, finalAmount - useZarya);
+                absorbedAmount += useZarya;
+                console.log(`DamageBus - Zarya Token on ${targetCardId} absorbed ${useZarya} damage, remaining tokens: ${newAmount}`);
+                if (newAmount <= 0) {
+                    window.__ow_removeCardEffect?.(targetCardId, zaryaToken.id);
+                } else {
+                    const updatedToken = { ...zaryaToken, amount: newAmount, tooltip: `Zarya Token: Absorbs damage like shields, reduces Particle Cannon damage (${newAmount} charges)` };
+                    window.__ow_removeCardEffect?.(targetCardId, zaryaToken.id);
+                    setTimeout(() => {
+                        window.__ow_appendCardEffect?.(targetCardId, updatedToken);
+                    }, 10);
                 }
             }
-            if (finalAmount <= 0) break;
         }
     }
     

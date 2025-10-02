@@ -90,6 +90,13 @@ async function handleHealingAbility(playerHeroId, rowId, playerNum) {
         return;
     }
     
+    // Safety check: ensure target.cardId is valid
+    if (!target.cardId || typeof target.cardId !== 'string') {
+        showToast('Mercy: Invalid target selected');
+        setTimeout(() => clearToast(), 1500);
+        return;
+    }
+    
     const targetCard = window.__ow_getCard?.(target.cardId);
     if (!targetCard || targetCard.health <= 0) {
         showToast('Mercy: Cannot target dead heroes');
@@ -153,6 +160,13 @@ async function handleDamageBoostAbility(playerHeroId, rowId, playerNum) {
     const target = await selectCardTarget();
     if (!target) {
         clearToast();
+        return;
+    }
+    
+    // Safety check: ensure target.cardId is valid
+    if (!target.cardId || typeof target.cardId !== 'string') {
+        showToast('Mercy: Invalid target selected');
+        setTimeout(() => clearToast(), 1500);
         return;
     }
     

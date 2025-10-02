@@ -20,8 +20,16 @@ export async function onEnter({ playerHeroId, rowId }) {
     showToast('Echo: Select target enemy for Focusing Beam');
 
     try {
-        const target = await selectCardTarget();
+        const target = await selectCardTarget({ isDamage: true });
         if (target) {
+            // Validate enemy
+            const targetPlayerNum = parseInt(target.cardId[0]);
+            if (targetPlayerNum === playerNum) {
+                showToast('Echo: Must target an enemy!');
+                setTimeout(() => clearToast(), 2000);
+                return;
+            }
+
             const targetCard = window.__ow_getCard?.(target.cardId);
             if (!targetCard) {
                 showToast('Echo: Invalid target');

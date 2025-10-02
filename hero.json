@@ -10,7 +10,7 @@
     "back_power": 2,
     "back_synergy": 2,
     "on_enter1": "Biotic Grenade — All allies within target row are healed by 1 health and all enemies within the opposing row receive 1 damage.",
-    "ultimate": "Nano Boost (3): Place Ana Token in Ana's row. The Ana Token adds X Power to that row where X equals the number of Heroes in the row."
+    "ultimate": "Nano Boost (3): Place Ana Token in Ana's row. The Ana Token adds X Synergy to that row where X equals the number of Heroes in the row."
   },
   {
     "name": "Ashe",
@@ -236,7 +236,7 @@
     "back_power": 1,
     "back_synergy": 3,
     "on_enter1": "Flashbang — Remove Synergy Points from a row equal to the number of enemy Heroes who occupy it.",
-    "ultimate": "Dead Eye (3): Deal 7 damage spread as evenly as possible (your choice) within a single row."
+    "ultimate": "Dead Eye (3): Deal 9 damage spread as evenly as possible (your choice) within a single row."
   },
   {
     "name": "Mei",

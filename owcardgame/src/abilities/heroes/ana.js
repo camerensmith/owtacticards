@@ -23,7 +23,7 @@ export default { onDraw, onEnter, onEnterAbility1, onUltimate };
 // Place an Ana token in Ana's row. Token adds X power to that row, where X equals the
 // number of heroes (alive) in that row (exclude special=true except 'nemesis').
 // This persists even if Ana dies; power adjusts dynamically as heroes enter/leave/die.
-export function onUltimate({ playerHeroId }) {
+export function onUltimate({ playerHeroId, rowId, cost }) {
     try {
         const playerNum = parseInt(playerHeroId[0]);
         // Find Ana's current row by scanning rows for playerHeroId
@@ -40,14 +40,14 @@ export function onUltimate({ playerHeroId }) {
             id: 'ana-token',
             hero: 'ana',
             playerHeroId,
-            type: 'rowPowerBoost',
-            tooltip: 'Nano Boost: +X Power (heroes in row)',
+            type: 'rowSynergyBoost',
+            tooltip: 'Nano Boost: +X Synergy (heroes in row)',
         };
         if (window.__ow_appendRowEffect) {
             window.__ow_appendRowEffect(anaRow, 'allyEffects', modifier);
         }
 
-        // Subscribe to row changes and recompute X → set power for that row position
+        // Subscribe to row changes and recompute X → set synergy for that row position
         // For now, compute once immediately
         const recompute = () => {
             const cards = window.__ow_getRow?.(anaRow)?.cardIds || [];
@@ -59,11 +59,11 @@ export function onUltimate({ playerHeroId }) {
                 const alive = (window.__ow_getCard?.(pid)?.health ?? 0) > 0;
                 if (countsAsHero && alive) heroes += 1;
             }
-            // Store the computed X in the row for reference (optional) and set power slot
+            // Store the computed X in the row for reference (optional) and set synergy slot
             const rowPos = anaRow[1];
-            const powerIndex = { f:'f', m:'m', b:'b' }[rowPos];
-            // Set absolute power contribution for this row position
-            window.__ow_setRowPower && window.__ow_setRowPower(playerNum, powerIndex, heroes);
+            const synergyIndex = { f:'f', m:'m', b:'b' }[rowPos];
+            // Set absolute synergy contribution for this row position
+            window.__ow_setRowSynergy && window.__ow_setRowSynergy(playerNum, synergyIndex, heroes);
         };
         recompute();
 
@@ -81,7 +81,7 @@ export async function onEnterAbility1({ playerNum, playerHeroId }) {
             aimLineBus.setArrowSource(playerHeroId);
         }
         showToast('Ana: Select a row');
-        const { rowId } = await selectRowTarget();
+        const { rowId } = await selectRowTarget({ allowAnyRow: true });
         clearToast();
         aimLineBus.clearArrow();
 
@@ -95,6 +95,9 @@ export async function onEnterAbility1({ playerNum, playerHeroId }) {
         const healAllies = (row) => {
             const cards = window.__ow_getRow?.(row)?.cardIds || [];
             for (const pid of cards) {
+                // Safety check: ensure pid is valid before processing
+                if (!pid || typeof pid !== 'string') continue;
+                
                 const card = window.__ow_getCard?.(pid);
                 if (!card) continue;
                 
@@ -118,9 +121,12 @@ export async function onEnterAbility1({ playerNum, playerHeroId }) {
         const damageEnemies = (row) => {
             const cards = window.__ow_getRow?.(row)?.cardIds || [];
             for (const pid of cards) {
-                dealDamage(pid, row, 1, false, playerHeroId);
-                // show -1 overlay
-                effectsBus.publish(Effects.showDamage(pid, 1));
+                // Safety check: ensure pid is valid before processing
+                if (pid && typeof pid === 'string') {
+                    dealDamage(pid, row, 1, false, playerHeroId);
+                    // show -1 overlay
+                    effectsBus.publish(Effects.showDamage(pid, 1));
+                }
             }
         };
 

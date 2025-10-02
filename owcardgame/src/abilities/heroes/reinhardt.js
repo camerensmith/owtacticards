@@ -45,11 +45,11 @@ export async function onEnter({ playerHeroId, rowId }) {
 // Earthshatter - Ultimate (Cost 3)
 export async function onUltimate({ playerHeroId, rowId, cost }) {
     const playerNum = parseInt(playerHeroId[0]);
-    
+
     try {
         showToast('Reinhardt: Select enemy column to Earthshatter');
-        
-        const target = await selectCardTarget();
+
+        const target = await selectCardTarget({ isDamage: true });
         if (!target) {
             clearToast();
             return;

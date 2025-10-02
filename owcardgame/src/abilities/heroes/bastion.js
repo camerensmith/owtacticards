@@ -5,6 +5,7 @@ import { showMessage as showToast, clearMessage as clearToast } from '../engine/
 import { dealDamage } from '../engine/damageBus';
 import effectsBus, { Effects } from '../engine/effectsBus';
 import { getAudioFile, playAudioByKey } from '../../assets/imageImports';
+import { withAIContext } from '../engine/aiContextHelper';
 
 // On Enter - Modal choice between two options
 export function onEnter({ playerHeroId, rowId }) {
@@ -24,7 +25,7 @@ export function onEnter({ playerHeroId, rowId }) {
         description: 'Place Bastion Token next to an enemy row. Any enemy Heroes that move or deploy into this row take 1 damage.' 
     };
 
-    showOnEnterChoice('Bastion', opt1, opt2, async (choiceIndex) => {
+    showOnEnterChoice('Bastion', opt1, opt2, withAIContext(playerHeroId, async (choiceIndex) => {
         try {
             if (choiceIndex === 0) {
                 // Option 1: Deal 1 damage to target enemy
@@ -38,7 +39,7 @@ export function onEnter({ playerHeroId, rowId }) {
             showToast('Bastion ability cancelled');
             setTimeout(() => clearToast(), 1500);
         }
-    });
+    }));
 }
 
 // Option 1: Deal 1 damage to target enemy
@@ -46,7 +47,7 @@ async function handleOption1(playerHeroId, rowId, playerNum) {
     showToast('Bastion: Select target enemy');
     
     try {
-        const target = await selectCardTarget();
+        const target = await selectCardTarget({ isDamage: true });
         if (target) {
             dealDamage(target.cardId, target.rowId, 1, false, playerHeroId);
             try { effectsBus.publish(Effects.showDamage(target.cardId, 1)); } catch {}
@@ -72,7 +73,7 @@ async function handleOption2(playerHeroId, rowId, playerNum) {
     showToast('Bastion: Select enemy row for token');
     
     try {
-        const target = await selectRowTarget();
+        const target = await selectRowTarget({ isDamage: true });
         if (target) {
             // Place Bastion token on the selected enemy row
             window.__ow_appendRowEffect?.(target.rowId, 'enemyEffects', {
@@ -115,7 +116,7 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
     
     try {
         // Select primary target (2 damage)
-        const primaryTarget = await selectCardTarget();
+        const primaryTarget = await selectCardTarget({ isDamage: true });
         if (!primaryTarget) {
             showToast('Bastion ultimate cancelled');
             setTimeout(() => clearToast(), 1500);
@@ -132,7 +133,7 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
         const additionalTargets = [];
         for (let i = 0; i < 2; i++) {
             try {
-                const target = await selectCardTarget();
+                const target = await selectCardTarget({ isDamage: true });
                 if (target) {
                     additionalTargets.push(target);
                     dealDamage(target.cardId, target.rowId, 2, false, playerHeroId);

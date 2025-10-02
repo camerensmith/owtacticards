@@ -41,7 +41,7 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
     } catch {}
     
     showToast('Winston: Select row to move to');
-    const targetRow = await selectRowTarget();
+    const targetRow = await selectRowTarget({ isBuff: true });
     
     console.log('Winston Ultimate: Target row selected:', targetRow);
     
@@ -83,7 +83,7 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
         } else {
             // Multiple target rows, let player choose
             showToast('Winston: Select enemy row to strike');
-            const strikeTarget = await selectRowTarget();
+            const strikeTarget = await selectRowTarget({ isDamage: true });
             
             if (strikeTarget && targetableEnemyRows.includes(strikeTarget.rowId)) {
                 strikeEnemyRow(strikeTarget.rowId, playerHeroId);

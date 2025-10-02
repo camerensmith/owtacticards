@@ -110,7 +110,7 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
         showToast('Junkrat: Select row to move to');
         
         // Let player choose which row to move Junkrat to
-        const targetRow = await selectRowTarget();
+        const targetRow = await selectRowTarget({ isBuff: true });
         if (!targetRow) {
             clearToast();
             return;

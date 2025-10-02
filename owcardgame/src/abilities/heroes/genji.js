@@ -20,8 +20,16 @@ export async function onEnter({ playerHeroId, rowId }) {
     showToast('Genji: Select target enemy for Shuriken column attack');
 
     try {
-        const target = await selectCardTarget();
+        const target = await selectCardTarget({ isDamage: true });
         if (target) {
+            // Validate enemy
+            const targetPlayerNum = parseInt(target.cardId[0]);
+            if (targetPlayerNum === playerNum) {
+                showToast('Genji: Must target an enemy!');
+                setTimeout(() => clearToast(), 2000);
+                return;
+            }
+
             const targetCard = window.__ow_getCard?.(target.cardId);
             if (!targetCard) {
                 showToast('Genji: Invalid target');
@@ -97,8 +105,16 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
     showToast('Genji: Select damaged enemy for Dragon Blade');
 
     try {
-        const target = await selectCardTarget();
+        const target = await selectCardTarget({ isDamage: true });
         if (target) {
+            // Validate enemy
+            const targetPlayerNum = parseInt(target.cardId[0]);
+            if (targetPlayerNum === playerNum) {
+                showToast('Genji: Must target an enemy!');
+                setTimeout(() => clearToast(), 2000);
+                return;
+            }
+
             const targetCard = window.__ow_getCard?.(target.cardId);
             if (!targetCard) {
                 showToast('Genji: Invalid target');

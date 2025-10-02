@@ -1707,7 +1707,7 @@ McCree's Dead Eye demonstrates even damage distribution:
 
 ```javascript
 // Calculate base damage per target
-const totalDamage = 7;
+const totalDamage = 9;
 const enemyCount = livingEnemies.length;
 const baseDamage = Math.floor(totalDamage / enemyCount);
 const remainder = totalDamage % enemyCount;
@@ -2792,7 +2792,7 @@ Roadhog demonstrates advanced patterns including movement mechanics, random dama
 - **Damage**: 2 damage dealt **immediately** with movement
 - **Edge Cases**: Can target dead heroes (they move but take no damage)
 
-#### Whole Hog (Ultimate, Cost 4)
+#### Whole Hog (Ultimate, Cost 3)
 - **Damage Calculation**: `2 × number of living enemies`
 - **Distribution**: Randomly distributed over 4 seconds
 - **Visual**: Floating combat text shows individual damage instances

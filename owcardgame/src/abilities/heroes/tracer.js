@@ -4,6 +4,7 @@ import { selectCardTarget } from '../engine/targeting';
 import { showOnEnterChoice } from '../engine/modalController';
 import { playAudioByKey } from '../../assets/imageImports';
 import effectsBus, { Effects } from '../engine/effectsBus';
+import { withAIContext } from '../engine/aiContextHelper';
 
 // Tracer Ultimate System - Avoid Fatal Damage
 let tracerUltimateUsed = false;
@@ -61,28 +62,41 @@ function triggerTracerUltimate(cardId, rowId, hpBeforeDamage) {
 }
 
 // Pulse Pistols - Single Target
-export async function onEnter1({ playerHeroId, rowId }) {
-    const playerNum = parseInt(playerHeroId[0]);
-    
+export async function onEnter1({ playerHeroId, rowId, playerNum }) {
+    if (!playerHeroId) {
+        console.error("onEnter1: playerHeroId is undefined!");
+        return;
+    }
     // Play ability sound on selection
     try {
         playAudioByKey('tracer-ability1');
     } catch {}
-    
+
     showToast('Tracer: Select target enemy for Pulse Pistols');
-    
-    const target = await selectCardTarget();
+
+    const target = await selectCardTarget({ isDamage: true });
     if (!target) {
         clearToast();
         return;
     }
-    
-    const targetCard = window.__ow_getCard?.(target.cardId);
+
+    // Safety check: ensure target.cardId is valid
+    if (!target.cardId || typeof target.cardId !== 'string') {
+        showToast('Tracer: Invalid target selected');
+        setTimeout(() => clearToast(), 1500);
+        return;
+    }
+
+    // Validate enemy
     const targetPlayer = parseInt(target.cardId[0]);
-    const isEnemy = targetPlayer !== playerNum;
-    
-    // Validate target (enemy, alive)
-    if (!isEnemy || !targetCard || targetCard.health <= 0) {
+    if (targetPlayer === playerNum) {
+        showToast('Tracer: Must target an enemy!');
+        setTimeout(() => clearToast(), 2000);
+        return;
+    }
+
+    const targetCard = window.__ow_getCard?.(target.cardId);
+    if (!targetCard || targetCard.health <= 0) {
         showToast('Tracer: Invalid target (must be living enemy)');
         setTimeout(() => clearToast(), 1500);
         return;
@@ -101,47 +115,57 @@ export async function onEnter1({ playerHeroId, rowId }) {
 }
 
 // Pulse Pistols - Dual Target
-export async function onEnter2({ playerHeroId, rowId }) {
-    const playerNum = parseInt(playerHeroId[0]);
-    
+export async function onEnter2({ playerHeroId, rowId, playerNum }) {
+    if (!playerHeroId) {
+        console.error("onEnter2: playerHeroId is undefined!");
+        return;
+    }
     // Play ability sound on selection
     try {
         playAudioByKey('tracer-ability2');
     } catch {}
-    
+
     showToast('Tracer: Select first target enemy');
-    
-    const target1 = await selectCardTarget();
+
+    const target1 = await selectCardTarget({ isDamage: true });
     if (!target1) {
         clearToast();
         return;
     }
-    
-    const target1Card = window.__ow_getCard?.(target1.cardId);
+
+    // Validate first target is enemy
     const target1Player = parseInt(target1.cardId[0]);
-    const isEnemy1 = target1Player !== playerNum;
-    
-    // Validate first target
-    if (!isEnemy1 || !target1Card || target1Card.health <= 0) {
+    if (target1Player === playerNum) {
+        showToast('Tracer: Must target enemies!');
+        setTimeout(() => clearToast(), 2000);
+        return;
+    }
+
+    const target1Card = window.__ow_getCard?.(target1.cardId);
+    if (!target1Card || target1Card.health <= 0) {
         showToast('Tracer: Invalid first target (must be living enemy)');
         setTimeout(() => clearToast(), 1500);
         return;
     }
-    
+
     showToast('Tracer: Select second target enemy (must be different)');
-    
-    const target2 = await selectCardTarget();
+
+    const target2 = await selectCardTarget({ isDamage: true });
     if (!target2) {
         clearToast();
         return;
     }
-    
-    const target2Card = window.__ow_getCard?.(target2.cardId);
+
+    // Validate second target is enemy
     const target2Player = parseInt(target2.cardId[0]);
-    const isEnemy2 = target2Player !== playerNum;
-    
-    // Validate second target
-    if (!isEnemy2 || !target2Card || target2Card.health <= 0) {
+    if (target2Player === playerNum) {
+        showToast('Tracer: Must target enemies!');
+        setTimeout(() => clearToast(), 2000);
+        return;
+    }
+
+    const target2Card = window.__ow_getCard?.(target2.cardId);
+    if (!target2Card || target2Card.health <= 0) {
         showToast('Tracer: Invalid second target (must be living enemy)');
         setTimeout(() => clearToast(), 1500);
         return;
@@ -172,28 +196,30 @@ export async function onEnter2({ playerHeroId, rowId }) {
 // Main onEnter function with modal choice
 export function onEnter({ playerHeroId, rowId }) {
     const playerNum = parseInt(playerHeroId[0]);
-    
+
     // Play enter sound
     try {
         playAudioByKey('tracer-enter');
     } catch {}
-    
-    const opt1 = { 
-        name: 'Pulse Pistols (Single)', 
-        description: 'Deal 2 damage to target enemy' 
+
+    const opt1 = {
+        name: 'Pulse Pistols (Single)',
+        title: 'Pulse Pistols (Single)',
+        description: 'Deal 2 damage to target enemy'
     };
-    const opt2 = { 
-        name: 'Pulse Pistols (Dual)', 
-        description: 'Deal 1 damage to two different enemies anywhere on the board' 
+    const opt2 = {
+        name: 'Pulse Pistols (Dual)',
+        title: 'Pulse Pistols (Dual)',
+        description: 'Deal 1 damage to two different enemies anywhere on the board'
     };
 
-    showOnEnterChoice('Tracer', opt1, opt2, async (choiceIndex) => {
+    showOnEnterChoice('Tracer', opt1, opt2, withAIContext(playerHeroId, async (choiceIndex) => {
         if (choiceIndex === 0) {
-            await onEnter1({ playerHeroId, rowId });
+            await onEnter1({ playerHeroId, rowId, playerNum });
         } else {
-            await onEnter2({ playerHeroId, rowId });
+            await onEnter2({ playerHeroId, rowId, playerNum });
         }
-    });
+    }));
 }
 
 // Manual Ultimate (Cost 2) - Not used in new system

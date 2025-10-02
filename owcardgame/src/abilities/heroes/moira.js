@@ -19,31 +19,101 @@ export async function onEnter({ playerHeroId, rowId }) {
     } catch {}
 
     try {
-        // Step 1: pick enemy first
-        showToast('Moira: Pick one ENEMY to siphon (ignores shields)');
-        const enemyTarget = await selectCardTarget();
-        if (!enemyTarget) { clearToast(); return; }
-        const enemyCard = window.__ow_getCard?.(enemyTarget.cardId);
+        // If AI is acting, auto-pick targets to avoid prompting human
+        let enemyTarget;
+        if (window.__ow_isAITurn || window.__ow_aiTriggering) {
+            // Pick highest-health enemy on board
+            const enemyRows = [ `${playerNum === 1 ? 2 : 1}f`, `${playerNum === 1 ? 2 : 1}m`, `${playerNum === 1 ? 2 : 1}b` ];
+            const candidates = [];
+            enemyRows.forEach(r => {
+                const row = window.__ow_getRow?.(r);
+                row?.cardIds?.forEach(id => {
+                    const c = window.__ow_getCard?.(id);
+                    if (c && c.health > 0 && c.id !== 'turret') candidates.push({ id, r, hp: c.health });
+                });
+            });
+            candidates.sort((a,b)=>b.hp-a.hp);
+            if (candidates.length > 0) {
+                enemyTarget = { cardId: candidates[0].id, rowId: candidates[0].r };
+            }
+        } else {
+            // Step 1: pick enemy first (human)
+            showToast('Moira: Pick one ENEMY to siphon (ignores shields)');
+            enemyTarget = await selectCardTarget({ isDamage: true });
+            if (!enemyTarget) { clearToast(); return; }
+        }
+
+        if (!enemyTarget || !enemyTarget.cardId) {
+            showToast('Moira: No valid enemy selected');
+            setTimeout(() => clearToast(), 1500);
+            clearToast();
+            return;
+        }
+
+        // Validate enemy
         const enemyPlayer = parseInt(enemyTarget.cardId[0]);
-        const isEnemy = enemyPlayer !== playerNum;
-        if (!isEnemy || !enemyCard || enemyCard.health <= 0) {
+        if (enemyPlayer === playerNum) {
+            showToast('Moira: Must target an enemy!');
+            setTimeout(() => clearToast(), 2000);
+            return;
+        }
+
+        const enemyCard = window.__ow_getCard?.(enemyTarget.cardId);
+        if (!enemyCard || enemyCard.health <= 0) {
             showToast('Moira: No valid enemy — ability failed');
             setTimeout(() => clearToast(), 1500);
             return;
         }
+
         // Deal 1 damage ignoring shields (Hanzo reduction may still apply via damageBus)
         dealDamage(enemyTarget.cardId, enemyTarget.rowId, 1, true, playerHeroId);
         effectsBus.publish(Effects.showDamage(enemyTarget.cardId, 1));
 
         // Step 2: pick ally to heal (turret cannot be healed)
-        showToast('Moira: Pick one ALLY to heal 2');
-        const allyTarget = await selectCardTarget();
-        if (!allyTarget) { clearToast(); return; }
-        const allyCard = window.__ow_getCard?.(allyTarget.cardId);
+        let allyTarget;
+        if (window.__ow_isAITurn || window.__ow_aiTriggering) {
+            // Pick most wounded ally
+            const allyRows = [ `${playerNum}f`, `${playerNum}m`, `${playerNum}b` ];
+            const candidates = [];
+            allyRows.forEach(r => {
+                const row = window.__ow_getRow?.(r);
+                row?.cardIds?.forEach(id => {
+                    const c = window.__ow_getCard?.(id);
+                    if (c && c.health > 0 && c.id !== 'turret') {
+                        const maxHp = c.maxHealth || window.__ow_getMaxHealth?.(id) || c.health;
+                        const missing = Math.max(0, maxHp - c.health);
+                        if (missing > 0) candidates.push({ id, r, missing });
+                    }
+                });
+            });
+            candidates.sort((a,b)=>b.missing-a.missing);
+            if (candidates.length > 0) {
+                allyTarget = { cardId: candidates[0].id, rowId: candidates[0].r };
+            }
+        } else {
+            showToast('Moira: Pick one ALLY to heal 2');
+            allyTarget = await selectCardTarget({ isHeal: true });
+            if (!allyTarget) { clearToast(); return; }
+        }
+
+        if (!allyTarget || !allyTarget.cardId) {
+            showToast('Moira: No valid ally selected');
+            setTimeout(() => clearToast(), 1500);
+            clearToast();
+            return;
+        }
+
+        // Validate ally
         const allyPlayer = parseInt(allyTarget.cardId[0]);
-        const isAlly = allyPlayer === playerNum;
-        const isTurret = allyCard?.id === 'turret';
-        if (!isAlly || !allyCard || allyCard.health <= 0 || isTurret) {
+        if (allyPlayer !== playerNum) {
+            showToast('Moira: Must target an ally!');
+            setTimeout(() => clearToast(), 2000);
+            return;
+        }
+
+        const allyCard = window.__ow_getCard?.(allyTarget.cardId);
+        const isTurret = allyCard?.id === 'turret' || allyCard?.turret === true;
+        if (!allyCard || allyCard.health <= 0 || isTurret) {
             showToast('Moira: Invalid ally (turret cannot be healed)');
             setTimeout(() => clearToast(), 1500);
             return;
@@ -72,7 +142,7 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
     showToast('Moira: Select any card to target its column');
 
     try {
-        const target = await selectCardTarget();
+        const target = await selectCardTarget({ isHeal: true });
         if (!target) { clearToast(); return; }
 
         const targetRow = window.__ow_getRow?.(target.rowId);

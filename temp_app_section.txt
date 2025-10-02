@@ -1,0 +1,14 @@
+            const actionsBus = await import('./abilities/engine/actionsBus');
+            window.__ow_aiTriggering = true;
+            // Store the target for AI ultimates so onUltimate functions can use it instead of selectCardTarget
+            window.__ow_aiUltimateTarget = target;
+
+            console.log(`Publishing requestUltimate action...`);
+            actionsBus.default.publish(actionsBus.Actions.requestUltimate(cardId, cardRowId, ultimateCost));
+            console.log(`Ultimate action published successfully`);
+
+            // NOTE: Do NOT clear flags here - causes race condition!
+            // Flags will be cleared by action handler after ultimate completes
+            console.log(`======= AI ULTIMATE REQUEST SENT (flags remain active) =======`);
+
+            return true;

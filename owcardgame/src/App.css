@@ -227,3 +227,136 @@ body {
     box-shadow: inset 0 0 10px rgba(50,50,50,0.7);
 }
 
+/* AI Controls Styling */
+.ai-controls {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.ai-selector-button {
+    background: #2e3651;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: bold;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.ai-selector-button:hover {
+    background: #3d4a6b;
+}
+
+.ai-selector-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    min-width: 200px;
+    padding: 10px;
+}
+
+.ai-selector-section {
+    margin-bottom: 15px;
+}
+
+.ai-selector-section h4 {
+    margin: 0 0 8px 0;
+    font-size: 14px;
+    color: #333;
+}
+
+.ai-option {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 8px;
+    cursor: pointer;
+}
+
+.ai-option input[type="radio"] {
+    margin-right: 8px;
+    margin-top: 2px;
+}
+
+.ai-option-content {
+    flex: 1;
+}
+
+.ai-option-content strong {
+    display: block;
+    font-size: 12px;
+    color: #333;
+}
+
+.ai-option-content small {
+    display: block;
+    font-size: 10px;
+    color: #666;
+    margin-top: 2px;
+}
+
+.ai-decision-display {
+    background: rgba(46, 54, 81, 0.9);
+    color: white;
+    padding: 10px;
+    border-radius: 4px;
+    max-width: 300px;
+    font-size: 12px;
+}
+
+.ai-thinking-indicator {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.ai-decision-text {
+    margin-bottom: 8px;
+    line-height: 1.4;
+}
+
+.ai-cursor {
+    animation: blink 1s infinite;
+}
+
+@keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+}
+
+.ai-action-details {
+    font-size: 10px;
+    opacity: 0.8;
+}
+
+.ai-action-details div {
+    margin: 2px 0;
+}
+
+.ai-hand-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 150px;
+    background: rgba(46, 54, 81, 0.3);
+    border-radius: 8px;
+    border: 2px dashed rgba(46, 54, 81, 0.5);
+}
+
+.ai-hand-info {
+    font-size: 16px;
+    font-weight: bold;
+    color: #2e3651;
+    text-align: center;
+    padding: 20px;
+}
+

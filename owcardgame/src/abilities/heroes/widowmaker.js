@@ -5,9 +5,9 @@ import { playAudioByKey } from '../../assets/imageImports';
 
 export async function onEnter({ playerHeroId, rowId }) {
     const playerNum = parseInt(playerHeroId[0]);
-    
+
     showToast('Widowmaker: Place Infra-Sight on enemy row');
-    const target = await selectRowTarget();
+    const target = await selectRowTarget({ isDebuff: true });
     if (target) {
         // Validate it's an enemy row
         const targetPlayerNum = parseInt(target.rowId[0]);
@@ -58,7 +58,7 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
     const opposingRowId = `${enemyPlayer}${widowmakerPosition}`;
     
     showToast(`Widowmaker: Select enemy in ${opposingRowId} to defeat`);
-    const target = await selectCardTarget();
+    const target = await selectCardTarget({ isDamage: true });
     if (target) {
         // Validate target is in the opposing row
         if (target.rowId !== opposingRowId) {

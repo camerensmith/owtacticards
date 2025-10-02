@@ -60,7 +60,7 @@ export async function onEnter({ playerHeroId, rowId }) {
     }
     
     showToast('Venture: Select target for Drill Dash');
-    const target = await selectCardTarget();
+    const target = await selectCardTarget({ isDamage: true });
     if (!target) {
         clearToast();
         return;

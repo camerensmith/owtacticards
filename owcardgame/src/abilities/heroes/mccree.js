@@ -17,7 +17,7 @@ async function handleFlashbang(playerHeroId, rowId, playerNum) {
     try {
         showToast('McCree: Select an enemy row for Flashbang');
         
-        const targetRow = await selectRowTarget();
+        const targetRow = await selectRowTarget({ isDamage: true });
         if (!targetRow) {
             clearToast();
             return;
@@ -88,15 +88,15 @@ async function handleFlashbang(playerHeroId, rowId, playerNum) {
 export async function onUltimate({ playerHeroId, rowId, cost }) {
     try {
         const playerNum = parseInt(playerHeroId[0]);
-        
+
         // Play ultimate activation sound
         try {
             playAudioByKey('mccree-ultimate');
         } catch {}
-        
+
         showToast('McCree: Dead Eye - Select an enemy row');
-        
-        const targetRow = await selectRowTarget();
+
+        const targetRow = await selectRowTarget({ isDamage: true });
         if (!targetRow) {
             clearToast();
             return;
@@ -131,7 +131,7 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
         }
         
         // Calculate damage distribution
-        const totalDamage = 7;
+        const totalDamage = 9;
         const enemyCount = livingEnemies.length;
         const baseDamage = Math.floor(totalDamage / enemyCount);
         const remainder = totalDamage % enemyCount;

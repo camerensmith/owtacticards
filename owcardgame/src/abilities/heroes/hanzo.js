@@ -20,7 +20,7 @@ export async function onEnter({ playerHeroId, rowId }) {
     showToast('Hanzo: Select enemy row for Sonic Arrow token');
 
     try {
-        const target = await selectRowTarget();
+        const target = await selectRowTarget({ isDamage: true });
         if (target) {
             const targetRowId = target.rowId;
             
@@ -63,7 +63,7 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
     showToast('Hanzo: Select target enemy for Dragonstrike');
 
     try {
-        const target = await selectCardTarget();
+        const target = await selectCardTarget({ isDamage: true });
         if (target) {
             const targetCard = window.__ow_getCard?.(target.cardId);
             if (!targetCard) {

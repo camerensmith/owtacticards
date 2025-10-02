@@ -26,6 +26,10 @@ import abilitiesIndex from './abilities';
 import TopBanner from './components/layout/TopBanner';
 import { subscribe as subscribeTargeting, showMessage as showToast, clearMessage as clearToast } from './abilities/engine/targetingBus';
 import { subscribe as subscribeDamage } from './abilities/engine/damageBus';
+import AIGameIntegration from './ai/AIGameIntegration';
+import AIDifficultySelector from './components/AIDifficultySelector';
+import AIDecisionDisplay from './components/AIDecisionDisplay';
+import { AI_DIFFICULTY, AI_PERSONALITY } from './ai/AIController';
 
 export const ACTIONS = {
     ADD_CARD_EFFECT: 'add-card-effect',
@@ -140,7 +144,14 @@ function reducer(gameState, action) {
             const playerHeroId = action.payload.playerHeroId;
 
             return produce(gameState, (draft) => {
-                draft.rows[`player${playerNum}hand`].cardIds.push(playerHeroId);
+                // Prevent duplicates - only add if not already in hand
+                const handRow = draft.rows[`player${playerNum}hand`];
+                if (!handRow.cardIds.includes(playerHeroId)) {
+                    handRow.cardIds.push(playerHeroId);
+                    console.log(`Added ${playerHeroId} to hand`);
+                } else {
+                    console.warn(`DUPLICATE PREVENTED: ${playerHeroId} already in hand!`);
+                }
             });
         }
 
@@ -317,6 +328,15 @@ function reducer(gameState, action) {
             newStartRowCardIds.splice(startIndex, 1);
 
             const newFinishRowCardIds = Array.from(finishRow.cardIds);
+
+            // CRITICAL: Prevent duplicate cards in same row
+            if (newFinishRowCardIds.includes(targetCardId)) {
+                console.error(`DUPLICATE PREVENTED: ${targetCardId} already exists in ${finishRowId}!`);
+                console.error(`Current cards in ${finishRowId}:`, newFinishRowCardIds);
+                // Don't add the duplicate, just return current state
+                return gameState;
+            }
+
             newFinishRowCardIds.splice(finishIndex, 0, targetCardId);
 
             // Check for Bastion token damage when moving to any row (not hand)
@@ -896,6 +916,13 @@ function reducer(gameState, action) {
 
 // Check for onEnter abilities when a hero is deployed
 function checkOnEnterAbilities(playerHeroId, rowId, playerNum) {
+    // Note: Player 2 onEnter abilities are triggered by AI via window.__ow_triggerOnEnter
+    // This function handles Player 1 manual triggers and AI-initiated triggers
+    if (playerNum === 2 && !window.__ow_aiTriggering) {
+        console.log('Player 2 abilities are controlled by AI - use window.__ow_triggerOnEnter');
+        return;
+    }
+    
     const heroId = playerHeroId.slice(1);
     const heroData = data.heroes[heroId];
     
@@ -1194,6 +1221,48 @@ export default function App() {
     const [modalState, setModalState] = useState({ isOpen: false, type: null, data: null });
     const [targetingMessage, setTargetingMessage] = useState(null);
     
+    // AI State Management
+    const [aiIntegration] = useState(() => new AIGameIntegration());
+    const [aiDifficulty, setAiDifficulty] = useState(AI_DIFFICULTY.MEDIUM);
+    const [aiPersonality, setAiPersonality] = useState(AI_PERSONALITY.BALANCED);
+    const [aiDecision, setAiDecision] = useState(null);
+    const [isAIThinking, setIsAIThinking] = useState(false);
+
+    // AI Turn End Handler
+    const handleAIEndTurn = () => {
+        console.log('AI ending turn - switching to Player 1');
+        // Prevent double increment if already advanced this logical turn
+        if (window.__ow_lastTurnAdvance && window.__ow_lastTurnAdvance.turn === turnState.turnCount && window.__ow_lastTurnAdvance.from === 2) {
+            console.warn('Skipping duplicate AI end turn advance');
+            return;
+        }
+        setTurnState((prevState) => ({
+            ...prevState,
+            turnCount: prevState.turnCount + 1,
+            playerTurn: 1,
+        }));
+        window.__ow_lastTurnAdvance = { turn: turnState.turnCount, from: 2 };
+    };
+
+    // AI Turn Handler
+    const handleAITurn = async () => {
+        try {
+            setIsAIThinking(true);
+            setAiDecision(null);
+
+            // Get current decision from AI
+            const decision = await aiIntegration.handleAITurn();
+            setAiDecision(decision);
+
+            // Update AI thinking state
+            setIsAIThinking(false);
+
+        } catch (error) {
+            console.error('AI turn error:', error);
+            setIsAIThinking(false);
+        }
+    };
+    
     // Expose a minimal bridge for hero modules to append row effects (e.g., BOB token)
     useEffect(() => {
         window.__ow_appendRowEffect = (rowId, arrayKey, effect) => {
@@ -1241,16 +1310,22 @@ export default function App() {
             const heroId = playerHeroId.slice(1);
             return data.heroes[heroId]?.health ?? undefined;
         };
-        window.__ow_setCardHealth = (playerHeroId, newHealth) => {
+        window.__ow_setCardHealth = (playerHeroId, newHealth, allowRevive = false) => {
             const playerNum = parseInt(playerHeroId[0]);
             const card = gameState.playerCards[`player${playerNum}cards`]?.cards?.[playerHeroId];
-            
+
             // Prevent turrets from being healed (but allow damage)
             if (card && card.turret === true && newHealth > card.health) {
                 console.log(`Health Update: Turret ${playerHeroId} cannot be healed`);
                 return;
             }
-            
+
+            // CRITICAL: Prevent healing from reviving dead cards (only Mercy ultimate can revive)
+            if (card && card.health <= 0 && newHealth > 0 && !allowRevive) {
+                console.log(`Health Update: Cannot revive dead card ${playerHeroId} with healing (only Mercy ultimate can revive)`);
+                return;
+            }
+
             dispatch({ type: 'external-set-card-health', payload: { targetCardId: playerHeroId, newHealth } });
         };
         window.__ow_isSpecial = (heroId) => {
@@ -1258,6 +1333,10 @@ export default function App() {
         };
         window.__ow_setRowPower = (playerNum, rowPosition, powerValue) => {
             dispatch({ type: ACTIONS.SET_POWER, payload: { playerNum, rowPosition, powerValue } });
+        };
+        window.__ow_setRowSynergy = (playerNum, rowPosition, synergyValue) => {
+            const rowId = `${playerNum}${rowPosition}`;
+            dispatch({ type: ACTIONS.SET_SYNERGY, payload: { rowId, newSynergyVal: synergyValue } });
         };
         window.__ow_setInvulnerableSlots = (rowId, sourceCardId, sourceRowId) => {
             dispatch({
@@ -1430,6 +1509,135 @@ export default function App() {
         window.__ow_dispatchAction = (action) => {
             dispatch(action);
         };
+        window.__ow_dispatch = (action) => {
+            dispatch(action);
+        };
+        window.__ow_getTurnCount = () => {
+            return turnState.turnCount;
+        };
+        window.__ow_isUltimateReady = (cardId) => {
+            // Find the card's row
+            const playerNum = parseInt(cardId[0]);
+            const rows = [`${playerNum}f`, `${playerNum}m`, `${playerNum}b`];
+
+            let cardRow = null;
+            let rowId = null;
+            for (const rid of rows) {
+                const row = gameState.rows[rid];
+                if (row && row.cardIds && row.cardIds.includes(cardId)) {
+                    cardRow = row;
+                    rowId = rid;
+                    break;
+                }
+            }
+
+            if (!cardRow) {
+                console.log(`Ultimate check failed: card ${cardId} not found in any row`);
+                return false;
+            }
+
+            // Get ultimate cost from card data
+            const heroId = cardId.slice(1); // Remove player number
+            const heroData = data.heroes[heroId];
+            if (!heroData || !heroData.ultimate) {
+                console.log(`Ultimate check failed: no ultimate data for hero ${heroId}`);
+                return false;
+            }
+
+            // Extract cost from ultimate string (e.g., "Whole Hog (3)" -> 3)
+            const costMatch = heroData.ultimate.match(/\((\d+)\)/);
+            if (!costMatch) {
+                console.log(`Ultimate check failed: could not parse cost from "${heroData.ultimate}"`);
+                return false;
+            }
+
+            const requiredCost = parseInt(costMatch[1]);
+
+            // Get synergy for the row (it's a single number, not an object)
+            const currentSynergy = cardRow.synergy || 0;
+
+            console.log(`Ultimate check for ${cardId} (${heroId}) in ${rowId}: needs ${requiredCost} synergy, has ${currentSynergy}`);
+
+            return currentSynergy >= requiredCost;
+        };
+        window.__ow_triggerOnEnter = (playerHeroId, rowId, playerNum) => {
+            window.__ow_aiTriggering = true;
+            checkOnEnterAbilities(playerHeroId, rowId, playerNum);
+            window.__ow_aiTriggering = false;
+        };
+        window.__ow_useUltimate = async (cardId, target) => {
+            console.log(`AI requesting ultimate for ${cardId}`, target);
+
+            // Find the row where the card is located
+            const playerNum = parseInt(cardId[0]);
+            const allRows = [`${playerNum}f`, `${playerNum}m`, `${playerNum}b`];
+            let cardRowId = null;
+
+            for (const rowId of allRows) {
+                const row = gameState.rows[rowId];
+                if (row && row.cardIds.includes(cardId)) {
+                    cardRowId = rowId;
+                    break;
+                }
+            }
+
+            if (!cardRowId) {
+                console.error(`AI ultimate failed: card ${cardId} not found on board`);
+                return false;
+            }
+
+            // Get hero ID and ultimate cost
+            const heroId = cardId.slice(1);
+            const heroJsonData = data.heroes[heroId];
+
+            // Get ultimate cost
+            let ultimateCost = 3; // Default
+            if (heroId === 'wreckingball') {
+                const currentSynergy = gameState.rows[cardRowId]?.synergy || 0;
+                ultimateCost = currentSynergy;
+            } else if (heroId === 'bob') {
+                ultimateCost = 1;
+            } else if (heroJsonData?.ultimate) {
+                const match = heroJsonData.ultimate.match(/\((\d+)\)/);
+                if (match) {
+                    ultimateCost = parseInt(match[1]);
+                }
+            }
+
+            // Check synergy availability
+            const currentSynergy = gameState.rows[cardRowId]?.synergy || 0;
+            if (currentSynergy < ultimateCost) {
+                console.log(`AI ultimate failed: insufficient synergy (have ${currentSynergy}, need ${ultimateCost})`);
+                return false;
+            }
+
+            // Check if already used
+            const playerKey = `player${playerNum}`;
+            if (gameState.ultimateUsage[playerKey]?.includes(heroId)) {
+                console.log(`AI ultimate failed: ${heroId} already used ultimate this round`);
+                return false;
+            }
+
+            // Publish the ultimate request via actions bus
+            console.log(`======= AI ULTIMATE EXECUTION START =======`);
+            console.log(`Hero: ${heroId}, Card: ${cardId}, Row: ${cardRowId}`);
+            console.log(`Cost: ${ultimateCost}, Current Synergy: ${gameState.rows[cardRowId]?.synergy}`);
+            console.log(`Target:`, target);
+
+            const actionsBus = await import('./abilities/engine/actionsBus');
+            window.__ow_aiTriggering = true;
+            // Store the target for AI ultimates so onUltimate functions can use it instead of selectCardTarget
+            window.__ow_aiUltimateTarget = target;
+
+            console.log(`Publishing requestUltimate action...`);
+            actionsBus.default.publish(actionsBus.Actions.requestUltimate(cardId, cardRowId, ultimateCost));
+            console.log(`Ultimate action published successfully`);
+
+            // NOTE: Flags cleared after ultimate execution completes (see action handler)
+            console.log(`======= AI ULTIMATE REQUEST SENT =======`);
+
+            return true;
+        };
         window.__ow_getReinhardtFunctions = () => {
             const reinhardtModule = abilitiesIndex?.reinhardt;
             if (reinhardtModule) {
@@ -1508,7 +1716,7 @@ export default function App() {
                 }
             }
         };
-        return () => { window.__ow_appendRowEffect = null; window.__ow_getRow = null; window.__ow_setRowArray = null; window.__ow_updateSynergy = null; window.__ow_getCard = null; window.__ow_getMaxHealth = null; window.__ow_setCardHealth = null; window.__ow_isSpecial = null; window.__ow_setRowPower = null; window.__ow_setInvulnerableSlots = null; window.__ow_clearInvulnerableSlots = null; window.__ow_isSlotInvulnerable = null; window.__ow_removeRowEffect = null; window.__ow_cleanupImmortalityField = null; window.__ow_dealDamage = null; window.__ow_dispatchShieldUpdate = null; window.__ow_appendCardEffect = null; window.__ow_removeCardEffect = null; window.__ow_moveCardToRow = null; window.__ow_isRowFull = null; window.__ow_addSpecialCardToHand = null; window.__ow_returnDvaToHand = null; window.__ow_replaceWithDva = null; window.__ow_cleanupDvaSuitedUp = null; window.__ow_removeSpecialCard = null; window.__ow_getLastUltimateUsed = null; window.__ow_trackUltimateUsed = null; window.__ow_dispatchAction = null; window.__ow_executeDuplicatedUltimate = null; window.__ow_getReinhardtFunctions = null; };
+        return () => { window.__ow_appendRowEffect = null; window.__ow_getRow = null; window.__ow_setRowArray = null; window.__ow_updateSynergy = null; window.__ow_getCard = null; window.__ow_getMaxHealth = null; window.__ow_setCardHealth = null; window.__ow_isSpecial = null; window.__ow_setRowPower = null; window.__ow_setRowSynergy = null; window.__ow_setInvulnerableSlots = null; window.__ow_clearInvulnerableSlots = null; window.__ow_isSlotInvulnerable = null; window.__ow_removeRowEffect = null; window.__ow_cleanupImmortalityField = null; window.__ow_dealDamage = null; window.__ow_dispatchShieldUpdate = null; window.__ow_appendCardEffect = null; window.__ow_removeCardEffect = null; window.__ow_moveCardToRow = null; window.__ow_isRowFull = null; window.__ow_addSpecialCardToHand = null; window.__ow_returnDvaToHand = null; window.__ow_replaceWithDva = null; window.__ow_cleanupDvaSuitedUp = null; window.__ow_removeSpecialCard = null; window.__ow_getLastUltimateUsed = null; window.__ow_trackUltimateUsed = null; window.__ow_dispatchAction = null; window.__ow_dispatch = null; window.__ow_executeDuplicatedUltimate = null; window.__ow_getReinhardtFunctions = null; window.__ow_useUltimate = null; };
     }, [gameState]);
     // Game logic state
     const [gameLogic, setGameLogic] = useState({
@@ -1520,7 +1728,7 @@ export default function App() {
         player2Turns: 0,
         player1Deployed: 0,
         player2Deployed: 0,
-        maxTurnsPerPlayer: 7,
+        maxTurnsPerPlayer: 8, // 8 turns each = 16 rounds total
         maxHandSize: 6, // Changed from 10 to 6
         maxHeroesPerPlayer: 6,
         gamePhase: 'playing', // 'playing', 'roundEnd', 'gameEnd'
@@ -1633,15 +1841,32 @@ export default function App() {
         initializeGame();
     }, []); // Only run once on mount
 
+    // Initialize AI integration (once), then keep settings and state in sync without re-initializing
+    useEffect(() => {
+        aiIntegration.initialize(gameState, handleAIEndTurn);
+        aiIntegration.setAISettings(aiDifficulty, aiPersonality);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [aiIntegration]);
+
+    // Keep AI settings in sync
+    useEffect(() => {
+        aiIntegration.setAISettings(aiDifficulty, aiPersonality);
+    }, [aiIntegration, aiDifficulty, aiPersonality]);
+
+    // Keep AI game state reference in sync without reinitializing
+    useEffect(() => {
+        aiIntegration.gameState = gameState;
+    }, [aiIntegration, gameState]);
+
     // Track deployment counts
     useEffect(() => {
-        const player1Deployed = gameState.rows['1f'].cardIds.length + 
-                               gameState.rows['1m'].cardIds.length + 
+        const player1Deployed = gameState.rows['1f'].cardIds.length +
+                               gameState.rows['1m'].cardIds.length +
                                gameState.rows['1b'].cardIds.length;
-        const player2Deployed = gameState.rows['2f'].cardIds.length + 
-                               gameState.rows['2m'].cardIds.length + 
+        const player2Deployed = gameState.rows['2f'].cardIds.length +
+                               gameState.rows['2m'].cardIds.length +
                                gameState.rows['2b'].cardIds.length;
-        
+
         setGameLogic(prev => ({
             ...prev,
             player1Deployed,
@@ -1649,28 +1874,38 @@ export default function App() {
         }));
     }, [gameState.rows]);
 
-    // Track turns and check for game end
+    // Handle AI turns and track turn counts
     useEffect(() => {
         if (turnState.turnCount > 1) { // Skip first turn (initialization)
             const currentPlayer = turnState.playerTurn;
             const otherPlayer = currentPlayer === 1 ? 2 : 1;
-            
-            // Increment turn count for the player who just ended their turn
-            setGameLogic(prev => ({
-                ...prev,
-                [`player${otherPlayer}Turns`]: prev[`player${otherPlayer}Turns`] + 1
-            }));
-            
-            // Check if both players have reached max turns
-            const newPlayer1Turns = currentPlayer === 2 ? gameLogic.player1Turns + 1 : gameLogic.player1Turns;
-            const newPlayer2Turns = currentPlayer === 1 ? gameLogic.player2Turns + 1 : gameLogic.player2Turns;
-            
-            if (newPlayer1Turns >= gameLogic.maxTurnsPerPlayer && newPlayer2Turns >= gameLogic.maxTurnsPerPlayer) {
-                console.log('Both players have reached max turns - ending round');
-                endRound();
+
+            // Handle AI turn for Player 2
+            if (currentPlayer === 2 && !turnState.player2Passed && !isAIThinking) {
+                // Prevent multiple AI triggers within the same Player 2 turn
+                if (!window.__ow_lastAITrigger || window.__ow_lastAITrigger.turn !== turnState.turnCount) {
+                    window.__ow_lastAITrigger = { turn: turnState.turnCount };
+                    console.log('AI turn detected - Player 2 turn');
+                    setTimeout(() => {
+                        handleAITurn();
+                    }, 100);
+                }
             }
         }
-    }, [turnState.turnCount]);
+    }, [turnState.turnCount, turnState.playerTurn, turnState.player2Passed, isAIThinking]);
+
+    // If the game starts with AI (Player 2), trigger AI on turn 1 as well
+    useEffect(() => {
+        if (turnState.turnCount === 1 && turnState.playerTurn === 2 && !isAIThinking) {
+            if (!window.__ow_lastAITrigger || window.__ow_lastAITrigger.turn !== 1) {
+                window.__ow_lastAITrigger = { turn: 1 };
+                console.log('AI starting game - Player 2 goes first at turn 1');
+                setTimeout(() => {
+                    handleAITurn();
+                }, 100);
+            }
+        }
+    }, [turnState.turnCount, turnState.playerTurn, isAIThinking])
 
     // Subscribe to modal state changes
     useEffect(() => {
@@ -1777,10 +2012,32 @@ export default function App() {
     useEffect(() => {
         const unsubscribe = subscribeToActions((action) => {
             if (action.type === 'request:ultimate') {
+                console.log(`>>> ULTIMATE ACTION RECEIVED <<<`);
+                console.log(`Action payload:`, action.payload);
+
                 const { playerHeroId, rowId, cost } = action.payload;
+
+                if (!playerHeroId) {
+                    console.error("ULTIMATE ERROR: playerHeroId is undefined!", action.payload);
+                    return;
+                }
                 const currentSynergy = gameState.rows[rowId]?.synergy || 0;
                 const playerNum = parseInt(playerHeroId[0]);
+                const heroId = playerHeroId.slice(1);
                 const enteredTurn = gameState.playerCards[`player${playerNum}cards`]?.cards?.[playerHeroId]?.enteredTurn;
+
+                console.log(`Hero: ${heroId}, Player: ${playerNum}, Row: ${rowId}`);
+                console.log(`Current Synergy: ${currentSynergy}, Required Cost: ${cost}`);
+                console.log(`AI Triggering: ${window.__ow_aiTriggering}`);
+
+                // Prevent Player 2 from manually using ultimates (AI controls Player 2)
+                // UNLESS the request is coming from the AI itself
+                if (playerNum === 2 && !window.__ow_aiTriggering) {
+                    console.log(`>>> BLOCKED: Player 2 manual ultimate prevented`);
+                    showToast('Player 2 is controlled by AI - no manual actions allowed');
+                    setTimeout(() => clearToast(), 2000);
+                    return;
+                }
 
                 // Block ultimates on the same turn a hero entered play
                 if (enteredTurn === turnState.turnCount) {
@@ -1788,7 +2045,6 @@ export default function App() {
                     return;
                 }
 
-                const heroId = playerHeroId.slice(1);
                 // Base cost override (BOB = 1)
                 let adjustedCost = (heroId === 'bob') ? 1 : cost;
                 // Adjust cost if BOB token is on the opposing row (enemyEffects include {type:'ultCost', value:2})
@@ -2173,6 +2429,13 @@ export default function App() {
                     if (abilitiesIndex?.wreckingball?.checkMinefieldTrigger) {
                         abilitiesIndex.wreckingball.checkMinefieldTrigger(playerHeroId, rowId);
                     }
+                    
+                    // RACE CONDITION FIX: Clear AI flags after ultimate completes
+                    if (window.__ow_aiTriggering) {
+                        console.log("Clearing AI ultimate flags after execution");
+                        window.__ow_aiTriggering = false;
+                        window.__ow_aiUltimateTarget = null;
+                    }
                 } else {
                     console.log(`Insufficient synergy for ultimate. Need ${adjustedCost}, have ${currentSynergy}`);
                 }
@@ -2401,7 +2664,7 @@ export default function App() {
             }
         };
 
-    // End the round and update match scores when both players have passed their turn
+    // End the round and update match scores when both players have passed their turn OR when turn limit is reached
     useEffect(() => {
         // When both players pass, end the round and move to the next round
         if (
@@ -2410,12 +2673,25 @@ export default function App() {
         ) {
             endRound();
         }
+        
+        // Also end the round if we've reached the turn limit (14 turns total)
+        if (turnState.turnCount > 14) {
+            console.log(`Turn limit reached (${turnState.turnCount}), ending round automatically`);
+            endRound();
+        }
     }, [turnState, gameState.rows, matchState]);
 
     // Handle card dragging
     function handleOnDragEnd(result) {
         const { destination, source, draggableId } = result;
         if (!destination) return;
+
+        // Prevent Player 2 from manually dragging cards (AI controls Player 2)
+        if (turnState.playerTurn === 2) {
+            showToast('Player 2 is controlled by AI - no manual actions allowed');
+            setTimeout(() => clearToast(), 2000);
+            return;
+        }
 
         // Get card movement data
         const startRowId = source.droppableId;
@@ -2545,9 +2821,30 @@ export default function App() {
         document.getElementById(`${result.source.droppableId}-list`).classList.toggle('is-drag-origin');
     }
 
+    // Expose current player and turn to window for AI wrappers
+    useEffect(() => {
+        window.__ow_getPlayerTurn = () => turnState.playerTurn;
+        window.__ow_getTurnCount = () => turnState.turnCount;
+    }, [turnState.playerTurn, turnState.turnCount]);
+
     return (
         <div id='page-wrapper'>
             <TitleCard playAudio={playAudio} setPlayAudio={setPlayAudio} />
+            
+            {/* AI Controls */}
+            <div className="ai-controls">
+                <AIDifficultySelector 
+                    onDifficultyChange={setAiDifficulty}
+                    onPersonalityChange={setAiPersonality}
+                    currentDifficulty={aiDifficulty}
+                    currentPersonality={aiPersonality}
+                />
+                <AIDecisionDisplay 
+                    decision={aiDecision}
+                    isVisible={isAIThinking || aiDecision}
+                />
+            </div>
+            
             <div id='landscape-wrapper'>
                 <turnContext.Provider value={{ turnState, setTurnState }}>
                     <gameContext.Provider value={{ gameState, dispatch }}>

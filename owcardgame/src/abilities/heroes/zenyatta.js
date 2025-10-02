@@ -4,6 +4,7 @@ import { playAudioByKey } from '../../assets/imageImports';
 import { showMessage as showToast, clearMessage as clearToast } from '../engine/targetingBus';
 import effectsBus, { Effects } from '../engine/effectsBus';
 import { showOnEnterChoice } from '../engine/modalController';
+import { withAIContext } from '../engine/aiContextHelper';
 
 // Helper function to place Harmony token on a hero
 function placeHarmonyToken(cardId) {
@@ -81,45 +82,88 @@ function findRandomEnemy(excludeCardId, playerNum) {
     return availableEnemies[Math.floor(Math.random() * availableEnemies.length)];
 }
 
-export function onEnter({ playerHeroId, rowId }) {
-    const harmonyChoice = { 
-        name: 'Harmony', 
-        description: 'Heal ally and place token. Token heals 1 health at start of turn and jumps to another ally.' 
+export async function onEnter({ playerHeroId, rowId }) {
+    const playerNum = parseInt(playerHeroId[0]);
+    
+    // For AI, automatically choose based on game state
+    if (window.__ow_aiTriggering || window.__ow_isAITurn) {
+        // AI logic: prefer Discord if enemies are present, otherwise Harmony
+        const enemyRows = playerNum === 1 ? ['2f', '2m', '2b'] : ['1f', '1m', '1b'];
+        const hasEnemies = enemyRows.some(rowId => {
+            const row = window.__ow_getRow?.(rowId);
+            return row?.cardIds?.length > 0;
+        });
+        
+        if (hasEnemies) {
+            await onEnter2({ playerHeroId, rowId, playerNum }); // Discord
+        } else {
+            await onEnter1({ playerHeroId, rowId, playerNum }); // Harmony
+        }
+        return;
+    }
+    
+    // For human players, show choice modal
+    const harmonyChoice = {
+        name: 'Harmony',
+        title: 'Harmony',
+        description: 'Heal ally and place token. Token heals 1 health at start of turn and jumps to another ally.'
     };
-    const discordChoice = { 
-        name: 'Discord', 
-        description: 'Damage amplify enemy and place token. Target takes +1 damage from attacks, token jumps to another enemy at start of their turn.' 
+    const discordChoice = {
+        name: 'Discord',
+        title: 'Discord',
+        description: 'Damage amplify enemy and place token. Target takes +1 damage from attacks, token jumps to another enemy at start of their turn.'
     };
 
-    showOnEnterChoice('Zenyatta', harmonyChoice, discordChoice, (choiceIndex) => {
+    showOnEnterChoice('Zenyatta', harmonyChoice, discordChoice, withAIContext(playerHeroId, async (choiceIndex) => {
         if (choiceIndex === 0) {
-            onEnter1({ playerHeroId, rowId });
+            await onEnter1({ playerHeroId, rowId, playerNum });
         } else if (choiceIndex === 1) {
-            onEnter2({ playerHeroId, rowId });
+            await onEnter2({ playerHeroId, rowId, playerNum });
         }
-    });
+    }));
 }
 
-export async function onEnter1({ playerHeroId, rowId }) {
+export async function onEnter1({ playerHeroId, rowId, playerNum }) {
+    if (!playerHeroId) {
+        console.error("onEnter1: playerHeroId is undefined!");
+        return;
+    }
     try {
         // Play audio
         playAudioByKey('zenyatta-ability1');
-        
-        // Target any friendly hero (including Zenyatta)
-        const target = await selectCardTarget('ally');
+
+        showToast('Zenyatta: Select an ally to place Harmony token');
+
+        // Target any friendly hero (including Zenyatta) - enforce ally-only
+        const target = await selectCardTarget({ isHeal: true, isBuff: true });
         if (!target) {
-            showToast('Harmony: No target selected');
+            clearToast();
             return;
         }
-        
+
+        // Safety check: ensure target.cardId is valid
+        if (!target.cardId || typeof target.cardId !== 'string') {
+            showToast('Zenyatta: Invalid target selected');
+            setTimeout(() => clearToast(), 1500);
+            return;
+        }
+
+        // Validate target is an ally
+        const targetPlayerNum = parseInt(target.cardId[0]);
+        if (targetPlayerNum !== playerNum) {
+            showToast('Harmony: Must target an ally!');
+            setTimeout(() => clearToast(), 2000);
+            return;
+        }
+
         // Place Harmony token
         placeHarmonyToken(target.cardId);
-        
+
         // Clear targeting message and show confirmation
         clearToast();
         showToast('Harmony: Token placed - will heal at start of turn');
         setTimeout(() => clearToast(), 1500);
-        
+
     } catch (error) {
         console.error('Zenyatta Harmony Error:', error);
         showToast('Harmony: Error occurred');
@@ -127,26 +171,40 @@ export async function onEnter1({ playerHeroId, rowId }) {
     }
 }
 
-export async function onEnter2({ playerHeroId, rowId }) {
+export async function onEnter2({ playerHeroId, rowId, playerNum }) {
+    if (!playerHeroId) {
+        console.error("onEnter2: playerHeroId is undefined!");
+        return;
+    }
     try {
         // Play audio
         playAudioByKey('zenyatta-ability2');
-        
-        // Target any enemy hero
-        const target = await selectCardTarget('enemy');
+
+        showToast('Zenyatta: Select an enemy to place Discord token');
+
+        // Target any enemy hero - enforce enemy-only
+        const target = await selectCardTarget({ isDamage: true, isDebuff: true });
         if (!target) {
-            showToast('Discord: No target selected');
+            clearToast();
             return;
         }
-        
+
+        // Validate target is an enemy
+        const targetPlayerNum = parseInt(target.cardId[0]);
+        if (targetPlayerNum === playerNum) {
+            showToast('Discord: Must target an enemy!');
+            setTimeout(() => clearToast(), 2000);
+            return;
+        }
+
         // Place Discord token
         placeDiscordToken(target.cardId);
-        
+
         // Clear targeting message and show confirmation
         clearToast();
         showToast('Discord: Token placed on target');
         setTimeout(() => clearToast(), 1500);
-        
+
     } catch (error) {
         console.error('Zenyatta Discord Error:', error);
         showToast('Discord: Error occurred');
