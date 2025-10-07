@@ -3,7 +3,6 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [ main ]
-  workflow_dispatch:
 
 permissions:
   contents: read
@@ -32,6 +31,8 @@ jobs:
 
       - name: Build
         working-directory: owcardgame
+        env:
+          CI: false
         run: |
           npm run build
           cp -f build/index.html build/404.html || true
@@ -51,3 +52,5 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+
