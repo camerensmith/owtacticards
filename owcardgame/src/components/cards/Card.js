@@ -38,7 +38,15 @@ export default function Card(props) {
     const rowPosition = rowId[1];
     const index = props.index;
 
-    // Get card attributes from relevant player
+    // Get card attributes from relevant player with safety guard
+    const __cardSafe__ = gameState.playerCards?.[playerCardsId]?.cards?.[playerHeroId];
+    if (!__cardSafe__) {
+        // Defensive: card might have been removed or state not yet synced; avoid crash
+        if (process?.env?.NODE_ENV !== 'production') {
+            console.warn('Card.js: Missing card for', { playerHeroId, playerNum, playerCardsId, rowId });
+        }
+        return null;
+    }
     const {
         id,
         name,
@@ -51,7 +59,7 @@ export default function Card(props) {
         allyEffects,
         isPlayed,
         isDiscarded,
-    } = gameState.playerCards[playerCardsId].cards[playerHeroId];
+    } = __cardSafe__;
 
     function getStyle(style, snapshot) {
         if (!snapshot.isDropAnimating) return style;

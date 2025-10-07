@@ -7,13 +7,14 @@ import { showOnEnterChoice } from '../engine/modalController';
 import { withAIContext } from '../engine/aiContextHelper';
 
 // Helper function to place Harmony token on a hero
-function placeHarmonyToken(cardId) {
+function placeHarmonyToken(cardId, ownerPlayerNum) {
     const tokenId = `harmony-token-${Date.now()}`;
     const harmonyToken = {
         id: tokenId,
         hero: 'zenyatta',
         type: 'harmony',
         sourceCardId: cardId,
+        ownerPlayerNum,
         tooltip: 'Harmony: Heals 1 health at start of turn, then jumps to another ally',
         visual: 'harmony'
     };
@@ -22,13 +23,14 @@ function placeHarmonyToken(cardId) {
 }
 
 // Helper function to place Discord token on a hero
-function placeDiscordToken(cardId) {
+function placeDiscordToken(cardId, ownerPlayerNum) {
     const tokenId = `discord-token-${Date.now()}`;
     const discordToken = {
         id: tokenId,
         hero: 'zenyatta',
         type: 'discord',
         sourceCardId: cardId,
+        ownerPlayerNum,
         tooltip: 'Discord: Target takes +1 damage from attacks, jumps to another enemy at start of their turn',
         visual: 'discord'
     };
@@ -156,8 +158,8 @@ export async function onEnter1({ playerHeroId, rowId, playerNum }) {
             return;
         }
 
-        // Place Harmony token
-        placeHarmonyToken(target.cardId);
+        // Place Harmony token with owner tracking
+        placeHarmonyToken(target.cardId, playerNum);
 
         // Clear targeting message and show confirmation
         clearToast();
@@ -205,8 +207,8 @@ export async function onEnter2({ playerHeroId, rowId, playerNum }) {
             return;
         }
 
-        // Place Discord token
-        placeDiscordToken(target.cardId);
+        // Place Discord token with owner tracking
+        placeDiscordToken(target.cardId, playerNum);
 
         // Clear targeting message and show confirmation
         clearToast();
@@ -315,16 +317,16 @@ export function processHarmonyJump(cardId) {
         effectsBus.publish(Effects.showHeal(cardId, 1));
     }
     
-    // Try to jump to another ally
-    const playerNum = parseInt(cardId[0]);
-    const newTarget = findRandomAlly(cardId, playerNum);
+    // Try to jump to another ally using token owner
+    const owner = typeof harmonyToken.ownerPlayerNum === 'number' ? harmonyToken.ownerPlayerNum : parseInt(cardId[0]);
+    const newTarget = findRandomAlly(cardId, owner);
     
     if (newTarget) {
         // Remove token from current target
         window.__ow_removeCardEffect?.(cardId, harmonyToken.id);
         
-        // Place token on new target
-        placeHarmonyToken(newTarget.cardId);
+        // Place token on new target preserving owner
+        placeHarmonyToken(newTarget.cardId, owner);
         console.log(`Harmony: Jumped from ${cardId} to ${newTarget.cardId}`);
     }
 }
@@ -339,16 +341,16 @@ export function processDiscordJump(cardId) {
     
     if (!discordToken) return;
     
-    // Try to jump to another enemy
-    const playerNum = parseInt(cardId[0]);
-    const newTarget = findRandomEnemy(cardId, playerNum);
+    // Try to jump to another enemy using token owner
+    const owner = typeof discordToken.ownerPlayerNum === 'number' ? discordToken.ownerPlayerNum : (3 - parseInt(cardId[0]));
+    const newTarget = findRandomEnemy(cardId, owner);
     
     if (newTarget) {
         // Remove token from current target
         window.__ow_removeCardEffect?.(cardId, discordToken.id);
         
-        // Place token on new target
-        placeDiscordToken(newTarget.cardId);
+        // Place token on new target preserving owner
+        placeDiscordToken(newTarget.cardId, owner);
         console.log(`Discord: Jumped from ${cardId} to ${newTarget.cardId}`);
     }
 }

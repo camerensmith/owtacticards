@@ -53,7 +53,14 @@ export default function CardFocus(props) {
         const playerNum = parseInt(playerHeroId[0]);
         const rowId = cardFocus.rowId;
 
-        // Get card attributes from relevant player
+        // Get card attributes from relevant player with safety guard
+        const __cardSafe__ = gameState.playerCards?.[`player${playerNum}cards`]?.cards?.[playerHeroId];
+        if (!__cardSafe__) {
+            if (process?.env?.NODE_ENV !== 'production') {
+                console.warn('CardFocus.js: Missing card for', { playerHeroId, playerNum, rowId });
+            }
+            return null;
+        }
         const {
             id,
             name,
@@ -63,10 +70,7 @@ export default function CardFocus(props) {
             enemyEffects,
             allyEffects,
             isDiscarded,
-        } =
-            gameState.playerCards[`player${playerNum}cards`].cards[
-                playerHeroId
-            ];
+        } = __cardSafe__;
 
         return (
             <div id='cardfocuscontainer'>
