@@ -9,6 +9,69 @@ export async function onEnter({ playerHeroId, rowId }) {
     
     try { playAudioByKey('pharah-enter'); } catch {}
     
+    // For AI, automatically select a random enemy hero
+    if (window.__ow_aiTriggering || window.__ow_isAITurn) {
+        const enemyPlayer = playerNum === 1 ? 2 : 1;
+        const enemyRows = [`${enemyPlayer}f`, `${enemyPlayer}m`, `${enemyPlayer}b`];
+        
+        // Find all living enemy heroes (not turrets)
+        const livingEnemies = [];
+        for (const enemyRowId of enemyRows) {
+            const row = window.__ow_getRow?.(enemyRowId);
+            if (row && row.cardIds) {
+                for (const cardId of row.cardIds) {
+                    const card = window.__ow_getCard?.(cardId);
+                    if (card && card.health > 0 && card.id !== 'turret') {
+                        livingEnemies.push({ cardId, rowId: enemyRowId });
+                    }
+                }
+            }
+        }
+        
+        if (livingEnemies.length === 0) {
+            showToast('Pharah AI: No enemies to target');
+            setTimeout(() => clearToast(), 2000);
+            return;
+        }
+        
+        // Select random enemy
+        const randomEnemy = livingEnemies[Math.floor(Math.random() * livingEnemies.length)];
+        const targetCard = window.__ow_getCard?.(randomEnemy.cardId);
+        
+        // Store original row for synergy removal
+        const originalRowId = randomEnemy.rowId;
+        const originalRow = window.__ow_getRow?.(originalRowId);
+        
+        // Remove 2 synergy from target's starting row (before movement)
+        if (originalRow && originalRow.synergy > 0) {
+            const synergyToRemove = Math.min(2, originalRow.synergy);
+            window.__ow_updateSynergy?.(originalRowId, -synergyToRemove);
+        }
+        
+        // Attempt to move target back one row
+        const currentRowPosition = randomEnemy.rowId[1]; // 'f', 'm', or 'b'
+        let destinationRowId = null;
+        
+        if (currentRowPosition === 'f') {
+            destinationRowId = randomEnemy.rowId[0] + 'm'; // Front → Middle
+        } else if (currentRowPosition === 'm') {
+            destinationRowId = randomEnemy.rowId[0] + 'b'; // Middle → Back
+        }
+        // Back stays back (no movement)
+        
+        // Check if destination row is full and attempt movement
+        if (destinationRowId && !window.__ow_isRowFull?.(destinationRowId)) {
+            window.__ow_moveCardToRow?.(randomEnemy.cardId, destinationRowId);
+        }
+        
+        // Play ability sound on resolve
+        try { playAudioByKey('pharah-ability1'); } catch {}
+        
+        showToast('Pharah AI: Concussive Blast resolved!');
+        setTimeout(() => clearToast(), 2000);
+        return;
+    }
+    
     showToast('Pharah: Select target enemy for Concussive Blast');
     
     try {
@@ -91,6 +154,35 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
         console.log(`Pharah Barrage - Consumed all ${totalSynergy} synergy`);
     }
     
+    // AI: auto-select up to 3 highest-synergy-impact enemies; Human: manual
+    if (window.__ow_aiTriggering || window.__ow_isAITurn) {
+        const enemyPlayer = playerNum === 1 ? 2 : 1;
+        const enemyRows = [`${enemyPlayer}f`, `${enemyPlayer}m`, `${enemyPlayer}b`];
+        // Collect enemies with row synergy context
+        const candidates = [];
+        for (const rid of enemyRows) {
+            const row = window.__ow_getRow?.(rid);
+            const rowSynergy = row?.synergy || 0;
+            if (!row || !row.cardIds) continue;
+            row.cardIds.forEach(cid => {
+                const c = window.__ow_getCard?.(cid);
+                if (c && c.health > 0 && c.id !== 'turret') {
+                    candidates.push({ cardId: cid, rowId: rid, score: rowSynergy + (c.health || 0) });
+                }
+            });
+        }
+        // Sort by score and take up to 3
+        candidates.sort((a,b)=>b.score-a.score);
+        const targets = candidates.slice(0, 3);
+        try { playAudioByKey('pharah-ultimate-resolve'); } catch {}
+        for (const t of targets) {
+            dealDamage(t.cardId, t.rowId, damagePerTarget, false, playerHeroId);
+        }
+        showToast(`Pharah AI: Barrage hit ${targets.length} enemy(ies) for ${damagePerTarget}`);
+        setTimeout(() => clearToast(), 2000);
+        return;
+    }
+
     showToast(`Pharah: Barrage - Select up to 3 enemies (${damagePerTarget} damage each)`);
     
     try {

@@ -47,27 +47,26 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
     const playerNum = parseInt(playerHeroId[0]);
 
     try {
-        showToast('Reinhardt: Select enemy column to Earthshatter');
-
-        const target = await selectCardTarget({ isDamage: true });
-        if (!target) {
-            clearToast();
-            return;
+        // For AI, auto-pick a random enemy column
+        let columnIndex = -1;
+        if (window.__ow_aiTriggering || window.__ow_isAITurn) {
+            const enemyPlayer = playerNum === 1 ? 2 : 1;
+            const enemyRows = [`${enemyPlayer}f`, `${enemyPlayer}m`, `${enemyPlayer}b`];
+            const firstRow = window.__ow_getRow?.(enemyRows[0]);
+            const cols = firstRow?.cardIds?.length || 4;
+            columnIndex = Math.floor(Math.random() * cols);
+        } else {
+            showToast('Reinhardt: Select enemy column to Earthshatter');
+            const target = await selectCardTarget();
+            if (!target) { clearToast(); return; }
+            // Validate target is enemy
+            const targetPlayerNum = parseInt(target.cardId[0]);
+            const isEnemy = targetPlayerNum !== playerNum;
+            if (!isEnemy) { showToast('Reinhardt: Must target enemy column'); setTimeout(() => clearToast(), 1500); return; }
+            // Get target's column index
+            const targetRow = window.__ow_getRow?.(target.rowId);
+            columnIndex = targetRow.cardIds.indexOf(target.cardId);
         }
-        
-        // Validate target is enemy
-        const targetPlayerNum = parseInt(target.cardId[0]);
-        const isEnemy = targetPlayerNum !== playerNum;
-        
-        if (!isEnemy) {
-            showToast('Reinhardt: Must target enemy column');
-            setTimeout(() => clearToast(), 1500);
-            return;
-        }
-        
-        // Get target's column index
-        const targetRow = window.__ow_getRow?.(target.rowId);
-        const columnIndex = targetRow.cardIds.indexOf(target.cardId);
         
         if (columnIndex === -1) {
             showToast('Reinhardt: Invalid target position');

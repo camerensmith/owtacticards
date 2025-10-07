@@ -15,6 +15,39 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
         playAudioByKey('dva-ultimate');
     } catch {}
 
+    // For AI, automatically execute Call Mech
+    if (window.__ow_aiTriggering || window.__ow_isAITurn) {
+        try {
+            // Move D.Va to hand first (this frees up deployment space)
+            window.__ow_returnDvaToHand?.(playerNum);
+            
+            // Add "Suited Up" effect to D.Va in hand
+            const dvaCardId = `${playerNum}dva`;
+            window.__ow_appendCardEffect?.(dvaCardId, {
+                id: 'suited-up',
+                hero: 'dvameka',
+                type: 'status',
+                sourceCardId: playerHeroId,
+                sourceRowId: rowId,
+                tooltip: 'Suited Up: D.Va is piloting her MEKA',
+                visual: 'overlay'
+            });
+            
+            // Add D.Va+MEKA to hand (special card, ignores hand size limit)
+            window.__ow_addSpecialCardToHand?.(playerNum, 'dvameka');
+            
+            console.log('D.Va AI: Call Mech executed - D.Va+MEKA added to hand');
+            showToast('D.Va AI: Call Mech - D.Va+MEKA added to hand');
+            setTimeout(() => clearToast(), 2000);
+            return;
+        } catch (error) {
+            console.error('D.Va AI Call Mech error:', error);
+            showToast('D.Va AI ultimate failed');
+            setTimeout(() => clearToast(), 1500);
+            return;
+        }
+    }
+
     showToast('D.Va: Call Mech - Moving to hand and adding D.Va+MEKA');
     
     try {

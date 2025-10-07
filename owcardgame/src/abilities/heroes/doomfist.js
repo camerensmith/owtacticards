@@ -23,9 +23,59 @@ export async function onEnter({ playerHeroId, rowId }) {
 
     try { playAudioByKey('doomfist-enter'); } catch {}
 
+    // For AI, automatically select a random enemy hero
+    if (window.__ow_aiTriggering || window.__ow_isAITurn) {
+        const enemyPlayer = playerNum === 1 ? 2 : 1;
+        const enemyRows = [`${enemyPlayer}f`, `${enemyPlayer}m`, `${enemyPlayer}b`];
+        
+        // Find all living enemy heroes (not turrets)
+        const livingEnemies = [];
+        for (const enemyRowId of enemyRows) {
+            const row = window.__ow_getRow?.(enemyRowId);
+            if (row && row.cardIds) {
+                for (const cardId of row.cardIds) {
+                    const card = window.__ow_getCard?.(cardId);
+                    if (card && card.health > 0 && card.id !== 'turret') {
+                        livingEnemies.push({ cardId, rowId: enemyRowId });
+                    }
+                }
+            }
+        }
+        
+        if (livingEnemies.length === 0) {
+            showToast('Doomfist AI: No enemies to target');
+            setTimeout(() => clearToast(), 2000);
+            return;
+        }
+        
+        // Select random enemy
+        const randomEnemy = livingEnemies[Math.floor(Math.random() * livingEnemies.length)];
+        const targetCard = window.__ow_getCard?.(randomEnemy.cardId);
+
+        // First: attempt to push the target back one row (if possible)
+        const currentRowId = randomEnemy.rowId;
+        const currentRowPos = currentRowId[1]; // f/m/b
+        let pushToRow = null;
+        if (currentRowPos === 'f') pushToRow = `${enemyPlayer}m`;
+        else if (currentRowPos === 'm') pushToRow = `${enemyPlayer}b`;
+
+        if (pushToRow && !window.__ow_isRowFull?.(pushToRow)) {
+            window.__ow_moveCardToRow?.(randomEnemy.cardId, pushToRow);
+        }
+
+        // Then: deal 2 damage to the target (respects shields)
+        const damageRow = pushToRow || currentRowId; // if pushed, damage from new row context
+        dealDamage(randomEnemy.cardId, damageRow, 2, false, playerHeroId);
+
+        try { playAudioByKey('doomfist-punch'); } catch {}
+        showToast('Doomfist AI: Rocket Punch resolved');
+        setTimeout(() => clearToast(), 1500);
+        return;
+    }
+
     showToast('Doomfist: Select target enemy for Rocket Punch');
     try {
-        const target = await selectCardTarget({ isDamage: true });
+        const target = await selectCardTarget();
         if (!target) {
             showToast('Doomfist ability cancelled');
             setTimeout(() => clearToast(), 1500);
@@ -81,7 +131,7 @@ async function handleRocketPunch(playerHeroId, rowId, playerNum) {
     showToast('Doomfist: Select target enemy for Rocket Punch');
     
     try {
-        const target = await selectCardTarget({ isDamage: true });
+        const target = await selectCardTarget();
         if (target) {
             // Check if target is already dead
             const targetHealth = window.__ow_getCard?.(target.cardId)?.health || 0;
@@ -152,7 +202,7 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
     showToast('Doomfist: Meteor Strike - Select target enemy');
     
     try {
-        const target = await selectCardTarget({ isDamage: true });
+        const target = await selectCardTarget();
         if (!target) {
             showToast('Doomfist ultimate cancelled');
             setTimeout(() => clearToast(), 1500);

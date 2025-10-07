@@ -28,6 +28,20 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
         playAudioByKey('torbjorn-ultimate');
     } catch {}
     
+    // AI guard: only use ultimate if at least one friendly turret is in play
+    if (window.__ow_aiTriggering || window.__ow_isAITurn) {
+        const allyRows = [`${playerNum}f`, `${playerNum}m`, `${playerNum}b`];
+        const hasTurret = allyRows.some(r => {
+            const row = window.__ow_getRow?.(r);
+            return row?.cardIds?.some(cid => (window.__ow_getCard?.(cid)?.id) === 'turret');
+        });
+        if (!hasTurret) {
+            showToast('Torbjörn AI: Skipping ultimate (no turret in play)');
+            setTimeout(() => clearToast(), 1500);
+            return;
+        }
+    }
+
     // Add Forge Hammer effect to Torbjörn's card
     window.__ow_appendCardEffect?.(playerHeroId, {
         id: 'forge-hammer',

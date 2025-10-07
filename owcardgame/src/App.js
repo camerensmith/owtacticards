@@ -591,6 +591,27 @@ function reducer(gameState, action) {
                 console.log(`${cardId} intro audio creation failed:`, err);
             }
             
+            // If this is an AI special card (Bob, D.Va Meka, Turret, or Nemesis), trigger immediate play
+            if (playerNum === 2 && (cardId === 'bob' || cardId === 'dvameka' || cardId === 'turret' || cardId === 'nemesis')) {
+                console.log(`AI special card ${cardId} added - triggering immediate play`);
+                // Use setTimeout to ensure the reducer completes before triggering AI play
+                setTimeout(() => {
+                    if (window.__ow_aiIntegration?.checkAndPlaySpawnedSpecialCard) {
+                        // Map cardId to heroId for the function
+                        const heroIdMap = {
+                            'bob': 'ashe',
+                            'dvameka': 'dva', 
+                            'turret': 'torbjorn',
+                            'nemesis': 'ramattra'
+                        };
+                        const heroId = heroIdMap[cardId];
+                        if (heroId) {
+                            window.__ow_aiIntegration.checkAndPlaySpawnedSpecialCard(heroId);
+                        }
+                    }
+                }, 100);
+            }
+            
             return result;
         }
 
@@ -918,7 +939,8 @@ function reducer(gameState, action) {
 function checkOnEnterAbilities(playerHeroId, rowId, playerNum) {
     // Note: Player 2 onEnter abilities are triggered by AI via window.__ow_triggerOnEnter
     // This function handles Player 1 manual triggers and AI-initiated triggers
-    if (playerNum === 2 && !window.__ow_aiTriggering) {
+    // Only skip if it's Player 2 AND we're not in an AI triggering context
+    if (playerNum === 2 && !window.__ow_aiTriggering && !window.__ow_isAITurn) {
         console.log('Player 2 abilities are controlled by AI - use window.__ow_triggerOnEnter');
         return;
     }
@@ -1236,6 +1258,15 @@ export default function App() {
             console.warn('Skipping duplicate AI end turn advance');
             return;
         }
+        
+        // Clear AI context flags to ensure human players can use abilities normally
+        window.__ow_aiTriggering = false;
+        window.__ow_isAITurn = false;
+        window.__ow_currentAICardId = null;
+        window.__ow_currentAIHero = null;
+        window.__ow_currentAIAbility = null;
+        console.log('AI context flags cleared for human player turn');
+        
         setTurnState((prevState) => ({
             ...prevState,
             turnCount: prevState.turnCount + 1,
@@ -1782,7 +1813,9 @@ export default function App() {
     const initializeGame = () => {
         const roles = ['offense', 'tank', 'support', 'defense'];
         
-        // Reset drawn heroes for new round
+        console.log('Initializing new round - shuffling deck and dealing cards...');
+        
+        // Reset drawn heroes for new round (this effectively shuffles the deck)
         setGameLogic(prev => ({
             ...prev,
             player1DrawnHeroes: [],
@@ -1845,6 +1878,10 @@ export default function App() {
     useEffect(() => {
         aiIntegration.initialize(gameState, handleAIEndTurn);
         aiIntegration.setAISettings(aiDifficulty, aiPersonality);
+        
+        // Expose AI integration to window for special card handling
+        window.__ow_aiIntegration = aiIntegration;
+        
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [aiIntegration]);
 
@@ -1876,36 +1913,22 @@ export default function App() {
 
     // Handle AI turns and track turn counts
     useEffect(() => {
-        if (turnState.turnCount > 1) { // Skip first turn (initialization)
-            const currentPlayer = turnState.playerTurn;
-            const otherPlayer = currentPlayer === 1 ? 2 : 1;
-
-            // Handle AI turn for Player 2
-            if (currentPlayer === 2 && !turnState.player2Passed && !isAIThinking) {
-                // Prevent multiple AI triggers within the same Player 2 turn
-                if (!window.__ow_lastAITrigger || window.__ow_lastAITrigger.turn !== turnState.turnCount) {
-                    window.__ow_lastAITrigger = { turn: turnState.turnCount };
-                    console.log('AI turn detected - Player 2 turn');
-                    setTimeout(() => {
-                        handleAITurn();
-                    }, 100);
-                }
-            }
-        }
-    }, [turnState.turnCount, turnState.playerTurn, turnState.player2Passed, isAIThinking]);
-
-    // If the game starts with AI (Player 2), trigger AI on turn 1 as well
-    useEffect(() => {
-        if (turnState.turnCount === 1 && turnState.playerTurn === 2 && !isAIThinking) {
-            if (!window.__ow_lastAITrigger || window.__ow_lastAITrigger.turn !== 1) {
-                window.__ow_lastAITrigger = { turn: 1 };
-                console.log('AI starting game - Player 2 goes first at turn 1');
+        // Handle AI turn for Player 2 (including first turn of new rounds)
+        const currentPlayer = turnState.playerTurn;
+        
+        if (currentPlayer === 2 && !turnState.player2Passed && !isAIThinking) {
+            // Prevent multiple AI triggers within the same Player 2 turn
+            if (!window.__ow_lastAITrigger || window.__ow_lastAITrigger.turn !== turnState.turnCount) {
+                window.__ow_lastAITrigger = { turn: turnState.turnCount };
+                console.log(`AI turn detected - Player 2 turn ${turnState.turnCount}`);
                 setTimeout(() => {
                     handleAITurn();
                 }, 100);
             }
         }
-    }, [turnState.turnCount, turnState.playerTurn, isAIThinking])
+    }, [turnState.turnCount, turnState.playerTurn, turnState.player2Passed, isAIThinking]);
+
+    // Note: AI turn detection is now handled in the main useEffect above
 
     // Subscribe to modal state changes
     useEffect(() => {
@@ -2192,6 +2215,8 @@ export default function App() {
                         }
                     } else if (heroId === 'echo' && abilitiesIndex?.echo?.onUltimate) {
                         try {
+                            // Track ultimate usage for Echo's Duplicate
+                            window.__ow_trackUltimateUsed?.(heroId, 'Echo', 'Duplicate', playerNum, rowId, adjustedCost);
                             abilitiesIndex.echo.onUltimate({ playerHeroId, rowId, cost: adjustedCost });
                         } catch (e) {
                             console.log('Error executing ECHO ultimate:', e);
@@ -2656,10 +2681,45 @@ export default function App() {
             // Set new match state using the ref that was mutated
             setMatchState(matchRef.current);
 
+            // CRITICAL: Reset AI state for new round
+            console.log('Resetting AI state for new round...');
+            
+            // Clear all AI context flags
+            window.__ow_aiTriggering = false;
+            window.__ow_isAITurn = false;
+            window.__ow_currentAICardId = null;
+            window.__ow_currentAIHero = null;
+            window.__ow_currentAIAbility = null;
+            window.__ow_aiActionsThisTurn = 0;
+            window.__ow_lastAITrigger = null; // Reset AI trigger tracking for new round
+            
+            // Reset AI integration state
+            if (window.__ow_aiIntegration) {
+                window.__ow_aiIntegration.isAITurn = false;
+                window.__ow_aiIntegration.cardsPlayedThisTurn = 0;
+                // Re-initialize AI with fresh game state
+                window.__ow_aiIntegration.initialize(gameState, handleAIEndTurn);
+                window.__ow_aiIntegration.setAISettings(aiDifficulty, aiPersonality);
+                console.log('AI integration re-initialized for new round');
+            }
+
             // Initialize new round with 4 cards per player (if game is not over)
             if (gameLogic.gamePhase !== 'gameEnd') {
                 setTimeout(() => {
+                    // Show round start notification
+                    const newRound = gameLogic.currentRound + 1;
+                    showToast(`Round ${newRound} starting - cards shuffled and dealt!`);
+                    setTimeout(() => clearToast(), 3000);
+                    
                     initializeGame();
+                    // Ensure AI is ready for the new round
+                    if (window.__ow_aiIntegration) {
+                        // Update AI with fresh game state after cards are dealt
+                        setTimeout(() => {
+                            window.__ow_aiIntegration.gameState = gameState;
+                            console.log('AI game state updated for new round');
+                        }, 100);
+                    }
                 }, 1000); // Delay to allow alerts to show
             }
         };

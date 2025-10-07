@@ -78,23 +78,82 @@ export function onEnter({ playerHeroId, rowId }) {
     const opt1 = { name: 'Biotic Launcher (Damage)', title: 'Biotic Launcher (Damage)', description: 'Deal 1 damage to up to 3 adjacent enemies in target column (respects shields).' };
     const opt2 = { name: 'Biotic Launcher (Heal)', title: 'Biotic Launcher (Heal)', description: 'Heal 1 to up to 3 adjacent allies in target column (cap at max HP).' };
 
-    showOnEnterChoice('Baptiste', opt1, opt2, withAIContext(playerHeroId, async (choiceIndex) => {
+    showOnEnterChoice('Baptiste', opt1, opt2, async (choiceIndex) => {
         console.log(`Baptiste onEnter choice made: ${choiceIndex} (0=damage, 1=heal)`);
         try {
             const sourceId = `${playerNum}baptiste`;
             aimLineBus.setArrowSource(sourceId);
 
+            // For AI, make decision per rules: 
+            // If all allies in a column are full HP -> use damage on enemy column.
+            // Else if two or more allies in a column are damaged -> heal that column.
+            // Else default to damage on enemy column.
+            if (window.__ow_aiTriggering || window.__ow_isAITurn) {
+                const enemyPlayer = playerNum === 1 ? 2 : 1;
+                const enemyRows = [`${enemyPlayer}f`, `${enemyPlayer}m`, `${enemyPlayer}b`];
+                const allyRows = [`${playerNum}f`, `${playerNum}m`, `${playerNum}b`];
+                const maxCols = Math.max(
+                    ...['f','m','b'].map(k => Math.max(
+                        (window.__ow_getRow?.(`${enemyPlayer}${k}`)?.cardIds?.length || 0),
+                        (window.__ow_getRow?.(`${playerNum}${k}`)?.cardIds?.length || 0)
+                    ))
+                );
+                let bestHealCol = -1; let bestHealDamagedCount = 0;
+                for (let li = 0; li < maxCols; li++) {
+                    let damaged = 0; let alliesPresent = 0;
+                    for (const r of allyRows) {
+                        const pid = window.__ow_getRow?.(r)?.cardIds?.[li];
+                        if (!pid) continue;
+                        alliesPresent++;
+                        const c = window.__ow_getCard?.(pid);
+                        if (!c) continue;
+                        const maxH = c.maxHealth || c.health; const curH = c.health || 0;
+                        if (curH < maxH && c.turret !== true) damaged++;
+                    }
+                    if (damaged >= 2 && damaged > bestHealDamagedCount) { bestHealDamagedCount = damaged; bestHealCol = li; }
+                }
+                // Check if any column has allies and all at full HP
+                let damageCol = -1;
+                for (let li = 0; li < maxCols; li++) {
+                    let alliesPresent = 0; let anyDamaged = false;
+                    for (const r of allyRows) {
+                        const pid = window.__ow_getRow?.(r)?.cardIds?.[li];
+                        if (!pid) continue;
+                        alliesPresent++;
+                        const c = window.__ow_getCard?.(pid);
+                        if (!c) continue;
+                        const maxH = c.maxHealth || c.health; const curH = c.health || 0;
+                        if (curH < maxH && c.turret !== true) anyDamaged = true;
+                    }
+                    if (alliesPresent > 0 && !anyDamaged) { damageCol = li; break; }
+                }
+                // Decision
+                if (bestHealCol >= 0) {
+                    aimLineBus.clearArrow();
+                    await doHealColumn(bestHealCol, playerNum);
+                    showToast('Baptiste AI: Healed damaged column');
+                    setTimeout(() => clearToast(), 2000);
+                } else {
+                    const liIndex = damageCol >= 0 ? damageCol : 0;
+                    aimLineBus.clearArrow();
+                    await doDamageColumn(liIndex, playerNum, playerHeroId);
+                    showToast('Baptiste AI: Damaged enemy column');
+                    setTimeout(() => clearToast(), 2000);
+                }
+                return;
+            }
+
             if (choiceIndex === 0) {
                 console.log(`Baptiste chose damage option`);
                 showToast('Baptiste: Pick an enemy column (click any enemy card)');
                 const target = await selectCardTarget({ isDamage: true });
-                if (!target) {
+                if (!target || !target.cardId) {
                     clearToast(); aimLineBus.clearArrow();
                     return;
                 }
 
                 // Validate target is enemy
-                const targetPlayerNum = parseInt(target.cardId[0]);
+                const targetPlayerNum = typeof target.cardId === 'string' ? parseInt(target.cardId[0]) : NaN;
                 console.log(`Baptiste target validation: targetPlayerNum=${targetPlayerNum}, playerNum=${playerNum}`);
                 if (targetPlayerNum === playerNum) {
                     showToast('Baptiste: Must target enemy column!');
@@ -103,48 +162,32 @@ export function onEnter({ playerHeroId, rowId }) {
                     return;
                 }
 
-                // Compute column index from enemy rows, not DOM
-                const enemyPlayer = playerNum === 1 ? 2 : 1;
-                const enemyRows = [`${enemyPlayer}f`, `${enemyPlayer}m`, `${enemyPlayer}b`];
-                let liIndex = -1;
-                for (const r of enemyRows) {
-                    const cardIds = window.__ow_getRow?.(r)?.cardIds || [];
-                    const idx = cardIds.indexOf(target.cardId);
-                    if (idx !== -1) { liIndex = idx; break; }
-                }
-                // Fallback: pick the densest existing column (0..max-1) among enemy rows
-                if (liIndex === -1) {
-                    let maxLen = Math.max(...enemyRows.map(r => (window.__ow_getRow?.(r)?.cardIds?.length || 0)));
-                    if (!isFinite(maxLen) || maxLen <= 0) { clearToast(); aimLineBus.clearArrow(); return; }
-                    // Choose column with most enemies (tie -> middle, then front)
-                    let bestIdx = 0, bestScore = -1;
-                    for (let c = 0; c < maxLen; c++) {
-                        let score = 0;
-                        for (const r of enemyRows) {
-                            const ids = window.__ow_getRow?.(r)?.cardIds || [];
-                            if (ids[c]) score += 1;
-                        }
-                        // prefer middle index in ties if exists
-                        const tieBias = (Math.abs(c - Math.floor(maxLen/2)) === 0) ? 0.1 : 0;
-                        if (score + tieBias > bestScore) { bestScore = score + tieBias; bestIdx = c; }
-                    }
-                    liIndex = bestIdx;
-                }
-
+                // Use DOM-based column index for human players
                 clearToast(); aimLineBus.clearArrow();
+                let liIndex = $(`#${target.cardId}`).closest('li').index();
+                if (typeof liIndex !== 'number' || liIndex < 0) {
+                    // Fallback: infer by scanning row array
+                    const enemyRow = window.__ow_getRow?.(target.rowId);
+                    liIndex = enemyRow?.cardIds?.indexOf(target.cardId) ?? -1;
+                }
+                if (liIndex < 0) {
+                    showToast('Baptiste: Could not determine target column');
+                    setTimeout(() => clearToast(), 1500);
+                    return;
+                }
                 console.log(`Baptiste calling doDamageColumn with liIndex=${liIndex}, playerNum=${playerNum}, playerHeroId=${playerHeroId}`);
                 await doDamageColumn(liIndex, playerNum, playerHeroId);
                 console.log(`Baptiste doDamageColumn finished`);
             } else {
                 showToast('Baptiste: Pick a friendly column (click any ally card)');
-                const target = await selectCardTarget({ isHeal: true });
-                if (!target) {
+                const target = await selectCardTarget();
+                if (!target || !target.cardId) {
                     clearToast(); aimLineBus.clearArrow();
                     return;
                 }
 
                 // Validate target is ally
-                const targetPlayerNum = parseInt(target.cardId[0]);
+                const targetPlayerNum = typeof target.cardId === 'string' ? parseInt(target.cardId[0]) : NaN;
                 if (targetPlayerNum !== playerNum) {
                     showToast('Baptiste: Must target friendly column!');
                     setTimeout(() => clearToast(), 2000);
@@ -153,14 +196,24 @@ export function onEnter({ playerHeroId, rowId }) {
                 }
 
                 clearToast(); aimLineBus.clearArrow();
-                const liIndex = $(`#${target.cardId}`).closest('li').index();
+                let liIndex = $(`#${target.cardId}`).closest('li').index();
+                if (typeof liIndex !== 'number' || liIndex < 0) {
+                    // Fallback: infer by scanning row array
+                    const allyRow = window.__ow_getRow?.(target.rowId);
+                    liIndex = allyRow?.cardIds?.indexOf(target.cardId) ?? -1;
+                }
+                if (liIndex < 0) {
+                    showToast('Baptiste: Could not determine target column');
+                    setTimeout(() => clearToast(), 1500);
+                    return;
+                }
                 await doHealColumn(liIndex, playerNum);
             }
         } catch (e) {
             console.error('Baptiste onEnter error:', e);
             clearToast(); aimLineBus.clearArrow();
         }
-    }));
+    });
 }
 
 export function onUltimate({ playerHeroId, rowId, cost }) {

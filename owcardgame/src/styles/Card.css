@@ -31,6 +31,21 @@
     border-radius: 10%;
 }
 
+/* Small column index badge in bottom-left of each card */
+.column-badge {
+    position: absolute;
+    bottom: 4px;
+    left: 6px;
+    background: rgba(0, 0, 0, 0.55);
+    color: #fff;
+    font-size: 10px;
+    line-height: 1;
+    padding: 2px 4px;
+    border-radius: 3px;
+    z-index: 130;
+    pointer-events: none;
+}
+
 #cardfocuscontainer {
     display: flex;
     justify-content: center;

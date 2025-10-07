@@ -8,7 +8,7 @@ import { getAudioFile, playAudioByKey } from '../../assets/imageImports';
 import { withAIContext } from '../engine/aiContextHelper';
 
 // On Enter - Modal choice between two options
-export function onEnter({ playerHeroId, rowId }) {
+export async function onEnter({ playerHeroId, rowId }) {
     const playerNum = parseInt(playerHeroId[0]);
     
     // Play enter sound
@@ -25,7 +25,30 @@ export function onEnter({ playerHeroId, rowId }) {
         description: 'Place Bastion Token next to an enemy row. Any enemy Heroes that move or deploy into this row take 1 damage.' 
     };
 
-    showOnEnterChoice('Bastion', opt1, opt2, withAIContext(playerHeroId, async (choiceIndex) => {
+    // For AI, choose token by default unless there is a 1 HP enemy to finish
+    if (window.__ow_aiTriggering || window.__ow_isAITurn) {
+        const enemyPlayer = playerNum === 1 ? 2 : 1;
+        const enemyRows = [`${enemyPlayer}f`, `${enemyPlayer}m`, `${enemyPlayer}b`];
+        let hasOneHpEnemy = false;
+        for (const rid of enemyRows) {
+            const row = window.__ow_getRow?.(rid);
+            if (!row || !row.cardIds) continue;
+            for (const cid of row.cardIds) {
+                const c = window.__ow_getCard?.(cid);
+                if (c && c.health === 1) { hasOneHpEnemy = true; break; }
+            }
+            if (hasOneHpEnemy) break;
+        }
+        if (hasOneHpEnemy) {
+            await handleOption1(playerHeroId, rowId, playerNum);
+        } else {
+            await handleOption2(playerHeroId, rowId, playerNum);
+        }
+        return;
+    }
+    
+    // For human players, show choice modal
+    showOnEnterChoice('Bastion', opt1, opt2, async (choiceIndex) => {
         try {
             if (choiceIndex === 0) {
                 // Option 1: Deal 1 damage to target enemy
@@ -39,15 +62,54 @@ export function onEnter({ playerHeroId, rowId }) {
             showToast('Bastion ability cancelled');
             setTimeout(() => clearToast(), 1500);
         }
-    }));
+    });
 }
 
 // Option 1: Deal 1 damage to target enemy
 async function handleOption1(playerHeroId, rowId, playerNum) {
+    // For AI, automatically select a random enemy
+    if (window.__ow_aiTriggering || window.__ow_isAITurn) {
+        const enemyPlayer = playerNum === 1 ? 2 : 1;
+        const enemyRows = [`${enemyPlayer}f`, `${enemyPlayer}m`, `${enemyPlayer}b`];
+        
+        // Find all living enemy heroes
+        const livingEnemies = [];
+        for (const enemyRowId of enemyRows) {
+            const row = window.__ow_getRow?.(enemyRowId);
+            if (row && row.cardIds) {
+                for (const cardId of row.cardIds) {
+                    const card = window.__ow_getCard?.(cardId);
+                    if (card && card.health > 0) {
+                        livingEnemies.push({ cardId, rowId: enemyRowId });
+                    }
+                }
+            }
+        }
+        
+        if (livingEnemies.length === 0) {
+            showToast('Bastion AI: No enemies to target');
+            setTimeout(() => clearToast(), 2000);
+            return;
+        }
+        
+        // Select random enemy
+        const randomEnemy = livingEnemies[Math.floor(Math.random() * livingEnemies.length)];
+        console.log('Bastion AI: Selected random enemy:', randomEnemy.cardId);
+        
+        // Deal damage
+        dealDamage(randomEnemy.cardId, randomEnemy.rowId, 1, false, playerHeroId);
+        try { effectsBus.publish(Effects.showDamage(randomEnemy.cardId, 1)); } catch {}
+        
+        showToast('Bastion AI: Recon Mode - 1 damage to enemy');
+        setTimeout(() => clearToast(), 2000);
+        return;
+    }
+    
+    // Human player logic
     showToast('Bastion: Select target enemy');
     
     try {
-        const target = await selectCardTarget({ isDamage: true });
+        const target = await selectCardTarget();
         if (target) {
             dealDamage(target.cardId, target.rowId, 1, false, playerHeroId);
             try { effectsBus.publish(Effects.showDamage(target.cardId, 1)); } catch {}
@@ -70,11 +132,58 @@ async function handleOption1(playerHeroId, rowId, playerNum) {
 
 // Option 2: Place Bastion token on enemy row
 async function handleOption2(playerHeroId, rowId, playerNum) {
+    // For AI, automatically select an enemy row
+    if (window.__ow_aiTriggering || window.__ow_isAITurn) {
+        const enemyPlayer = playerNum === 1 ? 2 : 1;
+        const enemyRows = [`${enemyPlayer}f`, `${enemyPlayer}m`, `${enemyPlayer}b`];
+        
+        // Find the enemy row with the most cards (best target for token)
+        let bestRow = enemyRows[0];
+        let maxEnemies = 0;
+        
+        enemyRows.forEach(rowId => {
+            const row = window.__ow_getRow?.(rowId);
+            const enemyCount = row?.cardIds?.length || 0;
+            if (enemyCount > maxEnemies) {
+                maxEnemies = enemyCount;
+                bestRow = rowId;
+            }
+        });
+        
+        // Place Bastion token on the selected enemy row
+        window.__ow_appendRowEffect?.(bestRow, 'enemyEffects', {
+            id: 'bastion-token',
+            hero: 'bastion',
+            type: 'token',
+            sourceCardId: playerHeroId,
+            sourceRowId: rowId,
+            tooltip: 'Bastion Token: Enemies take 1 damage when moving/deploying here'
+        });
+        
+        // Play audio after token is placed
+        try {
+            playAudioByKey('bastion-ability2');
+        } catch {}
+        
+        console.log(`AI Bastion: Token placed on enemy row ${bestRow} (${maxEnemies} enemies)`);
+        showToast(`Bastion AI: Token placed on ${bestRow} row`);
+        setTimeout(() => clearToast(), 2000);
+        return;
+    }
+    
     showToast('Bastion: Select enemy row for token');
     
     try {
-        const target = await selectRowTarget({ isDamage: true });
+        const target = await selectRowTarget();
         if (target) {
+            // Validate that the target is actually an enemy row
+            const targetPlayerNum = parseInt(target.rowId[0]);
+            if (targetPlayerNum === playerNum) {
+                showToast('Bastion: Token can only be placed on enemy rows!');
+                setTimeout(() => clearToast(), 2000);
+                return;
+            }
+            
             // Place Bastion token on the selected enemy row
             window.__ow_appendRowEffect?.(target.rowId, 'enemyEffects', {
                 id: 'bastion-token',
@@ -116,7 +225,7 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
     
     try {
         // Select primary target (2 damage)
-        const primaryTarget = await selectCardTarget({ isDamage: true });
+        const primaryTarget = await selectCardTarget();
         if (!primaryTarget) {
             showToast('Bastion ultimate cancelled');
             setTimeout(() => clearToast(), 1500);
@@ -133,7 +242,7 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
         const additionalTargets = [];
         for (let i = 0; i < 2; i++) {
             try {
-                const target = await selectCardTarget({ isDamage: true });
+                const target = await selectCardTarget();
                 if (target) {
                     additionalTargets.push(target);
                     dealDamage(target.cardId, target.rowId, 2, false, playerHeroId);

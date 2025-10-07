@@ -329,7 +329,7 @@
     "back_power": 2,
     "back_synergy": 2,
     "on_enter1": "Concussive Blast — Move target enemy back one row (if possible). Remove 2 Synergy Points from target’s starting row.",
-    "ultimate": "Barrage (3): Deal X damage to up to 3 enemies anywhere on the board, where X equals the remaining Synergy in Pharah's row after activating this ability."
+    "ultimate": "Barrage (3): Deal X damage to up to three enemy rows on the board, where X equals the remaining Synergy in Pharah's row after activating this ability."
   },
   {
     "name": "Ramattra",
@@ -382,7 +382,7 @@
     "back_power": 1,
     "back_synergy": 2,
     "on_enter1": "Chain Hook — Move target enemy to first row and deal 2 damage.",
-    "ultimate": "Whole Hog (4): Deal (+2 per enemy) damage spread randomly between each and all enemy targets."
+    "ultimate": "Whole Hog (3): Deal (+2 per enemy) damage spread randomly between each and all enemy targets."
   },
   {
     "name": "Sigma",

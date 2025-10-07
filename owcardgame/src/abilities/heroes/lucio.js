@@ -23,9 +23,12 @@ export function onEnter({ playerHeroId, rowId }) {
         description: 'Place Lúcio token near friendly row to heal all heroes by 1 each turn' 
     };
 
-    showOnEnterChoice('Lúcio', opt1, opt2, withAIContext(playerHeroId, async (choiceIndex) => {
-        // AI preference: if AI is acting, prefer healing if any ally is wounded
-        if (window.__ow_isAITurn || window.__ow_aiTriggering) {
+    showOnEnterChoice('Lúcio', opt1, opt2, async (choiceIndex) => {
+        // AI preference: if AI is acting (and it's actually AI turn), prefer healing if any ally is wounded
+        const getTurn = typeof window.__ow_getPlayerTurn === 'function' ? window.__ow_getPlayerTurn : null;
+        const currentPlayer = getTurn ? getTurn() : null;
+        const aiActing = (window.__ow_isAITurn || window.__ow_aiTriggering) && currentPlayer === 2;
+        if (aiActing) {
             try {
                 const allyRows = [`${playerNum}f`, `${playerNum}m`, `${playerNum}b`];
                 const wounded = allyRows.some(r => (window.__ow_getRow?.(r)?.cardIds || []).some(id => {
@@ -51,18 +54,32 @@ export function onEnter({ playerHeroId, rowId }) {
 
             await handleTokenAbility(playerHeroId, rowId, playerNum);
         }
-    }));
+    });
 }
 
 // Crossfade Shuffle: Place token near any row to shuffle positions at turn start
 async function handleShuffleAbility(playerHeroId, rowId, playerNum) {
     try {
-        showToast('Lúcio: Select any row for shuffle token');
+        const getTurn = typeof window.__ow_getPlayerTurn === 'function' ? window.__ow_getPlayerTurn : null;
+        const currentPlayer = getTurn ? getTurn() : null;
+        const aiActing = (window.__ow_isAITurn || window.__ow_aiTriggering) && currentPlayer === 2;
 
-        const targetRow = await selectRowTarget({ allowAnyRow: false, isDebuff: true });
-        if (!targetRow) {
-            clearToast();
-            return;
+        let targetRow;
+        if (aiActing) {
+            // AI: place shuffle on enemy row with most cards
+            const enemyPlayer = playerNum === 1 ? 2 : 1;
+            const enemyRows = [`${enemyPlayer}f`, `${enemyPlayer}m`, `${enemyPlayer}b`];
+            let best = enemyRows[0];
+            let maxCount = -1;
+            for (const r of enemyRows) {
+                const count = window.__ow_getRow?.(r)?.cardIds?.length || 0;
+                if (count > maxCount) { maxCount = count; best = r; }
+            }
+            targetRow = { rowId: best };
+        } else {
+            showToast('Lúcio: Select any row for shuffle token');
+            targetRow = await selectRowTarget({ allowAnyRow: false, isDebuff: true });
+            if (!targetRow) { clearToast(); return; }
         }
         
         // Determine if this is an ally or enemy row
@@ -100,12 +117,34 @@ async function handleShuffleAbility(playerHeroId, rowId, playerNum) {
 // Crossfade Token: Place token near friendly row for healing
 async function handleTokenAbility(playerHeroId, rowId, playerNum) {
     try {
-        showToast('Lúcio: Select friendly row for token');
+        const getTurn = typeof window.__ow_getPlayerTurn === 'function' ? window.__ow_getPlayerTurn : null;
+        const currentPlayer = getTurn ? getTurn() : null;
+        const aiActing = (window.__ow_isAITurn || window.__ow_aiTriggering) && currentPlayer === 2;
 
-        const targetRow = await selectRowTarget({ isBuff: true });
-        if (!targetRow) {
-            clearToast();
-            return;
+        let targetRow;
+        if (aiActing) {
+            // AI: place healing on friendly row with most wounded allies (fallback: most allies)
+            const allyRows = [`${playerNum}f`, `${playerNum}m`, `${playerNum}b`];
+            let best = allyRows[0];
+            let bestScore = -1;
+            for (const r of allyRows) {
+                const ids = window.__ow_getRow?.(r)?.cardIds || [];
+                let wounded = 0;
+                ids.forEach(id => {
+                    const c = window.__ow_getCard?.(id);
+                    if (c && c.id !== 'turret') {
+                        const maxH = c.maxHealth || c.health;
+                        if ((c.health || 0) < maxH) wounded++;
+                    }
+                });
+                const score = wounded * 2 + ids.length; // prefer wounded rows, then density
+                if (score > bestScore) { bestScore = score; best = r; }
+            }
+            targetRow = { rowId: best };
+        } else {
+            showToast('Lúcio: Select friendly row for token');
+            targetRow = await selectRowTarget({ isBuff: true });
+            if (!targetRow) { clearToast(); return; }
         }
         
         // Validate that the target row is on the player's side

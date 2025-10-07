@@ -240,6 +240,12 @@ export default function Card(props) {
                             <EffectBadges playerHeroId={playerHeroId} />
                             <ShieldBashOverlay playerHeroId={playerHeroId} rowId={rowId} />
                             <SuitedUpOverlay effects={effects} />
+                        {/* Column index badge (1-based); only show on board rows like 1f/1m/1b/2f/2m/2b */}
+                        {/^([12])[fmb]$/.test(rowId) && (
+                            <div className='column-badge'>
+                                {(typeof props.index === 'number' ? (props.index + 1) : '')}
+                            </div>
+                        )}
                             {isResurrectOverlayVisible && (
                                 <div style={{
                                     position: 'absolute',

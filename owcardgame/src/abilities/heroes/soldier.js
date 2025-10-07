@@ -63,6 +63,66 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
         playAudioByKey('soldier-ultimate');
     } catch {}
     
+    // For AI, automatically select up to 3 random enemy heroes
+    if (window.__ow_aiTriggering || window.__ow_isAITurn) {
+        const enemyPlayer = playerNum === 1 ? 2 : 1;
+        const enemyRows = [`${enemyPlayer}f`, `${enemyPlayer}m`, `${enemyPlayer}b`];
+        
+        // Find all living enemy heroes
+        const livingEnemies = [];
+        for (const enemyRowId of enemyRows) {
+            const row = window.__ow_getRow?.(enemyRowId);
+            if (row && row.cardIds) {
+                for (const cardId of row.cardIds) {
+                    const card = window.__ow_getCard?.(cardId);
+                    if (card && card.health > 0) {
+                        livingEnemies.push({ cardId, rowId: enemyRowId });
+                    }
+                }
+            }
+        }
+        
+        if (livingEnemies.length === 0) {
+            showToast('Soldier AI: No enemies to target');
+            setTimeout(() => clearToast(), 2000);
+            return;
+        }
+        
+        // Select up to 3 random enemies
+        const targets = [];
+        const damageAmounts = [3, 2, 1];
+        const maxTargets = Math.min(3, livingEnemies.length);
+        
+        // Shuffle and select targets
+        const shuffledEnemies = [...livingEnemies].sort(() => Math.random() - 0.5);
+        for (let i = 0; i < maxTargets; i++) {
+            targets.push(shuffledEnemies[i]);
+        }
+        
+        console.log('Soldier AI Ultimate: Selected targets:', targets.map(t => t.cardId));
+        
+        // Play ultimate resolve sound
+        try {
+            playAudioByKey('soldier-ultimate-resolve');
+        } catch {}
+        
+        // Deal fixed damage to each target
+        for (let i = 0; i < targets.length; i++) {
+            const target = targets[i];
+            const damage = damageAmounts[i];
+            
+            // Normal damage (respects shields and modifiers)
+            dealDamage(target.cardId, target.rowId, damage, false, playerHeroId, false);
+            effectsBus.publish(Effects.showDamage(target.cardId, damage));
+            
+            console.log(`Soldier AI: Tactical Visor dealt ${damage} fixed damage to ${target.cardId}`);
+        }
+        
+        showToast(`Soldier AI: Tactical Visor hit ${targets.length} enemies`);
+        setTimeout(() => clearToast(), 2000);
+        return;
+    }
+    
     showToast('Soldier: Select first target for Tactical Visor (3 damage)');
     
     const targets = [];

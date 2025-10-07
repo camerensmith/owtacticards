@@ -59,7 +59,30 @@ export async function onEnter({ playerHeroId, rowId }) {
         return;
     }
     
-    showToast('Venture: Select target for Drill Dash');
+    // For AI, automatically select a random enemy hero
+    if (window.__ow_aiTriggering || window.__ow_isAITurn) {
+        const randomEnemy = enemyHeroes[Math.floor(Math.random() * enemyHeroes.length)];
+        
+        // Calculate distance-based damage
+        const distance = getRowDistance(rowId, randomEnemy.rowId);
+        const damage = Math.max(1, distance); // Minimum 1 damage, maximum 3
+        console.log(`Venture AI Drill Dash: ${rowId} → ${randomEnemy.rowId}, distance=${distance}, damage=${damage}`);
+        
+        // Play ability1 sound on successful targeting
+        try { playAudioByKey('venture-ability1'); } catch {}
+        
+        // Deal damage
+        dealDamage(randomEnemy.cardId, randomEnemy.rowId, damage, false, playerHeroId);
+        try { effectsBus.publish(Effects.showDamage(randomEnemy.cardId, damage)); } catch {}
+        
+        const ventureRowName = getRowName(rowId);
+        const targetRowName = getRowName(randomEnemy.rowId);
+        showToast(`Drill Dash: ${damage} damage (${ventureRowName} → ${targetRowName})`);
+        setTimeout(() => clearToast(), 2000);
+        return;
+    }
+    
+    showToast('Venture: Select enemy target for Drill Dash');
     const target = await selectCardTarget({ isDamage: true });
     if (!target) {
         clearToast();

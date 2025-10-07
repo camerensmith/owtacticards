@@ -72,9 +72,51 @@ export async function onEnter1({ playerHeroId, rowId, playerNum }) {
         playAudioByKey('tracer-ability1');
     } catch {}
 
+    // For AI, automatically select a random enemy hero
+    if (window.__ow_aiTriggering || window.__ow_isAITurn) {
+        const enemyPlayer = playerNum === 1 ? 2 : 1;
+        const enemyRows = [`${enemyPlayer}f`, `${enemyPlayer}m`, `${enemyPlayer}b`];
+        
+        // Find all living enemy heroes
+        const livingEnemies = [];
+        for (const enemyRowId of enemyRows) {
+            const row = window.__ow_getRow?.(enemyRowId);
+            if (row && row.cardIds) {
+                for (const cardId of row.cardIds) {
+                    const card = window.__ow_getCard?.(cardId);
+                    if (card && card.health > 0) {
+                        livingEnemies.push({ cardId, rowId: enemyRowId });
+                    }
+                }
+            }
+        }
+        
+        if (livingEnemies.length === 0) {
+            showToast('Tracer AI: No enemies to target');
+            setTimeout(() => clearToast(), 2000);
+            return;
+        }
+        
+        // Select random enemy
+        const randomEnemy = livingEnemies[Math.floor(Math.random() * livingEnemies.length)];
+        
+        // Deal 2 damage
+        dealDamage(randomEnemy.cardId, randomEnemy.rowId, 2, false, playerHeroId);
+        effectsBus.publish(Effects.showDamage(randomEnemy.cardId, 2));
+        
+        // Play ability resolve sound on damage
+        try {
+            playAudioByKey('tracer-ability1-resolve');
+        } catch {}
+        
+        showToast('Tracer AI: Pulse Pistols hit enemy');
+        setTimeout(() => clearToast(), 2000);
+        return;
+    }
+
     showToast('Tracer: Select target enemy for Pulse Pistols');
 
-    const target = await selectCardTarget({ isDamage: true });
+    const target = await selectCardTarget();
     if (!target) {
         clearToast();
         return;
@@ -125,9 +167,66 @@ export async function onEnter2({ playerHeroId, rowId, playerNum }) {
         playAudioByKey('tracer-ability2');
     } catch {}
 
+    // For AI, automatically select two different enemy heroes
+    if (window.__ow_aiTriggering || window.__ow_isAITurn) {
+        const enemyPlayer = playerNum === 1 ? 2 : 1;
+        const enemyRows = [`${enemyPlayer}f`, `${enemyPlayer}m`, `${enemyPlayer}b`];
+        
+        // Find all living enemy heroes
+        const livingEnemies = [];
+        for (const enemyRowId of enemyRows) {
+            const row = window.__ow_getRow?.(enemyRowId);
+            if (row && row.cardIds) {
+                for (const cardId of row.cardIds) {
+                    const card = window.__ow_getCard?.(cardId);
+                    if (card && card.health > 0) {
+                        livingEnemies.push({ cardId, rowId: enemyRowId });
+                    }
+                }
+            }
+        }
+        
+        if (livingEnemies.length === 0) {
+            showToast('Tracer AI: No enemies to target');
+            setTimeout(() => clearToast(), 2000);
+            return;
+        }
+        
+        // Select two different enemies
+        let target1, target2;
+        if (livingEnemies.length === 1) {
+            // Only one enemy, target it twice (but only deal damage once)
+            target1 = livingEnemies[0];
+            target2 = livingEnemies[0];
+        } else {
+            // Select two different enemies
+            target1 = livingEnemies[Math.floor(Math.random() * livingEnemies.length)];
+            let remainingEnemies = livingEnemies.filter(e => e.cardId !== target1.cardId);
+            target2 = remainingEnemies[Math.floor(Math.random() * remainingEnemies.length)];
+        }
+        
+        // Deal 1 damage to each target
+        dealDamage(target1.cardId, target1.rowId, 1, false, playerHeroId);
+        effectsBus.publish(Effects.showDamage(target1.cardId, 1));
+        
+        if (target1.cardId !== target2.cardId) {
+            dealDamage(target2.cardId, target2.rowId, 1, false, playerHeroId);
+            effectsBus.publish(Effects.showDamage(target2.cardId, 1));
+        }
+        
+        // Play ability resolve sound on damage
+        try {
+            playAudioByKey('tracer-ability2-resolve');
+        } catch {}
+        
+        showToast('Tracer AI: Pulse Pistols hit enemies');
+        setTimeout(() => clearToast(), 2000);
+        return;
+    }
+
     showToast('Tracer: Select first target enemy');
 
-    const target1 = await selectCardTarget({ isDamage: true });
+    const target1 = await selectCardTarget();
     if (!target1) {
         clearToast();
         return;
@@ -150,7 +249,7 @@ export async function onEnter2({ playerHeroId, rowId, playerNum }) {
 
     showToast('Tracer: Select second target enemy (must be different)');
 
-    const target2 = await selectCardTarget({ isDamage: true });
+    const target2 = await selectCardTarget();
     if (!target2) {
         clearToast();
         return;
@@ -213,13 +312,13 @@ export function onEnter({ playerHeroId, rowId }) {
         description: 'Deal 1 damage to two different enemies anywhere on the board'
     };
 
-    showOnEnterChoice('Tracer', opt1, opt2, withAIContext(playerHeroId, async (choiceIndex) => {
+    showOnEnterChoice('Tracer', opt1, opt2, async (choiceIndex) => {
         if (choiceIndex === 0) {
             await onEnter1({ playerHeroId, rowId, playerNum });
         } else {
             await onEnter2({ playerHeroId, rowId, playerNum });
         }
-    }));
+    });
 }
 
 // Manual Ultimate (Cost 2) - Not used in new system

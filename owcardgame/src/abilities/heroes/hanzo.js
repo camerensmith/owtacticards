@@ -17,10 +17,42 @@ export async function onEnter({ playerHeroId, rowId }) {
         playAudioByKey('hanzo-enter');
     } catch {}
 
+    // For AI, automatically select a random enemy row
+    if (window.__ow_aiTriggering || window.__ow_isAITurn) {
+        const enemyPlayer = playerNum === 1 ? 2 : 1;
+        const enemyRows = [`${enemyPlayer}f`, `${enemyPlayer}m`, `${enemyPlayer}b`];
+        
+        // Select random enemy row
+        const randomRow = enemyRows[Math.floor(Math.random() * enemyRows.length)];
+        
+        // Add Hanzo token effect to the target row
+        const hanzoTokenEffect = {
+            id: 'hanzo-token',
+            hero: 'hanzo',
+            type: 'damage-reduction',
+            sourceCardId: playerHeroId,
+            sourceRowId: rowId,
+            tooltip: 'Sonic Arrow: Enemy damage in this row is reduced by 1',
+            visual: 'hanzo-icon',
+            value: 1 // Damage reduction amount
+        };
+        
+        window.__ow_appendRowEffect?.(randomRow, 'enemyEffects', hanzoTokenEffect);
+
+        // Play ability sound after token placement
+        try {
+            playAudioByKey('hanzo-ability1');
+        } catch {}
+
+        showToast(`Hanzo AI: Sonic Arrow token placed on ${randomRow} - enemy damage reduced by 1`);
+        setTimeout(() => clearToast(), 2000);
+        return;
+    }
+
     showToast('Hanzo: Select enemy row for Sonic Arrow token');
 
     try {
-        const target = await selectRowTarget({ isDamage: true });
+        const target = await selectRowTarget();
         if (target) {
             const targetRowId = target.rowId;
             
@@ -59,11 +91,86 @@ export async function onEnter({ playerHeroId, rowId }) {
 // Dragonstrike (3): Deal 3 damage to all enemies in target column
 export async function onUltimate({ playerHeroId, rowId, cost }) {
     const playerNum = parseInt(playerHeroId[0]);
+    
+    // For AI, automatically select a random enemy hero
+    if (window.__ow_aiTriggering || window.__ow_isAITurn) {
+        const enemyPlayer = playerNum === 1 ? 2 : 1;
+        const enemyRows = [`${enemyPlayer}f`, `${enemyPlayer}m`, `${enemyPlayer}b`];
+        
+        // Find all living enemy heroes
+        const livingEnemies = [];
+        for (const enemyRowId of enemyRows) {
+            const row = window.__ow_getRow?.(enemyRowId);
+            if (row && row.cardIds) {
+                for (const cardId of row.cardIds) {
+                    const card = window.__ow_getCard?.(cardId);
+                    if (card && card.health > 0) {
+                        livingEnemies.push({ cardId, rowId: enemyRowId });
+                    }
+                }
+            }
+        }
+        
+        if (livingEnemies.length === 0) {
+            showToast('Hanzo AI: No enemies to target');
+            setTimeout(() => clearToast(), 2000);
+            return;
+        }
+        
+        // Select random enemy
+        const randomEnemy = livingEnemies[Math.floor(Math.random() * livingEnemies.length)];
+        console.log('Hanzo AI Ultimate: Selected random enemy:', randomEnemy.cardId);
+        
+        // Get the column index from the target's position
+        const targetRow = window.__ow_getRow?.(randomEnemy.rowId);
+        if (!targetRow) {
+            showToast('Hanzo AI: Invalid target row');
+            setTimeout(() => clearToast(), 1500);
+            return;
+        }
+
+        const columnIndex = targetRow.cardIds.indexOf(randomEnemy.cardId);
+        if (columnIndex === -1) {
+            showToast('Hanzo AI: Could not determine column position');
+            setTimeout(() => clearToast(), 1500);
+            return;
+        }
+
+        let targetsHit = 0;
+        const maxTargets = 3;
+
+        // Deal 3 damage to enemies in the same column (front to back)
+        for (const enemyRowId of enemyRows) {
+            if (targetsHit >= maxTargets) break;
+            
+            const enemyRow = window.__ow_getRow?.(enemyRowId);
+            if (!enemyRow || !enemyRow.cardIds[columnIndex]) continue;
+            
+            const enemyCardId = enemyRow.cardIds[columnIndex];
+            const enemyCard = window.__ow_getCard?.(enemyCardId);
+            
+            if (enemyCard && enemyCard.health > 0) {
+                dealDamage(enemyCardId, enemyRowId, 3, false, playerHeroId);
+                effectsBus.publish(Effects.showDamage(enemyCardId, 3));
+                targetsHit++;
+            }
+        }
+
+        // Play ability sound after damage (on resolve)
+        try {
+            playAudioByKey('hanzo-ultimate');
+        } catch {}
+
+        showToast(`Hanzo AI: Dragonstrike hit ${targetsHit} enemies in column`);
+        setTimeout(() => clearToast(), 2000);
+        return;
+    }
+    
     // Play ultimate sound upon resolve only (after targets are validated and damage is applied)
     showToast('Hanzo: Select target enemy for Dragonstrike');
 
     try {
-        const target = await selectCardTarget({ isDamage: true });
+        const target = await selectCardTarget();
         if (target) {
             const targetCard = window.__ow_getCard?.(target.cardId);
             if (!targetCard) {

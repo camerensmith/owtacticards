@@ -15,13 +15,35 @@ export function determineBestRow(card, aiBoard, enemyBoard, winCondition) {
         middle: evaluateRowFit(card, 'middle', aiBoard, enemyBoard),
         back: evaluateRowFit(card, 'back', aiBoard, enemyBoard)
     };
+    
+    // Apply scenario-based positioning bonuses
+    try {
+        const { getScenarioBasedPositioning } = require('./scenarioAnalysis');
+        const gameState = { rows: aiBoard, playerCards: { player1cards: { cards: enemyBoard } } };
+        const scenarioBonuses = getScenarioBasedPositioning(card, aiBoard, enemyBoard, gameState);
+        
+        rowScores.front += scenarioBonuses.front || 0;
+        rowScores.middle += scenarioBonuses.middle || 0;
+        rowScores.back += scenarioBonuses.back || 0;
+        
+        console.log(`${card.name} scenario bonuses - Front: +${scenarioBonuses.front || 0}, Middle: +${scenarioBonuses.middle || 0}, Back: +${scenarioBonuses.back || 0}`);
+    } catch (error) {
+        console.log('Scenario analysis not available:', error.message);
+    }
 
     console.log(`Positioning ${card.name}:`, rowScores);
 
     // Apply specific hero positioning logic
-    rowScores.front += getFrontRowBonus(heroId, card, aiBoard, enemyBoard);
-    rowScores.middle += getMiddleRowBonus(heroId, card, aiBoard, enemyBoard);
-    rowScores.back += getBackRowBonus(heroId, card, aiBoard, enemyBoard);
+    const frontBonus = getFrontRowBonus(heroId, card, aiBoard, enemyBoard);
+    const middleBonus = getMiddleRowBonus(heroId, card, aiBoard, enemyBoard);
+    const backBonus = getBackRowBonus(heroId, card, aiBoard, enemyBoard);
+    
+    rowScores.front += frontBonus;
+    rowScores.middle += middleBonus;
+    rowScores.back += backBonus;
+    
+    console.log(`${card.name} bonuses - Front: +${frontBonus}, Middle: +${middleBonus}, Back: +${backBonus}`);
+    console.log(`${card.name} final scores - Front: ${rowScores.front}, Middle: ${rowScores.middle}, Back: ${rowScores.back}`);
 
     // Reinhardt special positioning
     if (heroId === 'reinhardt') {
@@ -36,6 +58,28 @@ export function determineBestRow(card, aiBoard, enemyBoard, winCondition) {
     // PHARAH: Position in highest synergy row for ultimate value
     if (heroId === 'pharah') {
         return positionPharah(card, aiBoard, enemyBoard, rowScores);
+    }
+
+    // ORISA: Backline protector with front synergy - balance between safety and synergy
+    if (heroId === 'orisa') {
+        return positionOrisa(card, aiBoard, enemyBoard, rowScores);
+    }
+
+    // WRECKING BALL: Favor entering on a row whose opposite enemy row is most populated
+    if (heroId === 'wreckingball') {
+        const enemyCounts = {
+            front: (enemyBoard.front?.length || 0),
+            middle: (enemyBoard.middle?.length || 0),
+            back: (enemyBoard.back?.length || 0)
+        };
+        let preferred = 'front';
+        let maxCount = enemyCounts.front;
+        if (enemyCounts.middle > maxCount) { preferred = 'middle'; maxCount = enemyCounts.middle; }
+        if (enemyCounts.back > maxCount) { preferred = 'back'; maxCount = enemyCounts.back; }
+        // Nudge scores toward the preferred row to bias selection
+        const bias = Math.min(30, maxCount * 10); // up to +30 bias
+        rowScores[preferred] += bias;
+        console.log(`Wrecking Ball: Opposite enemy counts F:${enemyCounts.front} M:${enemyCounts.middle} B:${enemyCounts.back} -> biasing ${preferred} by +${bias}`);
     }
 
     // Find best row
@@ -172,12 +216,41 @@ function evaluateRowFit(card, row, aiBoard, enemyBoard) {
 function getFrontRowBonus(heroId, card, aiBoard, enemyBoard) {
     let bonus = 0;
 
-    // Tanks should generally go front
+    // Tanks should generally go front, but consider their synergy/power distribution
     if (card.role === 'Tank') {
-        bonus += 25;
-
+        // Base tank bonus
+        bonus += 15;
+        
         // Extra bonus if no front line yet
         if (aiBoard.front.length === 0) bonus += 20;
+        
+        // Consider synergy distribution - if front synergy is significantly higher
+        const frontSynergy = card.synergy?.f || 0;
+        const middleSynergy = card.synergy?.m || 0;
+        const backSynergy = card.synergy?.b || 0;
+        const maxSynergy = Math.max(frontSynergy, middleSynergy, backSynergy);
+        
+        if (frontSynergy === maxSynergy && frontSynergy > 0) {
+            bonus += 15; // Front synergy bonus
+            console.log(`${heroId}: Front synergy bonus (+15) - front:${frontSynergy} vs others`);
+        }
+        
+        // Consider power distribution - if front power is significantly higher
+        const frontPower = card.power?.f || 0;
+        const middlePower = card.power?.m || 0;
+        const backPower = card.power?.b || 0;
+        const maxPower = Math.max(frontPower, middlePower, backPower);
+        
+        if (frontPower === maxPower && frontPower > 0) {
+            bonus += 10; // Front power bonus
+            console.log(`${heroId}: Front power bonus (+10) - front:${frontPower} vs others`);
+        }
+    }
+
+    // Orisa and Ramattra prefer not to commit to front line; bias away from front
+    if (heroId === 'orisa' || heroId === 'ramattra') {
+        bonus -= 20;
+        console.log(`${heroId}: Prefers mid/back - front penalty (-20)`);
     }
 
     // Brawlers (close range damage)
@@ -211,9 +284,37 @@ function getMiddleRowBonus(heroId, card, aiBoard, enemyBoard) {
         bonus += 15;
     }
 
+    // Orisa and Ramattra favor mid for protection + aura effects
+    if (heroId === 'orisa' || heroId === 'ramattra') {
+        bonus += 20;
+        console.log(`${heroId}: Mid preference (+20)`);
+    }
+
     // Flex damage dealers
     if (['pharah', 'junkrat', 'soldier', 'mccree', 'ashe'].includes(heroId)) {
         bonus += 12;
+    }
+
+    // Consider synergy distribution - if middle synergy is significantly higher
+    const frontSynergy = card.synergy?.f || 0;
+    const middleSynergy = card.synergy?.m || 0;
+    const backSynergy = card.synergy?.b || 0;
+    const maxSynergy = Math.max(frontSynergy, middleSynergy, backSynergy);
+    
+    if (middleSynergy === maxSynergy && middleSynergy > 0) {
+        bonus += 15; // Middle synergy bonus
+        console.log(`${heroId}: Middle synergy bonus (+15) - middle:${middleSynergy} vs others`);
+    }
+    
+    // Consider power distribution - if middle power is significantly higher
+    const frontPower = card.power?.f || 0;
+    const middlePower = card.power?.m || 0;
+    const backPower = card.power?.b || 0;
+    const maxPower = Math.max(frontPower, middlePower, backPower);
+    
+    if (middlePower === maxPower && middlePower > 0) {
+        bonus += 10; // Middle power bonus
+        console.log(`${heroId}: Middle power bonus (+10) - middle:${middlePower} vs others`);
     }
 
     return bonus;
@@ -238,6 +339,12 @@ function getBackRowBonus(heroId, card, aiBoard, enemyBoard) {
         if (aiBoard.front.length > 0) bonus += 15;
     }
 
+    // Orisa and Ramattra: prefer back when frontline is risky
+    if (heroId === 'orisa' || heroId === 'ramattra') {
+        bonus += 10;
+        console.log(`${heroId}: Back preference (+10)`);
+    }
+
     // Squishy heroes prefer back
     if (card.health < 3) bonus += 10;
 
@@ -246,6 +353,28 @@ function getBackRowBonus(heroId, card, aiBoard, enemyBoard) {
 
     // Torbjorn back for turret placement
     if (heroId === 'torbjorn') bonus += 15;
+
+    // Consider synergy distribution - if back synergy is significantly higher
+    const frontSynergy = card.synergy?.f || 0;
+    const middleSynergy = card.synergy?.m || 0;
+    const backSynergy = card.synergy?.b || 0;
+    const maxSynergy = Math.max(frontSynergy, middleSynergy, backSynergy);
+    
+    if (backSynergy === maxSynergy && backSynergy > 0) {
+        bonus += 15; // Back synergy bonus
+        console.log(`${heroId}: Back synergy bonus (+15) - back:${backSynergy} vs others`);
+    }
+    
+    // Consider power distribution - if back power is significantly higher
+    const frontPower = card.power?.f || 0;
+    const middlePower = card.power?.m || 0;
+    const backPower = card.power?.b || 0;
+    const maxPower = Math.max(frontPower, middlePower, backPower);
+    
+    if (backPower === maxPower && backPower > 0) {
+        bonus += 10; // Back power bonus
+        console.log(`${heroId}: Back power bonus (+10) - back:${backPower} vs others`);
+    }
 
     return bonus;
 }
@@ -534,6 +663,86 @@ function positionPharah(card, aiBoard, enemyBoard, rowScores) {
 
     console.log(`Pharah best row: ${bestRow} (synergy setup score: ${bestScore})`);
     return bestRow;
+}
+
+/**
+ * Special positioning logic for Orisa
+ * Orisa is a backline protector with front synergy - needs to balance safety vs synergy
+ */
+function positionOrisa(card, aiBoard, enemyBoard, baseScores) {
+    console.log('Positioning Orisa - backline protector with front synergy');
+    
+    // Orisa's stats: Front synergy=3, Back power=3, Front power=1
+    const frontSynergy = card.synergy?.f || 0;
+    const backPower = card.power?.b || 0;
+    
+    // Calculate safety vs synergy trade-off
+    const safetyScore = baseScores.back + 20; // Extra safety bonus for backline protector
+    const synergyScore = baseScores.front + 25; // Extra synergy bonus for front placement
+    
+    // Consider enemy threats - if front row is dangerous, prioritize safety
+    const frontThreatLevel = calculateRowThreatLevel('front', enemyBoard);
+    const backThreatLevel = calculateRowThreatLevel('back', enemyBoard);
+    
+    let finalScores = { ...baseScores };
+    
+    // If front row is very dangerous, heavily favor back
+    if (frontThreatLevel > 50) {
+        finalScores.front -= 30;
+        finalScores.back += 20;
+        console.log('Orisa: Front row dangerous, prioritizing safety');
+    }
+    // If back row is safer and we have allies to protect, go back
+    else if (backThreatLevel < frontThreatLevel && aiBoard.back.length > 0) {
+        finalScores.back += 15;
+        console.log('Orisa: Back row safer with allies to protect');
+    }
+    // If front row is safe and we need synergy, go front
+    else if (frontThreatLevel < 30 && aiBoard.front.length < 2) {
+        finalScores.front += 20;
+        console.log('Orisa: Front row safe, prioritizing synergy');
+    }
+    
+    // Find best row based on final scores
+    let bestRow = 'middle';
+    let highestScore = finalScores.middle;
+    
+    if (finalScores.front > highestScore) {
+        highestScore = finalScores.front;
+        bestRow = 'front';
+    }
+    if (finalScores.back > highestScore) {
+        highestScore = finalScores.back;
+        bestRow = 'back';
+    }
+    
+    console.log(`Orisa best row: ${bestRow} (safety vs synergy: front=${finalScores.front}, back=${finalScores.back})`);
+    return bestRow;
+}
+
+/**
+ * Calculate threat level for a specific row
+ */
+function calculateRowThreatLevel(row, enemyBoard) {
+    const enemyRow = enemyBoard[row] || [];
+    let threatLevel = 0;
+    
+    enemyRow.forEach(card => {
+        // High damage cards are more threatening
+        const cardPower = card.power?.[row[0]] || 0;
+        threatLevel += cardPower * 10;
+        
+        // Cards with high synergy are more threatening (closer to ultimate)
+        const cardSynergy = card.synergy?.[row[0]] || 0;
+        threatLevel += cardSynergy * 15;
+        
+        // Specific high-threat heroes
+        if (['pharah', 'hanzo', 'junkrat', 'zarya', 'dva'].includes(card.id)) {
+            threatLevel += 20;
+        }
+    });
+    
+    return threatLevel;
 }
 
 export default {

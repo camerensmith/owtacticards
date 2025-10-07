@@ -2,6 +2,7 @@ import { selectRowTarget } from '../engine/targeting';
 import { showMessage as showToast, clearMessage as clearToast } from '../engine/targetingBus';
 import { dealDamage } from '../engine/damageBus';
 import { playAudioByKey } from '../../assets/imageImports';
+import effectsBus, { Effects } from '../engine/effectsBus';
 
 export function onEnter({ playerHeroId, rowId }) {
     const playerNum = parseInt(playerHeroId[0]);
@@ -94,9 +95,58 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
             playAudioByKey('mccree-ultimate');
         } catch {}
 
+        // For AI, automatically select the enemy row with the most enemies
+        if ((window.__ow_aiTriggering || window.__ow_isAITurn) && (typeof window.__ow_getPlayerTurn !== 'function' || window.__ow_getPlayerTurn() === 2)) {
+            const enemyPlayer = playerNum === 1 ? 2 : 1;
+            const enemyRows = [`${enemyPlayer}f`, `${enemyPlayer}m`, `${enemyPlayer}b`];
+            
+            // Find the enemy row with the most living enemies
+            let bestRow = enemyRows[0];
+            let maxLivingEnemies = 0;
+            
+            for (const enemyRowId of enemyRows) {
+                const row = window.__ow_getRow?.(enemyRowId);
+                let livingEnemies = 0;
+                if (row && row.cardIds) {
+                    for (const cardId of row.cardIds) {
+                        const card = window.__ow_getCard?.(cardId);
+                        if (card && card.health > 0) {
+                            livingEnemies++;
+                        }
+                    }
+                }
+                if (livingEnemies > maxLivingEnemies) {
+                    maxLivingEnemies = livingEnemies;
+                    bestRow = enemyRowId;
+                }
+            }
+            
+            console.log(`McCree AI: Selected row ${bestRow} with ${maxLivingEnemies} living enemies`);
+            
+            // Deal damage to all living enemies in the selected row
+            const targetRow = window.__ow_getRow?.(bestRow);
+            let targetsHit = 0;
+            
+            if (targetRow && targetRow.cardIds) {
+                for (const cardId of targetRow.cardIds) {
+                    const card = window.__ow_getCard?.(cardId);
+                    if (card && card.health > 0) {
+                        // Deadeye deals 2 damage per target
+                        dealDamage(cardId, bestRow, 2, false, playerHeroId);
+                        effectsBus.publish(Effects.showDamage(cardId, 2));
+                        targetsHit++;
+                    }
+                }
+            }
+            
+            showToast(`McCree AI: Dead Eye hit ${targetsHit} enemies in ${bestRow}`);
+            setTimeout(() => clearToast(), 2000);
+            return;
+        }
+
         showToast('McCree: Dead Eye - Select an enemy row');
 
-        const targetRow = await selectRowTarget({ isDamage: true });
+        const targetRow = await selectRowTarget();
         if (!targetRow) {
             clearToast();
             return;

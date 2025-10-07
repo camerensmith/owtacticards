@@ -4,6 +4,7 @@ import { showMessage as showToast, clearMessage as clearToast } from '../engine/
 import aimLineBus from '../engine/aimLineBus';
 import { selectRowTarget } from '../engine/targeting';
 import { getAudioFile } from '../../assets/imageImports';
+import effectsBus, { Effects } from '../engine/effectsBus';
 
 // BOB: special unit spawned by Ashe. Non-drawable (special: true), may have onEnter and ultimate.
 
@@ -16,6 +17,27 @@ export function onEnter({ playerHeroId, rowId }) {
             const src = getAudioFile('bob-enter');
             if (src) new Audio(src).play().catch(() => {});
         } catch {}
+
+        // AI: automatically select a random enemy row to place suppression effect
+        if (window.__ow_aiTriggering || window.__ow_isAITurn) {
+            const enemyPlayer = playerNum === 1 ? 2 : 1;
+            const enemyRows = [`${enemyPlayer}f`, `${enemyPlayer}m`, `${enemyPlayer}b`];
+            const randomRow = enemyRows[Math.floor(Math.random() * enemyRows.length)];
+            // Apply effect: enemy ultimates in this row cost +2 this round
+            window.__ow_appendRowEffect?.(randomRow, 'enemyEffects', {
+                id: 'bob-row-suppression',
+                hero: 'bob',
+                type: 'ultimateCostModifier',
+                value: 2,
+                sourceCardId: playerHeroId,
+                sourceRowId: rowId,
+                tooltip: 'BOB: Ultimates from this row cost +2 this round',
+                visual: 'bob-icon'
+            });
+            showToast(`BOB AI: Suppressing row ${randomRow}`);
+            setTimeout(() => clearToast(), 2000);
+            return;
+        }
 
         // Visual: draw aim line from BOB card to cursor and prompt for row selection
         const sourceId = `${playerNum}bob`; // playerHeroId format
@@ -59,8 +81,62 @@ export function onUltimate({ playerHeroId, rowId, cost = 1 }) {
     // Smash (1): Deal 1 damage and 1 Synergy damage to up to 3 adjacent enemies in target row.
     (async () => {
         try {
+            const playerNum = parseInt(playerHeroId[0]);
+            
+            // For AI, automatically select the enemy row with most enemies
+            if (window.__ow_aiTriggering || window.__ow_isAITurn) {
+                const enemyPlayer = playerNum === 1 ? 2 : 1;
+                const enemyRows = [`${enemyPlayer}f`, `${enemyPlayer}m`, `${enemyPlayer}b`];
+                
+                // Find the enemy row with the most living enemies
+                let bestRow = enemyRows[0];
+                let maxLivingEnemies = 0;
+                
+                for (const enemyRowId of enemyRows) {
+                    const row = window.__ow_getRow?.(enemyRowId);
+                    let livingEnemies = 0;
+                    if (row && row.cardIds) {
+                        for (const cardId of row.cardIds) {
+                            const card = window.__ow_getCard?.(cardId);
+                            if (card && card.health > 0) {
+                                livingEnemies++;
+                            }
+                        }
+                    }
+                    if (livingEnemies > maxLivingEnemies) {
+                        maxLivingEnemies = livingEnemies;
+                        bestRow = enemyRowId;
+                    }
+                }
+                
+                console.log(`Bob AI: Selected row ${bestRow} with ${maxLivingEnemies} living enemies`);
+                
+                // Deal 1 damage + 1 synergy damage to up to 3 enemies
+                const targetRow = window.__ow_getRow?.(bestRow);
+                let targetsHit = 0;
+                const maxTargets = 3;
+                
+                if (targetRow && targetRow.cardIds) {
+                    for (const cardId of targetRow.cardIds) {
+                        if (targetsHit >= maxTargets) break;
+                        const card = window.__ow_getCard?.(cardId);
+                        if (card && card.health > 0) {
+                            // Deal 1 damage + 1 synergy damage
+                            dealDamage(cardId, bestRow, 1, false, playerHeroId);
+                            dealDamage(cardId, bestRow, 1, false, playerHeroId); // synergy damage
+                            effectsBus.publish(Effects.showDamage(cardId, 2));
+                            targetsHit++;
+                        }
+                    }
+                }
+                
+                showToast(`Bob AI: Smash hit ${targetsHit} enemies in ${bestRow}`);
+                setTimeout(() => clearToast(), 2000);
+                return;
+            }
+            
             showToast('Select target row for Smash');
-            const { rowId: targetRow } = await selectRowTarget({ isDamage: true });
+            const { rowId: targetRow } = await selectRowTarget();
             clearToast();
 
             const picks = [];

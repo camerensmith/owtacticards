@@ -26,12 +26,13 @@ const notifyModalListeners = () => {
 };
 
 export const showChoiceModal = (heroName, choices, onSelect) => {
-    // If AI auto-select is enabled or AI is acting, let AI choose without showing modal
-    const aiActing = !!window.__ow_isAITurn || !!window.__ow_aiTriggering;
-    if (aiAutoSelectCallback || aiActing) {
-        const chooser = aiAutoSelectCallback || (() => 0);
+    // If AI is acting AND it is actually Player 2's turn, let AI choose without showing modal
+    const getTurn = typeof window.__ow_getPlayerTurn === 'function' ? window.__ow_getPlayerTurn : null;
+    const currentPlayer = getTurn ? getTurn() : null;
+    const aiActing = (!!window.__ow_isAITurn || !!window.__ow_aiTriggering) && currentPlayer === 2;
+    if (aiActing && aiAutoSelectCallback) {
         console.log(`AI auto-selecting for ${heroName} from ${choices.length} choices:`, choices.map(c => c.title));
-        const aiChoice = chooser(heroName, choices);
+        const aiChoice = aiAutoSelectCallback(heroName, choices);
         console.log(`AI selected choice index ${aiChoice}: "${choices[aiChoice]?.title}"`);
         const thinkingDelay = Math.floor(300 + Math.random() * 700);
         setTimeout(() => { onSelect(aiChoice); }, thinkingDelay);
@@ -58,7 +59,9 @@ export const showInterruptModal = (heroName, abilityName, cost, currentSynergy) 
 };
 
 export const showTargetingModal = (heroName, abilityName, targetType, validTargets) => {
-    const aiActing = !!window.__ow_isAITurn || !!window.__ow_aiTriggering;
+    const getTurn = typeof window.__ow_getPlayerTurn === 'function' ? window.__ow_getPlayerTurn : null;
+    const currentPlayer = getTurn ? getTurn() : null;
+    const aiActing = (!!window.__ow_isAITurn || !!window.__ow_aiTriggering) && currentPlayer === 2;
     if (aiActing) {
         // When AI is acting, never show the modal; publish an AI-targeting event instead
         try {

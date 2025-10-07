@@ -282,8 +282,8 @@ export function dealDamage(targetCardId, targetRow, amount, ignoreShields = fals
         }
     }
     
-    // Check for Sigma Token shield absorption
-    if (finalAmount > 0 && window.__ow_getRow) {
+    // Check for Sigma Token shield absorption (only if not ignoring shields)
+    if (finalAmount > 0 && !ignoreShields && window.__ow_getRow) {
         // Check if target is in a row with Sigma Token
         const targetRowData = window.__ow_getRow(targetRow);
         if (targetRowData && targetRowData.allyEffects) {
@@ -339,8 +339,8 @@ export function dealDamage(targetCardId, targetRow, amount, ignoreShields = fals
         }
     }
     
-    // Check for Winston Barrier Protector damage absorption
-    if (finalAmount > 0 && window.__ow_getRow) {
+    // Check for Winston Barrier Protector damage absorption (only if not ignoring shields)
+    if (finalAmount > 0 && !ignoreShields && window.__ow_getRow) {
         // Find Winston cards that might absorb this damage
         const allRows = ['1f', '1m', '1b', '2f', '2m', '2b'];
         for (const rowId of allRows) {
@@ -403,6 +403,20 @@ export function dealDamage(targetCardId, targetRow, amount, ignoreShields = fals
                     }, 10);
                 }
             }
+        }
+    }
+    
+    // Handle shields for regular damage (not fixed damage)
+    if (finalAmount > 0 && !ignoreShields && window.__ow_getCard) {
+        const card = window.__ow_getCard(targetCardId);
+        if (card && card.shield > 0) {
+            const shieldAbsorbed = Math.min(finalAmount, card.shield);
+            finalAmount = Math.max(0, finalAmount - shieldAbsorbed);
+            absorbedAmount += shieldAbsorbed;
+            
+            // Update shield count
+            window.__ow_dispatchShieldUpdate?.(targetCardId, card.shield - shieldAbsorbed);
+            console.log(`DamageBus - Shields absorbed ${shieldAbsorbed}, remaining damage: ${finalAmount}`);
         }
     }
     

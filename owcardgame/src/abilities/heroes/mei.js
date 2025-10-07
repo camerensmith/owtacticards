@@ -17,7 +17,7 @@ async function handleBlizzard(playerHeroId, rowId, playerNum) {
     try {
         showToast('Mei: Select an enemy row for Blizzard');
         
-        const targetRow = await selectRowTarget({ isDamage: true });
+        const targetRow = await selectRowTarget();
         if (!targetRow) {
             clearToast();
             return;
@@ -63,9 +63,67 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
     try {
         const playerNum = parseInt(playerHeroId[0]);
         
+        // For AI, prioritize enemies with lowest power-in-row and that have NOT used their ultimate
+        if (window.__ow_aiTriggering || window.__ow_isAITurn) {
+            const enemyPlayer = playerNum === 1 ? 2 : 1;
+            const enemyRows = [`${enemyPlayer}f`, `${enemyPlayer}m`, `${enemyPlayer}b`];
+            
+            let bestTarget = null;
+            let bestScore = Number.NEGATIVE_INFINITY;
+            
+            for (const enemyRowId of enemyRows) {
+                const row = window.__ow_getRow?.(enemyRowId);
+                if (row && row.cardIds) {
+                    for (const cardId of row.cardIds) {
+                        const card = window.__ow_getCard?.(cardId);
+                        if (!card || card.health <= 0) continue;
+                        const rowKey = enemyRowId[1];
+                        const powerInRow = card[`${rowKey}_power`] || 0;
+                        const hasUsedUlt = (typeof window.__ow_hasUltimateUsed === 'function' && window.__ow_hasUltimateUsed(cardId)) ||
+                            (Array.isArray(card.effects) && card.effects.some(e => (e?.id || '').includes('ultimate-used')));
+                        let score = 0;
+                        score += (10 - powerInRow) * 10; // lower power preferred
+                        if (!hasUsedUlt) score += 100; else score -= 50;
+                        if (score > bestScore) { bestScore = score; bestTarget = { cardId, rowId: enemyRowId }; }
+                    }
+                }
+            }
+            
+            if (bestTarget) {
+                console.log(`Mei AI: Selected target ${bestTarget.cardId} with score ${bestScore}`);
+                
+                // Apply Cryo Freeze effect to the target card
+                window.__ow_appendCardEffect?.(bestTarget.cardId, {
+                    id: 'cryo-freeze',
+                    hero: 'mei',
+                    type: 'immunity',
+                    sourceCardId: playerHeroId,
+                    sourceRowId: rowId,
+                    tooltip: 'Cryo Freeze: Immune to damage and abilities for remainder of round',
+                    visual: 'frozen'
+                });
+                
+                // Clean up death-triggered tokens associated with this hero
+                cleanupDeathTriggeredTokens(bestTarget.cardId);
+                
+                // Play ultimate resolve sound
+                try {
+                    playAudioByKey('mei-ultimate');
+                } catch {}
+                
+                showToast(`Mei AI: Cryo Freeze applied to enemy`);
+                setTimeout(() => clearToast(), 2000);
+                return;
+            } else {
+                showToast('Mei AI: No valid targets for Cryo Freeze');
+                setTimeout(() => clearToast(), 2000);
+                return;
+            }
+        }
+        
         showToast('Mei: Cryo Freeze - Select any hero to freeze');
         
-        const target = await selectCardTarget({ isDebuff: true });
+        const target = await selectCardTarget();
         if (!target) {
             clearToast();
             return;

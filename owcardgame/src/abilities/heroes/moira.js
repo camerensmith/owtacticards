@@ -39,7 +39,7 @@ export async function onEnter({ playerHeroId, rowId }) {
         } else {
             // Step 1: pick enemy first (human)
             showToast('Moira: Pick one ENEMY to siphon (ignores shields)');
-            enemyTarget = await selectCardTarget({ isDamage: true });
+            enemyTarget = await selectCardTarget();
             if (!enemyTarget) { clearToast(); return; }
         }
 
@@ -92,7 +92,7 @@ export async function onEnter({ playerHeroId, rowId }) {
             }
         } else {
             showToast('Moira: Pick one ALLY to heal 2');
-            allyTarget = await selectCardTarget({ isHeal: true });
+            allyTarget = await selectCardTarget();
             if (!allyTarget) { clearToast(); return; }
         }
 
@@ -142,7 +142,7 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
     showToast('Moira: Select any card to target its column');
 
     try {
-        const target = await selectCardTarget({ isHeal: true });
+        const target = await selectCardTarget();
         if (!target) { clearToast(); return; }
 
         const targetRow = window.__ow_getRow?.(target.rowId);

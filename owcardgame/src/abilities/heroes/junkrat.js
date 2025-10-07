@@ -2,6 +2,7 @@ import { dealDamage, subscribe as subscribeToDamage } from '../engine/damageBus'
 import { selectRowTarget } from '../engine/targeting';
 import { showMessage as showToast, clearMessage as clearToast } from '../engine/targetingBus';
 import { playAudioByKey } from '../../assets/imageImports';
+import effectsBus, { Effects } from '../engine/effectsBus';
 
 // Junkrat intro sound on draw
 export function onDraw({ playerHeroId }) {
@@ -107,10 +108,57 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
             playAudioByKey('junkrat-ultimate');
         } catch {}
         
+        // For AI, automatically select the row with highest synergy
+        if (window.__ow_aiTriggering || window.__ow_isAITurn) {
+            const friendlyRows = [`${playerNum}f`, `${playerNum}m`, `${playerNum}b`];
+            
+            // Find the row with highest synergy
+            let bestRow = friendlyRows[0];
+            let maxSynergy = 0;
+            
+            for (const friendlyRowId of friendlyRows) {
+                const row = window.__ow_getRow?.(friendlyRowId);
+                const synergy = row?.synergy || 0;
+                if (synergy > maxSynergy) {
+                    maxSynergy = synergy;
+                    bestRow = friendlyRowId;
+                }
+            }
+            
+            console.log(`Junkrat AI: Selected row ${bestRow} with ${maxSynergy} synergy`);
+            
+            // Move Junkrat to the selected row
+            window.__ow_moveCardToRow?.(playerHeroId, bestRow);
+            
+            // Determine the opposing row
+            const currentRowPosition = bestRow[1]; // 'f', 'm', 'b'
+            const enemyPlayer = playerNum === 1 ? 2 : 1;
+            const opposingRowId = `${enemyPlayer}${currentRowPosition}`;
+            
+            // Deal synergy damage to all enemies in the opposing row
+            const opposingRow = window.__ow_getRow?.(opposingRowId);
+            let targetsHit = 0;
+            
+            if (opposingRow && opposingRow.cardIds) {
+                for (const cardId of opposingRow.cardIds) {
+                    const card = window.__ow_getCard?.(cardId);
+                    if (card && card.health > 0) {
+                        dealDamage(cardId, opposingRowId, maxSynergy, false, playerHeroId);
+                        effectsBus.publish(Effects.showDamage(cardId, maxSynergy));
+                        targetsHit++;
+                    }
+                }
+            }
+            
+            showToast(`Junkrat AI: RIP-Tire moved to ${bestRow} and hit ${targetsHit} enemies for ${maxSynergy} damage`);
+            setTimeout(() => clearToast(), 2000);
+            return;
+        }
+        
         showToast('Junkrat: Select row to move to');
         
         // Let player choose which row to move Junkrat to
-        const targetRow = await selectRowTarget({ isBuff: true });
+        const targetRow = await selectRowTarget();
         if (!targetRow) {
             clearToast();
             return;

@@ -8,10 +8,47 @@ import effectsBus, { Effects } from '../engine/effectsBus';
 export async function onEnter({ playerHeroId, rowId }) {
     const playerNum = parseInt(playerHeroId[0]);
     
+    // For AI, automatically select a random friendly row
+    if ((window.__ow_aiTriggering || window.__ow_isAITurn) && (typeof window.__ow_getPlayerTurn !== 'function' || window.__ow_getPlayerTurn() === 2)) {
+        const friendlyRows = [`${playerNum}f`, `${playerNum}m`, `${playerNum}b`];
+        
+        // Use a more robust random selection with better distribution
+        const randomValue = Math.random();
+        const randomIndex = Math.floor(randomValue * 3); // 0, 1, or 2
+        const randomRow = friendlyRows[randomIndex];
+        
+        console.log(`Sigma AI: Random selection - value ${randomValue.toFixed(3)}, index ${randomIndex} of [0,1,2] = ${randomRow} (${['front','middle','back'][randomIndex]})`);
+        
+        // Play ability sound when ability resolves
+        try {
+            playAudioByKey('sigma-ability1');
+        } catch {}
+        
+        // Place Sigma Token on the random row
+        const sigmaToken = {
+            id: 'sigma-token',
+            hero: 'sigma',
+            type: 'barrier',
+            shields: 3,
+            maxShields: 3,
+            sourceCardId: playerHeroId,
+            sourceRowId: rowId,
+            tooltip: 'Experimental Barrier: Absorbs up to 3 damage for any hero in this row',
+            visual: 'sigma-icon'
+        };
+        
+        window.__ow_appendRowEffect?.(randomRow, 'allyEffects', sigmaToken);
+        console.log(`Sigma AI: Placed Sigma Token on random row ${randomRow} with 3 shields`);
+        
+        showToast(`Sigma AI: Experimental Barrier placed on ${randomRow} with 3 shield tokens`);
+        setTimeout(() => clearToast(), 2000);
+        return;
+    }
+    
     showToast('Sigma: Select friendly row for Experimental Barrier');
     
     try {
-        const target = await selectRowTarget({ isBuff: true });
+        const target = await selectRowTarget();
         if (!target) {
             clearToast();
             return;
@@ -71,7 +108,7 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
     showToast('Sigma: Select enemy row for Gravitic Flux');
     
     try {
-        const target = await selectRowTarget({ isBuff: true });
+        const target = await selectRowTarget();
         if (!target) {
             clearToast();
             return;

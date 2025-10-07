@@ -114,13 +114,13 @@ export async function onEnter({ playerHeroId, rowId }) {
         description: 'Damage amplify enemy and place token. Target takes +1 damage from attacks, token jumps to another enemy at start of their turn.'
     };
 
-    showOnEnterChoice('Zenyatta', harmonyChoice, discordChoice, withAIContext(playerHeroId, async (choiceIndex) => {
+    showOnEnterChoice('Zenyatta', harmonyChoice, discordChoice, async (choiceIndex) => {
         if (choiceIndex === 0) {
             await onEnter1({ playerHeroId, rowId, playerNum });
         } else if (choiceIndex === 1) {
             await onEnter2({ playerHeroId, rowId, playerNum });
         }
-    }));
+    });
 }
 
 export async function onEnter1({ playerHeroId, rowId, playerNum }) {
@@ -135,7 +135,7 @@ export async function onEnter1({ playerHeroId, rowId, playerNum }) {
         showToast('Zenyatta: Select an ally to place Harmony token');
 
         // Target any friendly hero (including Zenyatta) - enforce ally-only
-        const target = await selectCardTarget({ isHeal: true, isBuff: true });
+        const target = await selectCardTarget();
         if (!target) {
             clearToast();
             return;
@@ -183,7 +183,7 @@ export async function onEnter2({ playerHeroId, rowId, playerNum }) {
         showToast('Zenyatta: Select an enemy to place Discord token');
 
         // Target any enemy hero - enforce enemy-only
-        const target = await selectCardTarget({ isDamage: true, isDebuff: true });
+        const target = await selectCardTarget({ isDamage: true });
         if (!target) {
             clearToast();
             return;
@@ -194,6 +194,14 @@ export async function onEnter2({ playerHeroId, rowId, playerNum }) {
         if (targetPlayerNum === playerNum) {
             showToast('Discord: Must target an enemy!');
             setTimeout(() => clearToast(), 2000);
+            return;
+        }
+
+        // Validate target card exists and is alive
+        const targetCard = window.__ow_getCard?.(target.cardId);
+        if (!targetCard || targetCard.health <= 0) {
+            showToast('Discord: Invalid or dead target');
+            setTimeout(() => clearToast(), 1500);
             return;
         }
 
@@ -220,6 +228,22 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
         // Heal all allies in Zenyatta's row (excluding Zenyatta)
         const playerNum = parseInt(playerHeroId[0]);
         const currentRow = window.__ow_getRow?.(rowId);
+
+        // AI gating: only use ultimate if at least one ally in row is damaged
+        if (window.__ow_aiTriggering || window.__ow_isAITurn) {
+            const anyDamaged = Array.isArray(currentRow?.cardIds) && currentRow.cardIds.some(cid => {
+                if (cid === playerHeroId) return false;
+                const c = window.__ow_getCard?.(cid);
+                if (!c || c.health <= 0) return false;
+                const maxH = c.maxHealth || c.health;
+                return c.health < maxH;
+            });
+            if (!anyDamaged) {
+                showToast('Zenyatta AI: Skipping Transcendence (no damaged ally in row)');
+                setTimeout(() => clearToast(), 1500);
+                return;
+            }
+        }
         
         if (currentRow && currentRow.cardIds) {
             currentRow.cardIds.forEach(cardId => {

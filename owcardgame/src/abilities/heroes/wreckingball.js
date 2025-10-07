@@ -51,8 +51,52 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
         return;
     }
     
+    // For AI, automatically select the enemy row with the LEAST enemies
+    if (window.__ow_aiTriggering || window.__ow_isAITurn) {
+        const enemyPlayer = playerNum === 1 ? 2 : 1;
+        const enemyRows = [`${enemyPlayer}f`, `${enemyPlayer}m`, `${enemyPlayer}b`];
+        
+        // Find the enemy row with the fewest cards
+        let bestRow = enemyRows[0];
+        let minEnemies = Number.POSITIVE_INFINITY;
+        
+        for (const enemyRowId of enemyRows) {
+            const row = window.__ow_getRow?.(enemyRowId);
+            const enemyCount = row?.cardIds?.length || 0;
+            if (enemyCount < minEnemies) {
+                minEnemies = enemyCount;
+                bestRow = enemyRowId;
+            }
+        }
+        
+        console.log(`Wrecking Ball AI: Selected row ${bestRow} with ${minEnemies} enemies`);
+        
+        // Deploy minefield on the selected row
+        const minefieldEffect = {
+            id: 'minefield',
+            hero: 'wreckingball',
+            type: 'damage-field',
+            sourceCardId: playerHeroId,
+            sourceRowId: rowId,
+            damage: currentSynergy,
+            tooltip: `Minefield: Deals ${currentSynergy} damage to enemies entering this row`,
+            visual: 'minefield'
+        };
+        
+        window.__ow_appendRowEffect?.(bestRow, 'enemyEffects', minefieldEffect);
+        
+        // Play ultimate sound
+        try {
+            playAudioByKey('wreckingball-ultimate');
+        } catch {}
+        
+        showToast(`Wrecking Ball AI: Minefield deployed on ${bestRow} (${currentSynergy} damage)`);
+        setTimeout(() => clearToast(), 2000);
+        return;
+    }
+    
     showToast('Wrecking Ball: Select enemy row to deploy Minefield');
-    const targetRow = await selectRowTarget({ isDamage: true });
+    const targetRow = await selectRowTarget();
     
     if (targetRow) {
         // Validate it's an enemy row

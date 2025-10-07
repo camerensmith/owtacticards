@@ -4,6 +4,7 @@ import { showOnEnterChoice } from '../engine/modalController';
 import { showMessage as showToast, clearMessage as clearToast } from '../engine/targetingBus';
 import effectsBus from '../engine/effectsBus';
 import { playAudioByKey } from '../../assets/imageImports';
+import { withAIContext } from '../engine/aiContextHelper';
 
 // Track healing effects for turn-based healing
 let healingEffects = new Map();
@@ -60,6 +61,28 @@ export async function onEnter({ playerHeroId, rowId }) {
         description: 'Target ally deals +1 damage with all abilities' 
     };
 
+    // For AI, automatically choose based on game state
+    if (window.__ow_aiTriggering || window.__ow_isAITurn) {
+        // AI logic: prefer healing if any ally is wounded, otherwise damage boost
+        const allyRows = [`${playerNum}f`, `${playerNum}m`, `${playerNum}b`];
+        const hasWoundedAllies = allyRows.some(rowId => {
+            const row = window.__ow_getRow?.(rowId);
+            if (!row || !row.cardIds) return false;
+            return row.cardIds.some(cardId => {
+                const card = window.__ow_getCard?.(cardId);
+                return card && card.health < (card.maxHealth || card.health);
+            });
+        });
+        
+        if (hasWoundedAllies) {
+            await handleHealingAbility(playerHeroId, rowId, playerNum);
+        } else {
+            await handleDamageBoostAbility(playerHeroId, rowId, playerNum);
+        }
+        return;
+    }
+    
+    // For human players, show choice modal
     showOnEnterChoice('Mercy', opt1, opt2, async (choiceIndex) => {
         if (choiceIndex === 0) {
             // Play ability sound immediately on selection
@@ -81,6 +104,57 @@ export async function onEnter({ playerHeroId, rowId }) {
 
 // Handle healing ability
 async function handleHealingAbility(playerHeroId, rowId, playerNum) {
+    // For AI, automatically select a wounded ally
+    if (window.__ow_aiTriggering || window.__ow_isAITurn) {
+        const allyRows = playerNum === 1 ? ['1f', '1m', '1b'] : ['2f', '2m', '2b'];
+        const woundedAllies = [];
+        
+        allyRows.forEach(rowId => {
+            const row = window.__ow_getRow?.(rowId);
+            if (row?.cardIds) {
+                row.cardIds.forEach(cardId => {
+                    const card = window.__ow_getCard?.(cardId);
+                    if (card && card.health > 0 && card.health < card.maxHealth && !card.turret) {
+                        woundedAllies.push({ cardId, rowId, card });
+                    }
+                });
+            }
+        });
+        
+        if (woundedAllies.length > 0) {
+            const randomAlly = woundedAllies[Math.floor(Math.random() * woundedAllies.length)];
+            const target = { cardId: randomAlly.cardId, rowId: randomAlly.rowId };
+            console.log(`AI Mercy: Auto-selected wounded ally ${randomAlly.cardId} for healing`);
+            await applyHealingEffect(playerHeroId, rowId, target, playerNum);
+            return;
+        } else {
+            // No wounded allies, select any living ally
+            const livingAllies = [];
+            allyRows.forEach(rowId => {
+                const row = window.__ow_getRow?.(rowId);
+                if (row?.cardIds) {
+                    row.cardIds.forEach(cardId => {
+                        const card = window.__ow_getCard?.(cardId);
+                        if (card && card.health > 0 && !card.turret) {
+                            livingAllies.push({ cardId, rowId, card });
+                        }
+                    });
+                }
+            });
+            
+            if (livingAllies.length > 0) {
+                const randomAlly = livingAllies[Math.floor(Math.random() * livingAllies.length)];
+                const target = { cardId: randomAlly.cardId, rowId: randomAlly.rowId };
+                console.log(`AI Mercy: Auto-selected ally ${randomAlly.cardId} for healing (no wounded allies)`);
+                await applyHealingEffect(playerHeroId, rowId, target, playerNum);
+                return;
+            }
+        }
+        
+        console.log('AI Mercy: No valid healing targets found');
+        return;
+    }
+    
     showToast('Mercy: Select an ally to heal');
     
     // Target selection
@@ -118,42 +192,48 @@ async function handleHealingAbility(playerHeroId, rowId, playerNum) {
         return;
     }
     
-    // Apply healing effect
-    window.__ow_appendCardEffect?.(target.cardId, {
-        id: 'mercy-heal',
-        hero: 'mercy',
-        type: 'healing',
-        sourceCardId: playerHeroId,
-        sourceRowId: rowId,
-        tooltip: 'Mercy Healing: Heals 1 HP at start of each turn',
-        visual: 'mercyheal.png'
-    });
-    
-    // Immediate 2 healing
-    const currentHealth = targetCard.health;
-    const newHealth = Math.min(currentHealth + 2, targetCard.maxHealth || 4);
-    const healingAmount = newHealth - currentHealth;
-    
-    if (healingAmount > 0) {
-        window.__ow_setCardHealth?.(target.cardId, newHealth);
-        
-        // Show floating text
-        if (window.effectsBus) {
-            window.effectsBus.publish({
-                type: 'fx:heal',
-                cardId: target.cardId,
-                amount: healingAmount,
-                text: `+${healingAmount}`
-            });
-        }
-    }
-    
+    await applyHealingEffect(playerHeroId, rowId, target, playerNum);
     showToast(`Mercy: Caduceus Staff healing applied to ${targetCard.name}`);
     setTimeout(() => clearToast(), 2000);
 }
 
 // Handle damage boost ability
 async function handleDamageBoostAbility(playerHeroId, rowId, playerNum) {
+    // For AI, automatically select a high-damage ally
+    if (window.__ow_aiTriggering || window.__ow_isAITurn) {
+        const allyRows = playerNum === 1 ? ['1f', '1m', '1b'] : ['2f', '2m', '2b'];
+        const livingAllies = [];
+        
+        allyRows.forEach(rowId => {
+            const row = window.__ow_getRow?.(rowId);
+            if (row?.cardIds) {
+                row.cardIds.forEach(cardId => {
+                    const card = window.__ow_getCard?.(cardId);
+                    if (card && card.health > 0 && !card.turret) {
+                        livingAllies.push({ cardId, rowId, card });
+                    }
+                });
+            }
+        });
+        
+        if (livingAllies.length > 0) {
+            // Prefer allies with high attack power or damage-dealing abilities
+            const sortedAllies = livingAllies.sort((a, b) => {
+                const aPower = a.card.attack || 0;
+                const bPower = b.card.attack || 0;
+                return bPower - aPower;
+            });
+            
+            const target = { cardId: sortedAllies[0].cardId, rowId: sortedAllies[0].rowId };
+            console.log(`AI Mercy: Auto-selected ally ${sortedAllies[0].cardId} for damage boost`);
+            await applyDamageBoostEffect(playerHeroId, rowId, target, playerNum);
+            return;
+        }
+        
+        console.log('AI Mercy: No valid damage boost targets found');
+        return;
+    }
+    
     showToast('Mercy: Select an ally to boost damage');
     
     // Target selection
@@ -185,18 +265,7 @@ async function handleDamageBoostAbility(playerHeroId, rowId, playerNum) {
         return;
     }
     
-    // Apply damage boost effect
-    window.__ow_appendCardEffect?.(target.cardId, {
-        id: 'mercy-damage',
-        hero: 'mercy',
-        type: 'damageBoost',
-        value: 1,
-        sourceCardId: playerHeroId,
-        sourceRowId: rowId,
-        tooltip: 'Mercy Damage Boost: +1 damage to all abilities',
-        visual: 'mercydamage.png'
-    });
-    
+    await applyDamageBoostEffect(playerHeroId, rowId, target, playerNum);
     showToast(`Mercy: Caduceus Staff damage boost applied to ${targetCard.name}`);
     setTimeout(() => clearToast(), 2000);
 }
@@ -383,6 +452,70 @@ export function mercyTokenHealing(cardId) {
             }
         }
     }
+}
+
+// Helper function to apply healing effect (used by both human and AI)
+async function applyHealingEffect(playerHeroId, rowId, target, playerNum) {
+    const targetCard = window.__ow_getCard?.(target.cardId);
+    if (!targetCard || targetCard.health <= 0) {
+        console.log('Mercy: Cannot target dead heroes');
+        return;
+    }
+    
+    // Apply healing effect
+    window.__ow_appendCardEffect?.(target.cardId, {
+        id: 'mercy-heal',
+        hero: 'mercy',
+        type: 'healing',
+        sourceCardId: playerHeroId,
+        sourceRowId: rowId,
+        tooltip: 'Mercy Healing: Heals 1 HP at start of each turn',
+        visual: 'mercyheal.png'
+    });
+    
+    // Immediate 2 healing
+    const currentHealth = targetCard.health;
+    const newHealth = Math.min(currentHealth + 2, targetCard.maxHealth || 4);
+    const healingAmount = newHealth - currentHealth;
+    
+    if (healingAmount > 0) {
+        window.__ow_setCardHealth?.(target.cardId, newHealth);
+        
+        // Show floating text
+        if (window.effectsBus) {
+            window.effectsBus.publish({
+                type: 'fx:heal',
+                cardId: target.cardId,
+                amount: healingAmount,
+                text: `+${healingAmount}`
+            });
+        }
+    }
+    
+    console.log(`Mercy: Caduceus Staff healing applied to ${targetCard.name}`);
+}
+
+// Helper function to apply damage boost effect (used by both human and AI)
+async function applyDamageBoostEffect(playerHeroId, rowId, target, playerNum) {
+    const targetCard = window.__ow_getCard?.(target.cardId);
+    if (!targetCard || targetCard.health <= 0) {
+        console.log('Mercy: Cannot target dead heroes');
+        return;
+    }
+    
+    // Apply damage boost effect
+    window.__ow_appendCardEffect?.(target.cardId, {
+        id: 'mercy-damage',
+        hero: 'mercy',
+        type: 'damageBoost',
+        value: 1,
+        sourceCardId: playerHeroId,
+        sourceRowId: rowId,
+        tooltip: 'Mercy Damage Boost: +1 damage to all abilities',
+        visual: 'mercydamage.png'
+    });
+    
+    console.log(`Mercy: Damage boost applied to ${targetCard.name}`);
 }
 
 // Default export

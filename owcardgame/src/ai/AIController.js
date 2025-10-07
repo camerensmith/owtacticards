@@ -477,6 +477,20 @@ class AIController {
         // Health bonus
         score += (card.health || 0) * 0.1;
 
+        // Role prioritization: prefer tanks and defense early for setup
+        try {
+            const role = (card.role || card.class || '').toLowerCase();
+            const aiBoard = this.getPlayerBoard(2);
+            const enemyBoard = this.getPlayerBoard(1);
+            const earlyBoard = ((aiBoard.front?.length||0)+(aiBoard.middle?.length||0)+(aiBoard.back?.length||0)) < 2;
+            if (earlyBoard) {
+                if (role === 'tank') score *= 1.35;
+                else if (role === 'defense') score *= 1.2;
+            }
+            // Mild deprioritization for fragile offense on empty board
+            if (earlyBoard && role === 'offense') score *= 0.9;
+        } catch {}
+
         // Check if this card needs allies to be effective
         const needsAlliesOnBoard = this.cardNeedsAllies(card);
         if (needsAlliesOnBoard) {

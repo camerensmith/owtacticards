@@ -11,8 +11,42 @@ export function onEnter({ playerHeroId, rowId }) {
         playAudioByKey('lifeweaver-enter');
     } catch {}
     
-    // Find the most damaged friendly unit
-    const mostDamagedUnit = findMostDamagedFriendlyUnit(playerNum);
+    // For AI, automatically pull the most damaged friendly unit
+    if (window.__ow_aiTriggering || window.__ow_isAITurn) {
+        // Find the most damaged friendly unit (excluding Lifeweaver himself)
+        const mostDamagedUnit = findMostDamagedFriendlyUnit(playerNum, playerHeroId);
+        
+        if (!mostDamagedUnit) {
+            console.log('Lifeweaver AI: No damaged friendly units found');
+            showToast('Lifeweaver AI: No damaged friendly units found');
+            setTimeout(() => clearToast(), 1500);
+            return;
+        }
+        
+        // Check if Lifeweaver's row is full
+        if (window.__ow_isRowFull?.(rowId)) {
+            console.log('Lifeweaver AI: Row is full, cannot pull unit');
+            showToast('Lifeweaver AI: Row is full, cannot pull unit');
+            setTimeout(() => clearToast(), 1500);
+            return;
+        }
+        
+        // Move the unit to Lifeweaver's row
+        window.__ow_moveCardToRow?.(mostDamagedUnit.cardId, rowId);
+        
+        // Give the unit 1 shield
+        const currentShield = mostDamagedUnit.card.shield || 0;
+        const newShield = Math.min(currentShield + 1, 3); // Max 3 shields
+        window.__ow_dispatchShieldUpdate?.(mostDamagedUnit.cardId, newShield);
+        
+        console.log(`Lifeweaver AI: Pulled ${mostDamagedUnit.card.name} and gave them 1 shield`);
+        showToast(`Lifeweaver AI: Pulled ${mostDamagedUnit.card.name} and gave them 1 shield`);
+        setTimeout(() => clearToast(), 2000);
+        return;
+    }
+    
+    // Find the most damaged friendly unit (excluding Lifeweaver himself)
+    const mostDamagedUnit = findMostDamagedFriendlyUnit(playerNum, playerHeroId);
     
     if (!mostDamagedUnit) {
         showToast('Lifeweaver: No damaged friendly units found');
@@ -47,6 +81,32 @@ export function onUltimate({ playerHeroId, rowId, cost }) {
     try {
         playAudioByKey('lifeweaver-ultimate');
     } catch {}
+    
+    // For AI, automatically apply Tree of Life to all friendly heroes
+    if (window.__ow_aiTriggering || window.__ow_isAITurn) {
+        const friendlyRows = [`${playerNum}f`, `${playerNum}m`, `${playerNum}b`];
+        let targetsHealed = 0;
+        
+        for (const friendlyRowId of friendlyRows) {
+            const row = window.__ow_getRow?.(friendlyRowId);
+            if (row && row.cardIds) {
+                for (const cardId of row.cardIds) {
+                    const card = window.__ow_getCard?.(cardId);
+                    if (card && card.health > 0) {
+                        // Give 2 temporary HP
+                        const currentTempHP = card.temporaryHP || 0;
+                        window.__ow_setCardProperty?.(cardId, 'temporaryHP', currentTempHP + 2);
+                        targetsHealed++;
+                    }
+                }
+            }
+        }
+        
+        console.log(`Lifeweaver AI: Tree of Life healed ${targetsHealed} allies`);
+        showToast(`Lifeweaver AI: Tree of Life gave 2 temporary HP to ${targetsHealed} allies`);
+        setTimeout(() => clearToast(), 2000);
+        return;
+    }
     
     // Get Lifeweaver's column index
     const lifeweaverRow = window.__ow_getRow?.(rowId);
@@ -98,7 +158,7 @@ export function onUltimate({ playerHeroId, rowId, cost }) {
 }
 
 // Find the most damaged friendly unit across all friendly rows
-function findMostDamagedFriendlyUnit(playerNum) {
+function findMostDamagedFriendlyUnit(playerNum, excludeCardId = null) {
     const friendlyRows = [`${playerNum}f`, `${playerNum}m`, `${playerNum}b`];
     let mostDamaged = null;
     let lowestHealthPercentage = 1.0; // Start with 100% health
@@ -110,6 +170,12 @@ function findMostDamagedFriendlyUnit(playerNum) {
         row.cardIds.forEach(cardId => {
             const card = window.__ow_getCard?.(cardId);
             if (!card || card.health <= 0) return; // Skip dead cards
+            
+            // Skip the excluded card (Lifeweaver himself)
+            if (excludeCardId && cardId === excludeCardId) {
+                console.log(`Lifeweaver: Skipping self ${cardId} - cannot pull self`);
+                return;
+            }
             
             // Skip turrets - they cannot be moved or given shields
             if (card.turret === true) {

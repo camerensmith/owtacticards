@@ -13,10 +13,93 @@ export async function onEnter({ playerHeroId, rowId }) {
         playAudioByKey('roadhog-enter');
     } catch {}
     
+    // For AI, automatically select a random enemy hero
+    if (window.__ow_aiTriggering || window.__ow_isAITurn) {
+        const enemyPlayer = playerNum === 1 ? 2 : 1;
+        const enemyRows = [`${enemyPlayer}f`, `${enemyPlayer}m`, `${enemyPlayer}b`];
+        
+        // Find all living enemy heroes (not turrets)
+        const livingEnemies = [];
+        for (const enemyRowId of enemyRows) {
+            const row = window.__ow_getRow?.(enemyRowId);
+            if (row && row.cardIds) {
+                for (const cardId of row.cardIds) {
+                    const card = window.__ow_getCard?.(cardId);
+                    if (card && card.health > 0 && card.id !== 'turret') {
+                        livingEnemies.push({ cardId, rowId: enemyRowId });
+                    }
+                }
+            }
+        }
+        
+        if (livingEnemies.length === 0) {
+            showToast('Roadhog AI: No enemies to target');
+            setTimeout(() => clearToast(), 2000);
+            return;
+        }
+        
+        // Select random enemy
+        const randomEnemy = livingEnemies[Math.floor(Math.random() * livingEnemies.length)];
+        const targetCard = window.__ow_getCard?.(randomEnemy.cardId);
+
+        // Determine destination row (front -> middle -> back)
+        const frontRow = `${enemyPlayer}f`;
+        const middleRow = `${enemyPlayer}m`;
+        const backRow = `${enemyPlayer}b`;
+        
+        let destinationRow = frontRow;
+        
+        // Check if front row is full
+        if (window.__ow_isRowFull?.(frontRow)) {
+            // Check if middle row is full
+            if (window.__ow_isRowFull?.(middleRow)) {
+                // Check if back row is full
+                if (window.__ow_isRowFull?.(backRow)) {
+                    // All rows full, just deal damage
+                    destinationRow = null;
+                } else {
+                    destinationRow = backRow;
+                }
+            } else {
+                destinationRow = middleRow;
+            }
+        }
+        
+        // Move target if possible
+        if (destinationRow && destinationRow !== randomEnemy.rowId) {
+            window.__ow_moveCardToRow?.(randomEnemy.cardId, destinationRow);
+            
+            // Show chain hook visual effect
+            if (window.effectsBus) {
+                window.effectsBus.publish({
+                    type: 'fx:chainHook',
+                    sourceCardId: playerHeroId,
+                    targetCardId: randomEnemy.cardId,
+                    duration: 1000
+                });
+            }
+        }
+        
+        // Deal damage (only to living heroes)
+        if (targetCard && targetCard.health > 0) {
+            dealDamage(randomEnemy.cardId, destinationRow || randomEnemy.rowId, 2, false, playerHeroId);
+            try { effectsBus.publish(Effects.showDamage(randomEnemy.cardId, 2)); } catch {}
+        }
+        
+        // Play ability sound
+        try {
+            playAudioByKey('roadhog-ability1');
+        } catch {}
+        
+        showToast('Roadhog AI: Chain Hook resolved');
+        setTimeout(() => clearToast(), 2000);
+        return;
+    }
+    
     showToast('Roadhog: Select target enemy');
 
     try {
-        const target = await selectCardTarget({ isDamage: true });
+        const target = await selectCardTarget();
         if (!target) {
             clearToast();
             return;
@@ -105,6 +188,21 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
         playAudioByKey('roadhog-ultimate');
     } catch {}
     
+    // AI gating: only use if there are more than 4 enemy heroes on the field
+    if (window.__ow_aiTriggering || window.__ow_isAITurn) {
+        const allEnemyRows = playerNum === 1 ? ['2f','2m','2b'] : ['1f','1m','1b'];
+        let enemyCount = 0;
+        allEnemyRows.forEach(r => {
+            const row = window.__ow_getRow?.(r);
+            enemyCount += (row?.cardIds?.filter(cid => (window.__ow_getCard?.(cid)?.health || 0) > 0).length || 0);
+        });
+        if (enemyCount <= 4) {
+            showToast('Roadhog AI: Skipping Whole Hog (not enough enemies)');
+            setTimeout(() => clearToast(), 1500);
+            return;
+        }
+    }
+
     // Get all living enemies
     const enemyPlayer = playerNum === 1 ? 2 : 1;
     const enemyRows = [`${enemyPlayer}f`, `${enemyPlayer}m`, `${enemyPlayer}b`];

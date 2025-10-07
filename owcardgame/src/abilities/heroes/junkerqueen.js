@@ -1,6 +1,7 @@
 import { dealDamage } from '../engine/damageBus';
 import effectsBus, { Effects } from '../engine/effectsBus';
 import { playAudioByKey } from '../../assets/imageImports';
+import { showMessage as showToast, clearMessage as clearToast } from '../engine/targetingBus';
 
 // Track total wound damage dealt this round per Junker Queen card
 const roundWoundDamageByCard = new Map(); // key: playerHeroId -> number
@@ -150,6 +151,12 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
     }
     
     console.log('JunkerQueen Ultimate: total damage to distribute =', total);
+    // AI gating: require at least 6 wounds collected before using ultimate
+    if ((window.__ow_aiTriggering || window.__ow_isAITurn) && total < 6) {
+        showToast('Junker Queen AI: Skipping Rampage (need at least 6 wounds)');
+        setTimeout(() => clearToast(), 1500);
+        return;
+    }
     if (total <= 0) return;
 
     // Gather all living enemies

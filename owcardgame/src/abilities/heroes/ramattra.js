@@ -15,11 +15,8 @@ export async function onEnter({ playerHeroId, rowId }) {
     const newShield = Math.min(currentShield + 1, 3); // Max 3 shields
     window.__ow_dispatchShieldUpdate?.(playerHeroId, newShield);
     
-    // AI AUTO-TARGETING: If AI is playing, automatically select a random ally
-    const isAI = (window.__ow_isAITurn || window.__ow_aiTriggering) && playerNum === 2;
-    let target = null;
-
-    if (isAI) {
+    // For AI, automatically select a random ally
+    if (window.__ow_aiTriggering || window.__ow_isAITurn) {
         // Find all living allies (excluding Ramattra himself)
         const allyRows = [`${playerNum}f`, `${playerNum}m`, `${playerNum}b`];
         const allies = [];
@@ -40,22 +37,38 @@ export async function onEnter({ playerHeroId, rowId }) {
         if (allies.length > 0) {
             // Pick a random ally
             const randomIndex = Math.floor(Math.random() * allies.length);
-            target = allies[randomIndex];
+            const target = allies[randomIndex];
             console.log('Ramattra AI: Auto-selected random ally:', target.cardId);
+            
+            // Give target 1 shield
+            const targetCard = window.__ow_getCard?.(target.cardId);
+            const targetCurrentShield = targetCard.shield || 0;
+            const targetNewShield = Math.min(targetCurrentShield + 1, 3); // Max 3 shields
+            
+            window.__ow_dispatchShieldUpdate?.(target.cardId, targetNewShield);
+            
+            // Play ability sound on resolve
+            try { playAudioByKey('ramattra-ability1'); } catch {}
+            
+            showToast('Ramattra AI: Void Barrier applied!');
+            setTimeout(() => clearToast(), 2000);
+            return;
         } else {
             console.log('Ramattra AI: No valid allies to buff, skipping');
+            showToast('Ramattra AI: No allies to buff');
+            setTimeout(() => clearToast(), 2000);
             return;
         }
-    } else {
-        // Manual targeting for human player
-        showToast('Ramattra: Select any ally to give 1 shield');
-        console.log('Ramattra onEnter: Starting targeting for ally shield');
-        target = await selectCardTarget({ isBuff: true });
-        if (!target) {
-            console.log('Ramattra onEnter: No target selected');
-            clearToast();
-            return;
-        }
+    }
+
+    // Manual targeting for human player
+    showToast('Ramattra: Select any ally to give 1 shield');
+    console.log('Ramattra onEnter: Starting targeting for ally shield');
+        const target = await selectCardTarget();
+    if (!target) {
+        console.log('Ramattra onEnter: No target selected');
+        clearToast();
+        return;
     }
 
     try {
@@ -66,12 +79,20 @@ export async function onEnter({ playerHeroId, rowId }) {
         const targetPlayer = parseInt(target.cardId[0]);
         const isAlly = targetPlayer === playerNum;
         
-        // Validate target (ally, alive, not Ramattra himself)
+        // Validate target (ally, alive)
         console.log('Ramattra onEnter: Target validation:', { isAlly, targetCard, targetHealth: targetCard?.health, isSelf: target.cardId === playerHeroId });
         
-        if (!isAlly || !targetCard || targetCard.health <= 0 || target.cardId === playerHeroId) {
-            console.log('Ramattra onEnter: Invalid target - must be different living ally');
-            showToast('Ramattra: Must target a different living ally');
+        if (!isAlly || !targetCard || targetCard.health <= 0) {
+            console.log('Ramattra onEnter: Invalid target - must be living ally');
+            showToast('Ramattra: Must target a living ally');
+            setTimeout(() => clearToast(), 2000);
+            return;
+        }
+        
+        // If targeting self, show different message
+        if (target.cardId === playerHeroId) {
+            console.log('Ramattra onEnter: Targeting self - no additional shield applied');
+            showToast('Ramattra: Already has shield from entering');
             setTimeout(() => clearToast(), 2000);
             return;
         }

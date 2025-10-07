@@ -18,10 +18,19 @@ try { window.__ow_cancelTargeting = cancelTargeting; } catch {}
 
 // Resolves with an object: { cardId, rowId, liIndex }
 export function selectCardTarget(options = {}) {
-    // If AI has already provided a target (e.g., for ultimates), use it immediately
+    // If AI has already provided a target (e.g., for ultimates), only use it on AI turn
     if (window.__ow_aiUltimateTarget) {
-        console.log('Using AI pre-selected target:', window.__ow_aiUltimateTarget);
-        return Promise.resolve(window.__ow_aiUltimateTarget);
+        const getTurn = typeof window.__ow_getPlayerTurn === 'function' ? window.__ow_getPlayerTurn : null;
+        const currentPlayer = getTurn ? getTurn() : null;
+        if (currentPlayer === 2) {
+            const pre = window.__ow_aiUltimateTarget;
+            console.log('Using AI pre-selected target:', pre);
+            try { window.__ow_aiUltimateTarget = null; } catch {}
+            return Promise.resolve(pre);
+        } else {
+            // Human turn – ignore and clear any stale AI preselection
+            try { window.__ow_aiUltimateTarget = null; } catch {}
+        }
     }
 
     // Check if AI should handle targeting
@@ -29,15 +38,99 @@ export function selectCardTarget(options = {}) {
     const aiTriggering = !!window.__ow_aiTriggering;
     const getTurn = typeof window.__ow_getPlayerTurn === 'function' ? window.__ow_getPlayerTurn : null;
     const currentPlayer = getTurn ? getTurn() : null;
-    if (window.__ow_selectCardTarget && (isAITurn || aiTriggering) && currentPlayer === 2) {
+    // Delegate ONLY when AI explicitly triggered this flow and it's AI's turn
+    if (window.__ow_selectCardTarget && aiTriggering && currentPlayer === 2) {
         console.log('Delegating to AI card targeting with options:', options);
         return window.__ow_selectCardTarget(options);
     }
 
     return new Promise((resolve) => {
         isCancelled = false;
+        let dragStartPos = null;
+        let isDragging = false;
+        const DRAG_THRESHOLD = 15; // pixels - minimum movement to consider it a drag (increased for better detection)
+        
+        // Add visual feedback for targeting mode
+        const addTargetingVisuals = () => {
+            try {
+                document.body.classList.add('targeting-mode');
+                // Add a subtle overlay to indicate targeting is active
+                if (!document.getElementById('targeting-overlay')) {
+                    const overlay = document.createElement('div');
+                    overlay.id = 'targeting-overlay';
+                    overlay.style.cssText = `
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        background: rgba(0, 0, 255, 0.02);
+                        pointer-events: none;
+                        z-index: 1000;
+                        transition: opacity 0.2s ease;
+                    `;
+                    document.body.appendChild(overlay);
+                }
+            } catch (e) {
+                console.log('Could not add targeting visuals:', e);
+            }
+        };
+        
+        const removeTargetingVisuals = () => {
+            try {
+                document.body.classList.remove('targeting-mode');
+                const overlay = document.getElementById('targeting-overlay');
+                if (overlay) {
+                    overlay.remove();
+                }
+            } catch (e) {
+                console.log('Could not remove targeting visuals:', e);
+            }
+        };
+        
+        // Track mouse down to detect drag start
+        const mouseDownHandler = (e) => {
+            dragStartPos = { x: e.clientX, y: e.clientY };
+            isDragging = false;
+        };
+        
+        // Track mouse movement to detect drag
+        const mouseMoveHandler = (e) => {
+            if (dragStartPos) {
+                const deltaX = Math.abs(e.clientX - dragStartPos.x);
+                const deltaY = Math.abs(e.clientY - dragStartPos.y);
+                if (deltaX > DRAG_THRESHOLD || deltaY > DRAG_THRESHOLD) {
+                    isDragging = true;
+                    console.log('Targeting: Drag detected - movement:', deltaX, deltaY);
+                }
+            }
+        };
+        
+        // Track mouse up to reset drag state
+        const mouseUpHandler = (e) => {
+            dragStartPos = null;
+            // Reset dragging state after a short delay to allow click handler to check it
+            // Increased delay to prevent accidental cancellation
+            setTimeout(() => { isDragging = false; }, 100);
+        };
+        
         const handler = (e) => {
+            // Ignore clicks that were actually drags
+            if (isDragging) {
+                console.log('Targeting: Ignoring click - was a drag operation');
+                // Reset dragging state after processing
+                isDragging = false;
+                return;
+            }
+            
             const $target = $(e.target);
+            // If AI flags are accidentally set during human click, ignore by forcing human path
+            try {
+                const currentPlayerNum = typeof window.__ow_getPlayerTurn === 'function' ? window.__ow_getPlayerTurn() : 1;
+                if (currentPlayerNum === 1) {
+                    window.__ow_aiTriggering = false;
+                }
+            } catch {}
             const cardId = $target.closest('.card').attr('id');
             const rowId = $target.closest('.row').attr('id');
             const liIndex = $target.closest('li').index();
@@ -68,13 +161,18 @@ export function selectCardTarget(options = {}) {
                 const currentPlayerNum = typeof window.__ow_getPlayerTurn === 'function' ? window.__ow_getPlayerTurn() : 1;
                 const requireAlly = options.isHeal === true || options.isBuff === true;
                 const requireEnemy = options.isDamage === true || options.isDebuff === true;
-                if (requireAlly && playerOfTarget !== currentPlayerNum) {
-                    // Wrong team for ally targeting
-                    return;
-                }
-                if (requireEnemy && playerOfTarget === currentPlayerNum) {
-                    // Wrong team for enemy targeting
-                    return;
+                const allowAnyTarget = options.allowAnyTarget === true;
+                
+                // Skip validation if allowAnyTarget is true
+                if (!allowAnyTarget) {
+                    if (requireAlly && playerOfTarget !== currentPlayerNum) {
+                        // Wrong team for ally targeting
+                        return;
+                    }
+                    if (requireEnemy && playerOfTarget === currentPlayerNum) {
+                        // Wrong team for enemy targeting
+                        return;
+                    }
                 }
             } catch {}
 
@@ -98,20 +196,31 @@ export function selectCardTarget(options = {}) {
                 return; // Keep listening
             }
             $('.card').off('click', handler);
+            removeTargetingVisuals();
 
             resolve({ cardId, rowId: finalRowId, liIndex });
         };
         const cancelHandler = () => {
             $('.card').off('click', handler);
+            $('.card').off('mousedown', mouseDownHandler);
+            $('.card').off('mouseup', mouseUpHandler);
+            document.removeEventListener('mousemove', mouseMoveHandler);
             document.removeEventListener('ow:targeting:cancel', cancelHandler);
             document.removeEventListener('contextmenu', contextCancel, true);
+            removeTargetingVisuals();
             resolve(null);
         };
         const contextCancel = (e) => {
             try { e.preventDefault(); e.stopPropagation(); } catch {}
             cancelHandler();
         };
+        // Start targeting mode with visual feedback
+        addTargetingVisuals();
+        
         $('.card').on('click', handler);
+        $('.card').on('mousedown', mouseDownHandler);
+        $('.card').on('mouseup', mouseUpHandler);
+        document.addEventListener('mousemove', mouseMoveHandler);
         document.addEventListener('ow:targeting:cancel', cancelHandler);
         document.addEventListener('contextmenu', contextCancel, true);
     });
@@ -119,10 +228,19 @@ export function selectCardTarget(options = {}) {
 
 // Resolves with an object: { rowId, rowPosition }
 export function selectRowTarget(options = {}) {
-    // If AI has already provided a target (e.g., for ultimates), use it immediately
+    // If AI has already provided a target (e.g., for ultimates), only use it on AI turn
     if (window.__ow_aiUltimateTarget) {
-        console.log('Using AI pre-selected row target:', window.__ow_aiUltimateTarget);
-        return Promise.resolve(window.__ow_aiUltimateTarget);
+        const getTurn = typeof window.__ow_getPlayerTurn === 'function' ? window.__ow_getPlayerTurn : null;
+        const currentPlayer = getTurn ? getTurn() : null;
+        if (currentPlayer === 2) {
+            const pre = window.__ow_aiUltimateTarget;
+            console.log('Using AI pre-selected row target:', pre);
+            try { window.__ow_aiUltimateTarget = null; } catch {}
+            return Promise.resolve(pre);
+        } else {
+            // Human turn – ignore and clear any stale AI preselection
+            try { window.__ow_aiUltimateTarget = null; } catch {}
+        }
     }
 
     // Check if AI should handle targeting
@@ -130,13 +248,17 @@ export function selectRowTarget(options = {}) {
     const aiTriggering = !!window.__ow_aiTriggering;
     const getTurn = typeof window.__ow_getPlayerTurn === 'function' ? window.__ow_getPlayerTurn : null;
     const currentPlayer = getTurn ? getTurn() : null;
-    if (window.__ow_selectRowTarget && (isAITurn || aiTriggering) && currentPlayer === 2) {
+    // Delegate ONLY when AI explicitly triggered this flow and it's AI's turn
+    if (window.__ow_selectRowTarget && aiTriggering && currentPlayer === 2) {
         console.log('Delegating to AI row targeting with options:', options);
         return window.__ow_selectRowTarget(options);
     }
 
     return new Promise((resolve) => {
         isCancelled = false;
+        let dragStartPos = null;
+        let isDragging = false;
+        const DRAG_THRESHOLD = 15; // pixels - minimum movement to consider it a drag (increased for better detection)
 
         // Determine current player for validation
         const currentPlayerNum = getTurn ? getTurn() : 1;
@@ -144,10 +266,89 @@ export function selectRowTarget(options = {}) {
         const isBuff = options.isBuff || false;
         const isDebuff = options.isDebuff || false;
         const allowAnyRow = options.allowAnyRow || false;
+        
+        // Add visual feedback for targeting mode
+        const addTargetingVisuals = () => {
+            try {
+                document.body.classList.add('targeting-mode');
+                // Add a subtle overlay to indicate targeting is active
+                if (!document.getElementById('targeting-overlay')) {
+                    const overlay = document.createElement('div');
+                    overlay.id = 'targeting-overlay';
+                    overlay.style.cssText = `
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        background: rgba(0, 0, 255, 0.02);
+                        pointer-events: none;
+                        z-index: 1000;
+                        transition: opacity 0.2s ease;
+                    `;
+                    document.body.appendChild(overlay);
+                }
+            } catch (e) {
+                console.log('Could not add targeting visuals:', e);
+            }
+        };
+        
+        const removeTargetingVisuals = () => {
+            try {
+                document.body.classList.remove('targeting-mode');
+                const overlay = document.getElementById('targeting-overlay');
+                if (overlay) {
+                    overlay.remove();
+                }
+            } catch (e) {
+                console.log('Could not remove targeting visuals:', e);
+            }
+        };
+        
+        // Track mouse down to detect drag start
+        const mouseDownHandler = (e) => {
+            dragStartPos = { x: e.clientX, y: e.clientY };
+            isDragging = false;
+        };
+        
+        // Track mouse movement to detect drag
+        const mouseMoveHandler = (e) => {
+            if (dragStartPos) {
+                const deltaX = Math.abs(e.clientX - dragStartPos.x);
+                const deltaY = Math.abs(e.clientY - dragStartPos.y);
+                if (deltaX > DRAG_THRESHOLD || deltaY > DRAG_THRESHOLD) {
+                    isDragging = true;
+                    console.log('Targeting: Drag detected - movement:', deltaX, deltaY);
+                }
+            }
+        };
+        
+        // Track mouse up to reset drag state
+        const mouseUpHandler = (e) => {
+            dragStartPos = null;
+            // Reset dragging state after a short delay to allow click handler to check it
+            // Increased delay to prevent accidental cancellation
+            setTimeout(() => { isDragging = false; }, 100);
+        };
 
         const handler = (e) => {
+            // Ignore clicks that were actually drags
+            if (isDragging) {
+                console.log('Row targeting: Ignoring click - was a drag operation');
+                // Reset dragging state after processing
+                isDragging = false;
+                return;
+            }
+            
             try { e.preventDefault(); e.stopPropagation(); } catch {}
             const $target = $(e.target);
+            // If AI flags are accidentally set during human click, ignore by forcing human path
+            try {
+                const currentPlayerNum = typeof window.__ow_getPlayerTurn === 'function' ? window.__ow_getPlayerTurn() : 1;
+                if (currentPlayerNum === 1) {
+                    window.__ow_aiTriggering = false;
+                }
+            } catch {}
             // Support clicks on elements with class 'row' or the known row ids
             const rowIds = ['1f','1m','1b','2f','2m','2b','player1hand','player2hand'];
             let rowId = $target.closest('.row').attr('id');
@@ -192,8 +393,15 @@ export function selectRowTarget(options = {}) {
         };
         const cancelHandler = () => {
             $('.row').off('click', handler);
+            $('.row').off('mousedown', mouseDownHandler);
+            $('.row').off('mouseup', mouseUpHandler);
             const rowIds = ['1f','1m','1b','2f','2m','2b','player1hand','player2hand'];
-            for (const rid of rowIds) { $(document).off('click', handler, `#${rid}`); }
+            for (const rid of rowIds) { 
+                $(document).off('click', handler, `#${rid}`);
+                $(`#${rid}`).off('mousedown', mouseDownHandler);
+                $(`#${rid}`).off('mouseup', mouseUpHandler);
+            }
+            document.removeEventListener('mousemove', mouseMoveHandler);
             document.removeEventListener('ow:targeting:cancel', cancelHandler);
             document.removeEventListener('contextmenu', contextCancel, true);
             resolve(null);
@@ -204,8 +412,15 @@ export function selectRowTarget(options = {}) {
         };
         // Attach to generic row containers and specific ids as fallback
         $('.row').on('click', handler);
+        $('.row').on('mousedown', mouseDownHandler);
+        $('.row').on('mouseup', mouseUpHandler);
         const rowIds = ['1f','1m','1b','2f','2m','2b','player1hand','player2hand'];
-        for (const rid of rowIds) { $(`#${rid}`).on('click', handler); }
+        for (const rid of rowIds) { 
+            $(`#${rid}`).on('click', handler);
+            $(`#${rid}`).on('mousedown', mouseDownHandler);
+            $(`#${rid}`).on('mouseup', mouseUpHandler);
+        }
+        document.addEventListener('mousemove', mouseMoveHandler);
         document.addEventListener('ow:targeting:cancel', cancelHandler);
         document.addEventListener('contextmenu', contextCancel, true);
     });

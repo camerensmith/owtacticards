@@ -12,10 +12,91 @@ export async function onEnter({ playerHeroId, rowId }) {
         playAudioByKey('sombra-enter');
     } catch {}
     
+    // For AI, select shielded enemy with most shields; deprioritize Zarya
+    if (window.__ow_aiTriggering || window.__ow_isAITurn) {
+        const enemyPlayer = playerNum === 1 ? 2 : 1;
+        const enemyRows = [`${enemyPlayer}f`, `${enemyPlayer}m`, `${enemyPlayer}b`];
+        
+        const candidates = [];
+        for (const enemyRowId of enemyRows) {
+            const row = window.__ow_getRow?.(enemyRowId);
+            if (!row || !row.cardIds) continue;
+            for (const cardId of row.cardIds) {
+                const card = window.__ow_getCard?.(cardId);
+                if (!card || card.health <= 0) continue;
+                let score = 0;
+                const shields = card.shield || 0;
+                if (shields > 0) score += 100 + shields * 10;
+                if (card.id === 'zarya') score -= 40; // avoid boosting Zarya ult later
+                const rowKey = enemyRowId[1];
+                score += (card[`${rowKey}_power`] || 0) * 2;
+                candidates.push({ cardId, rowId: enemyRowId, score });
+            }
+        }
+        if (candidates.length === 0) {
+            showToast('Sombra AI: No enemies to hack');
+            setTimeout(() => clearToast(), 2000);
+            return;
+        }
+        candidates.sort((a,b)=>b.score-a.score);
+        const randomEnemy = candidates[0];
+        const targetCard = window.__ow_getCard?.(randomEnemy.cardId);
+        
+        // Play hack sound
+        try {
+            playAudioByKey('sombra-ability1');
+        } catch {}
+        
+        let removedShields = 0;
+        let removedTokens = 0;
+        
+        // Remove all shield tokens from target hero
+        if (targetCard.shield > 0) {
+            removedShields = targetCard.shield;
+            window.__ow_dispatchShieldUpdate?.(randomEnemy.cardId, 0);
+            console.log(`Sombra AI: Removed ${removedShields} shields from ${randomEnemy.cardId}`);
+        }
+        
+        // Remove all effects belonging to target hero from all rows
+        const allRows = ['1f', '1m', '1b', '2f', '2m', '2b'];
+        for (const rowId of allRows) {
+            const row = window.__ow_getRow?.(rowId);
+            if (row && row.allyEffects) {
+                const effectsToRemove = row.allyEffects.filter(effect => 
+                    effect?.sourceCardId === randomEnemy.cardId
+                );
+                for (const effect of effectsToRemove) {
+                    window.__ow_removeRowEffect?.(rowId, 'allyEffects', effect.id);
+                    removedTokens++;
+                }
+            }
+            if (row && row.enemyEffects) {
+                const effectsToRemove = row.enemyEffects.filter(effect => 
+                    effect?.sourceCardId === randomEnemy.cardId
+                );
+                for (const effect of effectsToRemove) {
+                    window.__ow_removeRowEffect?.(rowId, 'enemyEffects', effect.id);
+                    removedTokens++;
+                }
+            }
+        }
+        
+        // Show floating text for removed shields
+        if (removedShields > 0) {
+            effectsBus.publish(Effects.showHeal(randomEnemy.cardId, -removedShields)); // Negative heal = shield removal
+        }
+        
+        showToast(`Sombra AI: Hacked ${targetCard.name} - Removed ${removedShields} shields, ${removedTokens} tokens`);
+        setTimeout(() => clearToast(), 3000);
+        
+        console.log(`Sombra AI: HACK complete - ${removedShields} shields, ${removedTokens} tokens removed`);
+        return;
+    }
+    
     showToast('Sombra: Select target hero to hack');
     
     try {
-        const target = await selectCardTarget({ isDebuff: true });
+        const target = await selectCardTarget();
         if (!target) {
             clearToast();
             return;

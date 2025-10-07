@@ -30,7 +30,29 @@ class AIGameIntegration {
         this.endTurnCallback = endTurnCallback;
         this.aiController.initialize(gameState);
         this.setupAITargetingOverrides();
+        
+        // Set up AI modal choice callback
+        this.setupAIModalChoiceCallback();
+        
         console.log('AI Game Integration initialized with targeting overrides');
+    }
+
+    // Set up AI modal choice callback for automatic decision making
+    setupAIModalChoiceCallback() {
+        try {
+            // Import the modal controller to set up AI auto-select
+            import('../abilities/engine/modalController').then(({ setAIAutoSelect }) => {
+                setAIAutoSelect((heroName, choices) => {
+                    console.log(`AI auto-selecting for ${heroName} from ${choices.length} choices:`, choices.map(c => c.title));
+                    return this.handleAIModalChoice(choices);
+                });
+                console.log('AI modal choice callback set up successfully');
+            }).catch(error => {
+                console.error('Failed to set up AI modal choice callback:', error);
+            });
+        } catch (error) {
+            console.error('Error setting up AI modal choice callback:', error);
+        }
     }
 
     // Set AI difficulty and personality
@@ -82,6 +104,9 @@ class AIGameIntegration {
 
             // Delegate full turn (multi-play + delay) to AIController
             await this.aiController.handleAITurn();
+
+            // Try to use abilities (ability1/ability2) if beneficial
+            await this.tryUseAbilitiesThisTurn();
 
             // Try to use an ultimate if sensible
             await this.tryUseUltimateThisTurn();
@@ -329,9 +354,42 @@ class AIGameIntegration {
         return this.aiController.getStatus();
     }
 
+    // Get scenario-based ultimate target
+    getScenarioBasedUltimateTarget(heroId) {
+        try {
+            const { getScenarioBasedUltimateTargeting } = require('./scenarioAnalysis');
+            const gameState = this.gameState;
+            const scenario = getScenarioBasedUltimateTargeting(heroId, gameState);
+            
+            if (scenario && scenario.targetRows && scenario.targetRows.length > 0) {
+                // Convert row ID to row name for targeting
+                const rowId = scenario.targetRows[0]; // Use first target row
+                const rowName = rowId[1]; // f, m, b
+                return {
+                    type: 'row',
+                    row: rowName,
+                    reasoning: scenario.description
+                };
+            }
+        } catch (error) {
+            console.log('Scenario-based ultimate targeting not available:', error.message);
+        }
+        return null;
+    }
+
     // Handle card and row targeting for AI
     async handleAITargeting(targetType, options = {}) {
         console.log('AI Targeting:', targetType, options);
+        
+        // Apply scenario-based targeting for ultimates
+        if (targetType === 'row' && options.isDamage) {
+            const heroIdContext = window.__ow_currentAIHero;
+            const scenarioTarget = this.getScenarioBasedUltimateTarget(heroIdContext);
+            if (scenarioTarget) {
+                console.log(`Scenario-based targeting for ${heroIdContext}:`, scenarioTarget);
+                return scenarioTarget;
+            }
+        }
 
         // Infer intent from current AI context if options are not explicit
         const heroIdContext = window.__ow_currentAIHero;
@@ -998,10 +1056,12 @@ class AIGameIntegration {
                     const enemyRows = ['1f', '1m', '1b'];
                     const maxEnemies = Math.max(...enemyRows.map(r => window.__ow_getRow?.(r)?.cardIds?.length || 0));
                     if (maxEnemies >= 2) {
-                        score += 45; // Prefer token if enemy has 2+ in a row
+                        score += 50; // Strong preference for token if enemy has 2+ in a row
+                    } else if (maxEnemies >= 1) {
+                        score += 40; // Still prefer token for area denial
                     }
                 } else if (desc.includes('damage')) {
-                    score += 35; // Default to damage
+                    score += 30; // Lower priority for single target damage
                 }
             }
 
@@ -1024,6 +1084,37 @@ class AIGameIntegration {
                     score += 50;
                 } else if (desc.includes('shuffle')) {
                     score += 30;
+                }
+            }
+
+            // Tracer: Prefer dual target when multiple enemies available, single for precision
+            if (heroId === 'tracer') {
+                if (desc.includes('dual') || desc.includes('two')) {
+                    const enemyRows = ['1f', '1m', '1b'];
+                    const totalEnemies = enemyRows.reduce((sum, r) => sum + (window.__ow_getRow?.(r)?.cardIds?.length || 0), 0);
+                    if (totalEnemies >= 2) {
+                        score += 45; // Prefer dual when multiple targets
+                    }
+                } else if (desc.includes('single') || desc.includes('2 damage')) {
+                    score += 35; // Single target for precision
+                }
+            }
+
+            // Zenyatta: Prefer Discord when enemies present, Harmony for healing
+            if (heroId === 'zenyatta') {
+                if (desc.includes('discord') && gameContext.enemyCount > 0) {
+                    score += 50; // Strong preference for Discord when enemies exist
+                } else if (desc.includes('harmony') && gameContext.allyHealthDeficit > 1) {
+                    score += 45; // Prefer Harmony when allies need healing
+                }
+            }
+
+            // Ana: Prefer healing when allies wounded, damage when they're healthy
+            if (heroId === 'ana') {
+                if (desc.includes('heal') && gameContext.allyHealthDeficit > 2) {
+                    score += 50;
+                } else if (desc.includes('damage') && gameContext.allyHealthDeficit <= 1) {
+                    score += 40;
                 }
             }
 
@@ -1757,13 +1848,16 @@ class AIGameIntegration {
             const specialCardMap = {
                 'ashe': 'bob',
                 'dva': 'dvameka',
-                'torbjorn': 'turret'
+                'torbjorn': 'turret',
+                'ramattra': 'nemesis'
             };
 
             const expectedSpecialCard = specialCardMap[heroId];
             if (!expectedSpecialCard) {
                 return null; // This hero doesn't spawn special cards
             }
+
+            console.log(`AI checking for spawned special card: ${expectedSpecialCard} from ${heroId} ultimate`);
 
             // Wait a moment for the special card to be added to hand
             await new Promise(resolve => setTimeout(resolve, 500));
@@ -1778,7 +1872,7 @@ class AIGameIntegration {
                 return null;
             }
 
-            console.log(`AI detected spawned special card: ${specialCardId}`);
+            console.log(`AI detected spawned special card: ${specialCardId} - MUST PLAY IMMEDIATELY`);
 
             // Determine best row for the special card
             let bestRow = 'middle'; // Default
@@ -1811,20 +1905,302 @@ class AIGameIntegration {
 
                 if (availableRows.length > 0) {
                     bestRow = availableRows[0][0];
+                    console.log(`AI: Preferred row full, using ${bestRow} row instead`);
                 } else {
                     console.log('AI cannot play special card: all rows full');
                     return null;
                 }
             }
 
-            // Play the special card immediately
-            console.log(`AI playing spawned special card ${specialCardId} in ${bestRow} row`);
-            await this.playCard(specialCardId, bestRow);
-
-            return specialCardId;
+            // Play the special card immediately - this is MANDATORY
+            console.log(`AI MANDATORY PLAY: ${specialCardId} in ${bestRow} row`);
+            const playResult = await this.playCard(specialCardId, bestRow);
+            
+            if (playResult) {
+                console.log(`AI successfully played mandatory special card: ${specialCardId}`);
+                return specialCardId;
+            } else {
+                console.error(`AI failed to play mandatory special card: ${specialCardId}`);
+                return null;
+            }
         } catch (error) {
             console.error('Error checking/playing spawned special card:', error);
             return null;
+        }
+    }
+
+    // Heuristic: try to use abilities (ability1/ability2) this turn if beneficial
+    async tryUseAbilitiesThisTurn() {
+        try {
+            const turnNumber = this.aiController?._aiTurnsTaken || 0;
+            console.log(`\n========================================`);
+            console.log(`AI ABILITY CHECK - Turn ${turnNumber + 1}`);
+            console.log(`========================================`);
+
+            const allyRows = ['2f','2m','2b'];
+            const allies = allyRows.flatMap(r => (window.__ow_getRow?.(r)?.cardIds || []).map(id => ({ cardId: id, rowId: r })));
+            console.log(`AI board: ${allies.length} allies`);
+            if (allies.length === 0) {
+                console.log('❌ No allies on board, skipping ability check\n');
+                return false;
+            }
+
+            // Check each ally for available abilities
+            const abilityUsers = [];
+            for (const ally of allies) {
+                const card = window.__ow_getCard?.(ally.cardId);
+                if (card) {
+                    // Check for ability1
+                    if (card.ability1 && !card.ability1Used) {
+                        abilityUsers.push({
+                            cardId: ally.cardId,
+                            rowId: ally.rowId,
+                            ability: 'ability1',
+                            card: card
+                        });
+                    }
+                    // Check for ability2
+                    if (card.ability2 && !card.ability2Used) {
+                        abilityUsers.push({
+                            cardId: ally.cardId,
+                            rowId: ally.rowId,
+                            ability: 'ability2',
+                            card: card
+                        });
+                    }
+                }
+            }
+
+            console.log(`AI found ${abilityUsers.length} available abilities`);
+            if (abilityUsers.length === 0) {
+                console.log('AI: No abilities available, skipping');
+                return false;
+            }
+
+            // Analyze game state for context-aware ability usage
+            const gameContext = this.analyzeGameContext();
+            const difficulty = this.aiController?.difficulty || 'hard';
+
+            // Score each ability based on game state
+            const scoredAbilities = abilityUsers.map(abilityUser => {
+                let score = 0;
+                const heroId = abilityUser.cardId.slice(1);
+                const ability = abilityUser.ability;
+                const card = abilityUser.card;
+
+                // Base score for having an ability available
+                score += 20;
+
+                // Hero-specific ability scoring
+                if (heroId === 'reinhardt' && ability === 'ability1') {
+                    // Reinhardt's barrier - use when enemies are threatening
+                    if (gameContext.enemyCount >= 2) {
+                        score += 40;
+                    }
+                } else if (heroId === 'winston' && ability === 'ability1') {
+                    // Winston's barrier - use when allies need protection
+                    if (gameContext.allyHealthDeficit > 2) {
+                        score += 35;
+                    }
+                } else if (heroId === 'genji' && ability === 'ability1') {
+                    // Genji's deflect - use when enemies are attacking
+                    if (gameContext.enemyCount >= 1) {
+                        score += 30;
+                    }
+                } else if (heroId === 'tracer' && ability === 'ability1') {
+                    // Tracer's blink - use for positioning
+                    score += 25;
+                } else if (heroId === 'pharah' && ability === 'ability1') {
+                    // Pharah's jump jet - use for positioning
+                    score += 25;
+                } else if (heroId === 'mercy' && ability === 'ability1') {
+                    // Mercy's guardian angel - use when allies need healing
+                    if (gameContext.allyHealthDeficit > 1) {
+                        score += 35;
+                    }
+                } else if (heroId === 'lucio' && ability === 'ability1') {
+                    // Lucio's speed boost - use when allies need positioning
+                    score += 30;
+                } else if (heroId === 'zenyatta' && ability === 'ability1') {
+                    // Zenyatta's orb - use when enemies are present
+                    if (gameContext.enemyCount >= 1) {
+                        score += 30;
+                    }
+                } else if (heroId === 'ana' && ability === 'ability1') {
+                    // Ana's sleep dart - use when enemies are threatening
+                    if (gameContext.enemyCount >= 1) {
+                        score += 35;
+                    }
+                } else if (heroId === 'baptiste' && ability === 'ability1') {
+                    // Baptiste's immortality field - use when allies are in danger
+                    if (gameContext.allyHealthDeficit > 2) {
+                        score += 40;
+                    }
+                } else if (heroId === 'moira' && ability === 'ability1') {
+                    // Moira's fade - use for positioning or escape
+                    score += 25;
+                } else if (heroId === 'brigitte' && ability === 'ability1') {
+                    // Brigitte's shield bash - use when enemies are close
+                    if (gameContext.enemyCount >= 1) {
+                        score += 30;
+                    }
+                } else if (heroId === 'sigma' && ability === 'ability1') {
+                    // Sigma's kinetic grasp - use when enemies are attacking
+                    if (gameContext.enemyCount >= 1) {
+                        score += 30;
+                    }
+                } else if (heroId === 'doomfist' && ability === 'ability1') {
+                    // Doomfist's seismic slam - use for damage
+                    if (gameContext.enemyCount >= 1) {
+                        score += 35;
+                    }
+                } else if (heroId === 'hanzo' && ability === 'ability1') {
+                    // Hanzo's storm arrows - use for damage
+                    if (gameContext.enemyCount >= 1) {
+                        score += 30;
+                    }
+                } else if (heroId === 'widowmaker' && ability === 'ability1') {
+                    // Widowmaker's grappling hook - use for positioning
+                    score += 25;
+                } else if (heroId === 'ashe' && ability === 'ability1') {
+                    // Ashe's coach gun - use for positioning
+                    score += 25;
+                } else if (heroId === 'sombra' && ability === 'ability1') {
+                    // Sombra's translocator - use for positioning
+                    score += 25;
+                } else if (heroId === 'echo' && ability === 'ability1') {
+                    // Echo's flight - use for positioning
+                    score += 25;
+                } else if (heroId === 'ramattra' && ability === 'ability1') {
+                    // Ramattra's nemesis form - use when enemies are present
+                    if (gameContext.enemyCount >= 1) {
+                        score += 30;
+                    }
+                } else if (heroId === 'junkerqueen' && ability === 'ability1') {
+                    // Junker Queen's commanding shout - use when allies need buffs
+                    if (gameContext.allyCount >= 2) {
+                        score += 30;
+                    }
+                } else if (heroId === 'mauga' && ability === 'ability1') {
+                    // Mauga's overrun - use for damage
+                    if (gameContext.enemyCount >= 1) {
+                        score += 30;
+                    }
+                } else if (heroId === 'lifeweaver' && ability === 'ability1') {
+                    // Lifeweaver's petal platform - use for positioning
+                    score += 25;
+                } else if (heroId === 'hazard' && ability === 'ability1') {
+                    // Hazard's trap - use for area denial
+                    if (gameContext.enemyCount >= 1) {
+                        score += 30;
+                    }
+                } else if (heroId === 'torbjorn' && ability === 'ability1') {
+                    // Torbjorn's overload - use for damage
+                    if (gameContext.enemyCount >= 1) {
+                        score += 30;
+                    }
+                } else if (heroId === 'orisa' && ability === 'ability1') {
+                    // Orisa's fortify - use when taking damage
+                    if (gameContext.enemyCount >= 1) {
+                        score += 30;
+                    }
+                } else if (heroId === 'dva' && ability === 'ability1') {
+                    // D.Va's defense matrix - use when enemies are attacking
+                    if (gameContext.enemyCount >= 1) {
+                        score += 30;
+                    }
+                } else if (heroId === 'roadhog' && ability === 'ability1') {
+                    // Roadhog's take a breather - use when low on health
+                    if (card.health < card.maxHealth * 0.6) {
+                        score += 40;
+                    }
+                } else if (heroId === 'zarya' && ability === 'ability1') {
+                    // Zarya's bubble - use when allies need protection
+                    if (gameContext.allyHealthDeficit > 1) {
+                        score += 35;
+                    }
+                } else if (heroId === 'soldier76' && ability === 'ability1') {
+                    // Soldier 76's sprint - use for positioning
+                    score += 25;
+                } else if (heroId === 'reaper' && ability === 'ability1') {
+                    // Reaper's wraith form - use for escape
+                    if (card.health < card.maxHealth * 0.5) {
+                        score += 35;
+                    }
+                } else if (heroId === 'junkrat' && ability === 'ability1') {
+                    // Junkrat's concussion mine - use for damage
+                    if (gameContext.enemyCount >= 1) {
+                        score += 30;
+                    }
+                } else if (heroId === 'mei' && ability === 'ability1') {
+                    // Mei's ice wall - use for area denial
+                    if (gameContext.enemyCount >= 1) {
+                        score += 30;
+                    }
+                } else if (heroId === 'symmetra' && ability === 'ability1') {
+                    // Symmetra's teleporter - use for positioning
+                    score += 25;
+                } else if (heroId === 'bastion' && ability === 'ability1') {
+                    // Bastion's reconfigure - use for damage
+                    if (gameContext.enemyCount >= 1) {
+                        score += 30;
+                    }
+                }
+
+                // Add randomness based on difficulty
+                const randomFactor = 0.8 + (this.aiController.rng.next() * 0.4); // 0.8 to 1.2
+                score *= randomFactor;
+
+                return { ...abilityUser, score };
+            });
+
+            // Sort by score and pick the best ability
+            scoredAbilities.sort((a, b) => b.score - a.score);
+            const bestAbility = scoredAbilities[0];
+
+            // Only use ability if score is above threshold
+            const threshold = difficulty === 'easy' ? 30 : difficulty === 'medium' ? 40 : 50;
+            if (bestAbility.score < threshold) {
+                console.log(`AI: Best ability score ${bestAbility.score} below threshold ${threshold}, skipping`);
+                return false;
+            }
+
+            console.log(`✅ AI using ${bestAbility.ability} on ${bestAbility.cardId} (score: ${bestAbility.score.toFixed(1)})`);
+
+            // Execute the ability
+            try {
+                window.__ow_aiTriggering = true;
+                window.__ow_currentAICardId = bestAbility.cardId;
+                window.__ow_currentAIHero = bestAbility.cardId.slice(1);
+                window.__ow_currentAIAbility = bestAbility.ability;
+
+                // Use the ability via the bridge
+                if (typeof window.__ow_useAbility === 'function') {
+                    const success = await window.__ow_useAbility(bestAbility.cardId, bestAbility.ability);
+                    if (success) {
+                        console.log(`AI successfully used ${bestAbility.ability} on ${bestAbility.cardId}`);
+                        try { window.__ow_aiActionsThisTurn = (window.__ow_aiActionsThisTurn || 0) + 1; } catch {}
+                        return true;
+                    } else {
+                        console.log(`AI failed to use ${bestAbility.ability} on ${bestAbility.cardId}`);
+                    }
+                } else {
+                    console.log('AI: window.__ow_useAbility function not available');
+                }
+            } catch (error) {
+                console.error('AI ability execution error:', error);
+            } finally {
+                // Clear AI context
+                window.__ow_aiTriggering = false;
+                window.__ow_currentAICardId = null;
+                window.__ow_currentAIHero = null;
+                window.__ow_currentAIAbility = null;
+            }
+
+            return false;
+        } catch (error) {
+            console.error('AI ability check error:', error);
+            return false;
         }
     }
 
@@ -2345,12 +2721,35 @@ class AIGameIntegration {
                 }
             }
 
-            // Difficulty-based random fire chance
+            // Difficulty-based random fire chance - INCREASED AGGRESSIVENESS
             if (!shouldFire) {
-                const randomThreshold = difficulty === 'easy' ? 0.4 : difficulty === 'medium' ? 0.25 : 0.1;
+                const randomThreshold = difficulty === 'easy' ? 0.7 : difficulty === 'medium' ? 0.5 : 0.3;
                 if (this.aiController.rng.next() < randomThreshold) {
                     shouldFire = true;
-                    console.log(`${difficulty} AI: Random ultimate fire`);
+                    console.log(`${difficulty} AI: Random ultimate fire (increased aggressiveness)`);
+                }
+            }
+
+            // ADDITIONAL AGGRESSIVE CONDITIONS: Fire ultimates more readily
+            if (!shouldFire) {
+                // Fire if we have high synergy (3+) regardless of other conditions
+                if (currentSynergy >= 3) {
+                    shouldFire = true;
+                    console.log(`High synergy (${currentSynergy}) - firing ultimate aggressively`);
+                }
+                // Fire if enemy has significant board presence (4+ cards)
+                else if (enemyDenseRow.count >= 4) {
+                    shouldFire = true;
+                    console.log(`Enemy has ${enemyDenseRow.count} cards - firing ultimate aggressively`);
+                }
+                // Fire if we're behind on board presence
+                else {
+                    const allyCount = allyRows.reduce((sum, r) => sum + (window.__ow_getRow?.(r)?.cardIds?.length || 0), 0);
+                    const enemyCount = enemyRows.reduce((sum, r) => sum + (window.__ow_getRow?.(r)?.cardIds?.length || 0), 0);
+                    if (enemyCount > allyCount + 1) {
+                        shouldFire = true;
+                        console.log(`Behind on board (${allyCount} vs ${enemyCount}) - firing ultimate aggressively`);
+                    }
                 }
             }
 

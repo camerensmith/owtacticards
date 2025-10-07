@@ -23,7 +23,7 @@ export async function onEnter({ playerHeroId, rowId }) {
         description: 'Deal 2 damage to enemy directly opposite Reaper, then 1 damage to enemy directly behind them' 
     };
 
-    showOnEnterChoice('Reaper', opt1, opt2, withAIContext(playerHeroId, async (choiceIndex) => {
+    showOnEnterChoice('Reaper', opt1, opt2, async (choiceIndex) => {
         if (choiceIndex === 0) {
             // Play ability sound immediately on selection
             try {
@@ -39,7 +39,7 @@ export async function onEnter({ playerHeroId, rowId }) {
             
             await handleSplitTarget(playerHeroId, rowId, playerNum);
         }
-    }));
+    });
 }
 
 // Hellfire Shotguns - Single Target (3 damage)

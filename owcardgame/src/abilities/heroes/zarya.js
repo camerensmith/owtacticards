@@ -15,7 +15,7 @@ export async function onEnter({ playerHeroId, rowId }) {
     
     try {
         // Use AI targeting system
-        const target = await selectCardTarget({ isBuff: true });
+        const target = await selectCardTarget();
         if (target) {
             // Validate target is on same team
             const targetPlayerNum = parseInt(target.cardId[0]);
@@ -63,7 +63,7 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
     const selectedTargets = [];
     const maxTargets = 3;
     
-    // AI AUTO-SELECT: If AI is triggering, automatically select up to 3 best enemy targets
+    // AI AUTO-SELECT: If AI is triggering, automatically select up to 3 random enemy targets
     const isAI = window.__ow_isAITurn || window.__ow_aiTriggering;
     if (isAI) {
         // Get all enemy heroes
@@ -84,14 +84,11 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
             }
         });
         
-        // Sort by priority: high power OR low health
-        enemyHeroes.sort((a, b) => {
-            const scoreA = a.power * 10 + (5 - a.health);
-            const scoreB = b.power * 10 + (5 - b.health);
-            return scoreB - scoreA;
-        });
-        
-        // Select top 3
+        // Shuffle randomly and take up to 3
+        for (let i = enemyHeroes.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [enemyHeroes[i], enemyHeroes[j]] = [enemyHeroes[j], enemyHeroes[i]];
+        }
         selectedTargets.push(...enemyHeroes.slice(0, maxTargets));
         console.log('Zarya AI selected targets:', selectedTargets);
     } else {
@@ -101,7 +98,7 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
         
         // Allow selecting up to 3 targets
         while (targetCount < maxTargets) {
-            const target = await selectCardTarget({ isDamage: true });
+            const target = await selectCardTarget();
         
         if (target) {
             // Validate target is enemy

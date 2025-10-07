@@ -2,12 +2,59 @@ import { dealDamage } from '../engine/damageBus';
 import { showMessage as showToast, clearMessage as clearToast } from '../engine/targetingBus';
 import { selectCardTarget } from '../engine/targeting';
 import { playAudioByKey } from '../../assets/imageImports';
+import effectsBus, { Effects } from '../engine/effectsBus';
 
 // Pummel - onEnter
 export async function onEnter({ playerHeroId, rowId }) {
     const playerNum = parseInt(playerHeroId[0]);
     
     try { playAudioByKey('nemesis-enter'); } catch {}
+    
+    // For AI, automatically select the enemy with most shields in opposing row
+    if (window.__ow_aiTriggering || window.__ow_isAITurn) {
+        const enemyPlayer = playerNum === 1 ? 2 : 1;
+        const currentRowPosition = rowId[1]; // 'f', 'm', 'b'
+        const opposingRowId = `${enemyPlayer}${currentRowPosition}`;
+        
+        const opposingRow = window.__ow_getRow?.(opposingRowId);
+        let bestTarget = null;
+        let maxShields = 0;
+        
+        if (opposingRow && opposingRow.cardIds) {
+            for (const cardId of opposingRow.cardIds) {
+                const card = window.__ow_getCard?.(cardId);
+                if (card && card.health > 0) {
+                    const shields = card.shield || 0;
+                    if (shields > maxShields) {
+                        maxShields = shields;
+                        bestTarget = { cardId, rowId: opposingRowId };
+                    }
+                }
+            }
+        }
+        
+        if (bestTarget) {
+            console.log(`Nemesis AI: Selected target with ${maxShields} shields`);
+            
+            // Calculate damage based on target's shield value
+            const damage = maxShields;
+            
+            if (damage > 0) {
+                dealDamage(bestTarget.cardId, bestTarget.rowId, damage, true, playerHeroId); // ignoreShields = true
+                effectsBus.publish(Effects.showDamage(bestTarget.cardId, damage));
+                
+                showToast(`Nemesis AI: Pummel dealt ${damage} damage (based on shields)`);
+                setTimeout(() => clearToast(), 2000);
+            } else {
+                showToast('Nemesis AI: Target has no shields - Pummel deals 0 damage');
+                setTimeout(() => clearToast(), 2000);
+            }
+        } else {
+            showToast('Nemesis AI: No valid targets in opposing row');
+            setTimeout(() => clearToast(), 2000);
+        }
+        return;
+    }
     
     showToast('Nemesis: Select enemy in opposing row to pummel');
     
@@ -75,6 +122,25 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
     
     // Play ultimate activation sound
     try { playAudioByKey('nemesis-ultimate'); } catch {}
+    
+    // For AI, automatically activate Annihilation
+    if (window.__ow_aiTriggering || window.__ow_isAITurn) {
+        // Apply Annihilation effect to Nemesis
+        window.__ow_appendCardEffect?.(playerHeroId, {
+            id: 'annihilation',
+            hero: 'nemesis',
+            type: 'persistent',
+            sourceCardId: playerHeroId,
+            sourceRowId: rowId,
+            tooltip: 'Annihilation: All enemies in opposite row and column take 1 damage at start of turn',
+            visual: 'annihilation'
+        });
+        
+        console.log('Nemesis AI: Annihilation activated');
+        showToast('Nemesis AI: Annihilation activated!');
+        setTimeout(() => clearToast(), 2000);
+        return;
+    }
     
     // Apply Annihilation effect to Nemesis
     window.__ow_appendCardEffect?.(playerHeroId, {

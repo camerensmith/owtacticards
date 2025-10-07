@@ -15,6 +15,11 @@ export function onDraw() {
 export function onEnter({ playerHeroId, rowId }) {
     const playerNum = parseInt(playerHeroId[0]);
     try { const s = getAudioFile('ana-enter'); if (s) new Audio(s).play().catch(()=>{}); } catch {}
+    // Ensure no AI auto when it is human turn
+    if (!(window.__ow_aiTriggering || window.__ow_isAITurn) || (typeof window.__ow_getPlayerTurn === 'function' && window.__ow_getPlayerTurn() !== 2)) {
+        // human-only path; do nothing here, actual choices via onEnterAbility1
+        return;
+    }
 }
 
 export default { onDraw, onEnter, onEnterAbility1, onUltimate };
@@ -76,6 +81,71 @@ export function onUltimate({ playerHeroId, rowId, cost }) {
 // and deal 1 damage to all enemies in the opposing row (does not pierce shields).
 export async function onEnterAbility1({ playerNum, playerHeroId }) {
     try {
+        // For AI, automatically select the row with most wounded allies
+        if (window.__ow_aiTriggering || window.__ow_isAITurn) {
+            const friendlyRows = [`${playerNum}f`, `${playerNum}m`, `${playerNum}b`];
+            
+            // Find the row with most wounded allies
+            let bestRow = friendlyRows[0];
+            let maxWoundedAllies = 0;
+            
+            for (const friendlyRowId of friendlyRows) {
+                const row = window.__ow_getRow?.(friendlyRowId);
+                let woundedAllies = 0;
+                if (row && row.cardIds) {
+                    for (const cardId of row.cardIds) {
+                        const card = window.__ow_getCard?.(cardId);
+                        if (card && card.health > 0 && card.health < (card.maxHealth || card.health)) {
+                            woundedAllies++;
+                        }
+                    }
+                }
+                if (woundedAllies > maxWoundedAllies) {
+                    maxWoundedAllies = woundedAllies;
+                    bestRow = friendlyRowId;
+                }
+            }
+            
+            console.log(`Ana AI: Selected row ${bestRow} with ${maxWoundedAllies} wounded allies`);
+            
+            // Heal allies in selected row and damage enemies in opposing row
+            const pos = bestRow[1]; // f/m/b
+            const allyRow = `${playerNum}${pos}`;
+            const enemyPlayer = playerNum === 1 ? 2 : 1;
+            const enemyRow = `${enemyPlayer}${pos}`;
+            
+            // Heal allies
+            const allyRowData = window.__ow_getRow?.(allyRow);
+            let alliesHealed = 0;
+            if (allyRowData && allyRowData.cardIds) {
+                for (const cardId of allyRowData.cardIds) {
+                    const card = window.__ow_getCard?.(cardId);
+                    if (card && card.health > 0 && card.health < (card.maxHealth || card.health)) {
+                        window.__ow_setCardProperty?.(cardId, 'health', Math.min(card.health + 1, card.maxHealth || card.health));
+                        alliesHealed++;
+                    }
+                }
+            }
+            
+            // Damage enemies
+            const enemyRowData = window.__ow_getRow?.(enemyRow);
+            let enemiesDamaged = 0;
+            if (enemyRowData && enemyRowData.cardIds) {
+                for (const cardId of enemyRowData.cardIds) {
+                    const card = window.__ow_getCard?.(cardId);
+                    if (card && card.health > 0) {
+                        dealDamage(cardId, enemyRow, 1, false, playerHeroId);
+                        effectsBus.publish(Effects.showDamage(cardId, 1));
+                        enemiesDamaged++;
+                    }
+                }
+            }
+            
+            showToast(`Ana AI: Healed ${alliesHealed} allies, damaged ${enemiesDamaged} enemies`);
+            setTimeout(() => clearToast(), 2000);
+            return;
+        }
+        
         // Draw aim line from Ana card to cursor while selecting
         if (playerHeroId) {
             aimLineBus.setArrowSource(playerHeroId);

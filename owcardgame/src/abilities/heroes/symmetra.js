@@ -20,11 +20,16 @@ export async function onEnter({ playerHeroId, rowId }) {
         console.log('Symmetra AI: Evaluating teleport targets');
         target = await selectSymmetraTeleportTarget(playerNum);
     } else {
-        // Human player manual selection
-        showToast('Symmetra: Select hero to return to hand');
-        target = await selectCardTarget({ isBuff: true });
+        // Human player manual selection - allow targeting any hero (ally or enemy)
+        showToast('Symmetra: Select any hero to return to hand');
+        target = await selectCardTarget();
     }
 
+    if (!target) {
+        clearToast();
+        return;
+    }
+    
     if (target && target.cardId) {
         // Get the target hero's owner
         const targetPlayerNum = parseInt(target.cardId[0]);
