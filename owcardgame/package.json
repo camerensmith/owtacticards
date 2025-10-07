@@ -1,7 +1,7 @@
 {
   "name": "owcardgame",
   "homepage": "https://camerensmith.github.io/owtacticards",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "private": true,
   "dependencies": {
     "@testing-library/jest-dom": "^6.4.2",
