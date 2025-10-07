@@ -112,8 +112,12 @@ export default function PlayerHand(props) {
 
     // Draw a card at the start of the player's turn (except for the very first turn)
     useEffect(() => {
-        // Only draw if it's this player's turn and it's not the first turn of the game
-        if (turnState.playerTurn === playerNum && turnState.turnCount > 1) {
+        // Only draw if it's this player's turn and it's not the very first turn of a round
+        // First player on turnCount===1 should NOT draw; second player on turnCount===2 should draw
+        const shouldDraw = turnState.playerTurn === playerNum && !(
+            turnState.turnCount === 1 // opening turn of the round
+        );
+        if (shouldDraw) {
             // Prevent duplicate draws within the same player's turn
             if (!window.__ow_lastDraw || window.__ow_lastDraw.player !== playerNum || window.__ow_lastDraw.turn !== turnState.turnCount) {
                 const currentHandSize = gameState.rows[`player${playerNum}hand`].cardIds.length;
@@ -245,7 +249,7 @@ export default function PlayerHand(props) {
                                   }
                                   setTurnState((prevState) => ({
                                       ...prevState,
-                                      turnCount: Math.min(prevState.turnCount + 1, 14),
+                                      turnCount: Math.min(prevState.turnCount + 1, 18),
                                       playerTurn: 2,
                                   }));
                                   window.__ow_lastTurnAdvance = { turn: turnState.turnCount, from: 1 };
@@ -259,7 +263,7 @@ export default function PlayerHand(props) {
                                   }
                                   setTurnState((prevState) => ({
                                       ...prevState,
-                                      turnCount: Math.min(prevState.turnCount + 1, 14),
+                                      turnCount: Math.min(prevState.turnCount + 1, 18),
                                       playerTurn: 1,
                                   }));
                                   window.__ow_lastTurnAdvance = { turn: turnState.turnCount, from: 2 };

@@ -290,7 +290,7 @@ const data = {
                 m: 1,
                 b: 3,
             },
-            ultimate: 'Self Destruct (3): Deal 4 damage to all opponents AND allies in D.Va+MEKA\'s row and the opposing row. Replace D.Va+MEKA with D.Va, and remove D.Va+MEKA from the game.',
+            ultimate: 'Self Destruct (1): Deal 4 damage to all opponents AND allies in D.Va+MEKA\'s row and the opposing row. Replace D.Va+MEKA with D.Va, and remove D.Va+MEKA from the game.',
             isImplemented: true,
             special: true,
         },

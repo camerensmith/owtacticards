@@ -221,6 +221,44 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
         playAudioByKey('bastion-ultimate');
     } catch {}
     
+    // AI: auto-select 3 random enemy targets (can repeat)
+    if (window.__ow_aiTriggering || window.__ow_isAITurn) {
+        try {
+            const enemyPlayer = playerNum === 1 ? 2 : 1;
+            const enemyRows = [`${enemyPlayer}f`, `${enemyPlayer}m`, `${enemyPlayer}b`];
+            const livingEnemies = [];
+            enemyRows.forEach(r => {
+                const row = window.__ow_getRow?.(r);
+                row?.cardIds?.forEach(id => {
+                    const c = window.__ow_getCard?.(id);
+                    if (c && c.health > 0) livingEnemies.push({ cardId: id, rowId: r });
+                });
+            });
+            if (livingEnemies.length === 0) {
+                showToast('Bastion AI: No enemies to target');
+                setTimeout(() => clearToast(), 1500);
+                return;
+            }
+            // Pick 3 targets with replacement
+            const picks = [];
+            for (let i = 0; i < 3; i++) {
+                const t = livingEnemies[Math.floor(Math.random() * livingEnemies.length)];
+                picks.push(t);
+            }
+            // Deal 2 damage to each pick
+            picks.forEach(t => {
+                dealDamage(t.cardId, t.rowId, 2, false, playerHeroId);
+                try { effectsBus.publish(Effects.showDamage(t.cardId, 2)); } catch {}
+            });
+            showToast(`Bastion AI: Tank Mode fired at ${picks.length} target(s)`);
+            setTimeout(() => clearToast(), 1500);
+            return;
+        } catch (e) {
+            console.error('Bastion AI ultimate error:', e);
+            return;
+        }
+    }
+    
     showToast('Bastion: Tank Mode - Select primary target');
     
     try {

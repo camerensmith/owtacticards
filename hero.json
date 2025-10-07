@@ -170,7 +170,7 @@
     "back_power": 1,
     "back_synergy": 3,
     "on_enter1": "Total Mayhem — If Junkrat is Defeated, deal 2 damage to the enemy who defeated Junkrat and 1 damage to up to 2 more enemies in that same row.",
-    "ultimate": "RIP-Tire (4): Move Junkrat to any of your rows and deal [Row Synergy] damage to all enemies in opposing row."
+    "ultimate": "RIP-Tire (4): Move Junkrat to any of your rows and deal [Row Synergy] damage to all enemies in opposing row + 1 piercing."
   },
   {
     "name": "Junker Queen",
@@ -262,7 +262,7 @@
     "back_power": 1,
     "back_synergy": 3,
     "on_enter1": "Defense Matrix — D.Va+MEKA gains 2 Shields if placed in the Front Row, or 1 Shield if placed in the Middle or Back..",
-    "ultimate": "Self Destruct (3): Deal 4 damage to all opponents AND allies in D.Va+MEKA’s row and the opposing row. Replace D.Va+MEKA with D.Va.",
+    "ultimate": "Self Destruct (1): Deal 4 damage to all opponents AND allies in D.Va+MEKA’s row and the opposing row. Replace D.Va+MEKA with D.Va.",
     "special": true
   },
   {
@@ -316,7 +316,7 @@
     "back_power": 3,
     "back_synergy": 1,
     "on_enter1": "Protective Barrier — All Heroes in Orisa’s row (including Orisa) take 1 less damage from attacks, but no less than 1 damage.",
-    "ultimate": "Supercharger (3): Place Orisa Token on Orisa's row. Orisa's row now receives +1 Synergy per Hero until Orisa is defeated."
+    "ultimate": "Supercharger (3): Place Orisa Token on Orisa's row. Orisa's row now receives +1 Power per Hero until Orisa is defeated."
   },
   {
     "name": "Pharah",

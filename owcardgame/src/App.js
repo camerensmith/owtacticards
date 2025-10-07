@@ -1759,7 +1759,7 @@ export default function App() {
         player2Turns: 0,
         player1Deployed: 0,
         player2Deployed: 0,
-        maxTurnsPerPlayer: 8, // 8 turns each = 16 rounds total
+        maxTurnsPerPlayer: 9, // 9 turns each = 18 turns total
         maxHandSize: 6, // Changed from 10 to 6
         maxHeroesPerPlayer: 6,
         gamePhase: 'playing', // 'playing', 'roundEnd', 'gameEnd'
@@ -2712,6 +2712,22 @@ export default function App() {
                     setTimeout(() => clearToast(), 3000);
                     
                     initializeGame();
+                    // Ensure starting hand sizes are exactly 4; no extra draws before first turn
+                    try {
+                        const p1Hand = gameState.rows['player1hand'].cardIds.length;
+                        const p2Hand = gameState.rows['player2hand'].cardIds.length;
+                        if (p1Hand > 4) {
+                            // Trim excess from the end
+                            const toDiscard = p1Hand - 4;
+                            const ids = [...gameState.rows['player1hand'].cardIds].slice(-toDiscard);
+                            ids.forEach(id => dispatch({ type: ACTIONS.DISCARD_CARD, payload: { playerNum: 1, targetCardId: id, targetCardRow: 'player1hand' } }));
+                        }
+                        if (p2Hand > 4) {
+                            const toDiscard = p2Hand - 4;
+                            const ids = [...gameState.rows['player2hand'].cardIds].slice(-toDiscard);
+                            ids.forEach(id => dispatch({ type: ACTIONS.DISCARD_CARD, payload: { playerNum: 2, targetCardId: id, targetCardRow: 'player2hand' } }));
+                        }
+                    } catch {}
                     // Ensure AI is ready for the new round
                     if (window.__ow_aiIntegration) {
                         // Update AI with fresh game state after cards are dealt
@@ -2734,8 +2750,8 @@ export default function App() {
             endRound();
         }
         
-        // Also end the round if we've reached the turn limit (14 turns total)
-        if (turnState.turnCount > 14) {
+        // Also end the round if we've reached the turn limit (18 turns total)
+        if (turnState.turnCount > 18) {
             console.log(`Turn limit reached (${turnState.turnCount}), ending round automatically`);
             endRound();
         }

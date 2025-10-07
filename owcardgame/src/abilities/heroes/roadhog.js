@@ -82,7 +82,8 @@ export async function onEnter({ playerHeroId, rowId }) {
         
         // Deal damage (only to living heroes)
         if (targetCard && targetCard.health > 0) {
-            dealDamage(randomEnemy.cardId, destinationRow || randomEnemy.rowId, 2, false, playerHeroId);
+            // Chain Hook damage should ignore shields/barriers in the destination row
+            dealDamage(randomEnemy.cardId, destinationRow || randomEnemy.rowId, 2, true, playerHeroId);
             try { effectsBus.publish(Effects.showDamage(randomEnemy.cardId, 2)); } catch {}
         }
         
@@ -164,7 +165,8 @@ export async function onEnter({ playerHeroId, rowId }) {
         
         // Deal damage (only to living heroes)
         if (targetCard && targetCard.health > 0) {
-            dealDamage(target.cardId, destinationRow || target.rowId, 2, false, playerHeroId);
+            // Chain Hook damage should ignore shields/barriers in the destination row
+            dealDamage(target.cardId, destinationRow || target.rowId, 2, true, playerHeroId);
             try { effectsBus.publish(Effects.showDamage(target.cardId, 2)); } catch {}
         }
         

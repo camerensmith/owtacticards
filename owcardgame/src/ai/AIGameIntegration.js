@@ -98,6 +98,9 @@ class AIGameIntegration {
 
             // CRITICAL: Auto-play Special and Turret cards immediately
             await this.autoPlaySpecialAndTurretCards();
+            // Double-check after a short delay to catch async add-to-hand race
+            try { await new Promise(r => setTimeout(r, 250)); } catch {}
+            await this.autoPlaySpecialAndTurretCards();
 
             // Try beneficial reposition
             await this.tryRepositionIfBeneficial();
@@ -108,8 +111,17 @@ class AIGameIntegration {
             // Try to use abilities (ability1/ability2) if beneficial
             await this.tryUseAbilitiesThisTurn();
 
-            // Try to use an ultimate if sensible
-            await this.tryUseUltimateThisTurn();
+            // Try to use one or more ultimates this turn if conditions are favorable
+            const difficulty = this.aiController?.difficulty || 'hard';
+            const maxUltimates = difficulty === 'easy' ? 1 : (difficulty === 'medium' ? 2 : 3);
+            let ultimatesUsed = 0;
+            while (ultimatesUsed < maxUltimates) {
+                const fired = await this.tryUseUltimateThisTurn();
+                if (!fired) break;
+                ultimatesUsed++;
+                // brief delay to let state settle between ultimates
+                try { await new Promise(r => setTimeout(r, 150)); } catch {}
+            }
 
             // Check if barriers should be toggled (Reinhardt/Winston)
             await this.manageBarrierToggles();
@@ -2330,17 +2342,38 @@ class AIGameIntegration {
             // TORBJORN: ONLY use ultimate if turret is active
             else if (heroId === 'torbjorn') {
                 const allyRows = ['2f', '2m', '2b'];
-                const hasTurret = allyRows.some(r => {
+                let hasTurret = allyRows.some(r => {
                     const row = window.__ow_getRow?.(r);
                     return row?.cardIds?.some(id => id.endsWith('turret'));
                 });
+
+                // If no turret on board, but turret is in hand, force-play it first
+                if (!hasTurret) {
+                    try {
+                        const handIds = window.__ow_getRow?.('player2hand')?.cardIds || [];
+                        const turretId = handIds.find(id => id === '2turret');
+                        if (turretId) {
+                            console.log('Torbjorn: Turret found in hand - force playing to back row');
+                            // Prefer back row; fallback handled by adapter
+                            await this.adapter.playCard(turretId, 'back');
+                            // Re-check for turret on board after placement
+                            hasTurret = allyRows.some(r => {
+                                const row = window.__ow_getRow?.(r);
+                                return row?.cardIds?.some(id => id.endsWith('turret'));
+                            });
+                        }
+                    } catch (e) {
+                        console.warn('Torbjorn: Failed to auto-play turret from hand before ultimate:', e);
+                    }
+                }
 
                 if (hasTurret) {
                     shouldFire = true;
                     console.log('Torbjorn: Turret active - Molten Core ready!');
                 } else {
+                    // HARD STOP: never fire without turret
                     shouldFire = false;
-                    console.log('Torbjorn: NO TURRET - waiting for turret deployment');
+                    console.log('Torbjorn: NO TURRET - holding ultimate until turret is deployed');
                 }
             }
 
@@ -2365,15 +2398,21 @@ class AIGameIntegration {
                 }
             }
 
-            // ORISA Supercharger: Setup for power advantage
+            // ORISA Supercharger: Only if 3+ heroes on Orisa's own row
             else if (heroId === 'orisa') {
-                const allyRows = ['2f', '2m', '2b'];
-                const allyCount = allyRows.reduce((sum, r) => sum + (window.__ow_getRow?.(r)?.cardIds?.length || 0), 0);
-
-                // Use if we have 3+ allies (supercharger buffs them all)
-                if (allyCount >= 3) {
-                    shouldFire = true;
-                    console.log(`Orisa Supercharger: Setup for ${allyCount} allies`);
+                const orisaRow = ['2f','2m','2b'].find(r => window.__ow_getRow?.(r)?.cardIds?.includes(chosen.cardId));
+                if (orisaRow) {
+                    const rowCards = window.__ow_getRow?.(orisaRow)?.cardIds || [];
+                    const livingCount = rowCards.filter(id => {
+                        const c = window.__ow_getCard?.(id);
+                        return c && c.health > 0;
+                    }).length;
+                    if (livingCount >= 3) {
+                        shouldFire = true;
+                        console.log(`Orisa Supercharger: ${livingCount} heroes on Orisa's row`);
+                    } else {
+                        console.log(`Orisa Supercharger: Only ${livingCount} heroes on row, need 3+`);
+                    }
                 }
             }
 
@@ -3020,6 +3059,7 @@ class AIGameIntegration {
                     if (card && card.health < card.maxHealth) woundedAllies++;
                 });
             }
+
 
             // Score = enemy damage + ally healing
             let score = 0;

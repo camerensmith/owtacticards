@@ -16,7 +16,10 @@ export async function onEnter({ playerHeroId, rowId }) {
         playAudioByKey('mercy-enter');
     } catch {}
     
-    showToast('Mercy: Caduceus Staff - Select an ally to heal or boost');
+    // Only show human tooltip; AI flow will auto-select and should not leave UI hints
+    if (!(window.__ow_aiTriggering || window.__ow_isAITurn)) {
+        showToast('Mercy: Caduceus Staff - Select an ally to heal or boost');
+    }
     
     // Get all friendly heroes (including special cards like Nemesis, MEKA, BOB)
     const allRows = ['1f', '1m', '1b', '2f', '2m', '2b'];
@@ -79,6 +82,8 @@ export async function onEnter({ playerHeroId, rowId }) {
         } else {
             await handleDamageBoostAbility(playerHeroId, rowId, playerNum);
         }
+        // Ensure any lingering human tooltip is cleared
+        try { clearToast(); } catch {}
         return;
     }
     
@@ -361,9 +366,9 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
         return;
     }
     
-    // Resurrect the hero
+    // Resurrect the hero (use allowRevive=true to bypass heal-prevention guard)
     const baseHealth = targetCard.maxHealth || 4;
-    window.__ow_setCardHealth?.(target.cardId, baseHealth);
+    window.__ow_setCardHealth?.(target.cardId, baseHealth, true);
     
     // Remove any negative effects
     if (Array.isArray(targetCard.effects)) {

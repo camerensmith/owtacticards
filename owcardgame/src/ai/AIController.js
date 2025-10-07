@@ -93,13 +93,13 @@ class AIController {
         if (!this.isActive || !this.gameState) return;
 
         // Enforce global turn cap: prefer gameState counters if present
-        const maxTotalTurns = this.gameState?.maxTurns || 14;
+        const maxTotalTurns = this.gameState?.maxTurns || 18;
         const currentTurn = this.gameState?.currentTurn || null; // expected 1-based
         if (typeof currentTurn === 'number' && currentTurn > maxTotalTurns) {
             console.log(`Max turns reached (${maxTotalTurns}). Skipping AI turn.`);
             return;
         }
-        if (this._aiTurnsTaken >= 7) {
+        if (this._aiTurnsTaken >= 9) {
             console.log('AI has already taken 7 turns. Skipping.');
             return;
         }

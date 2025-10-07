@@ -32,7 +32,6 @@ function Tutorial() {
         <div
             onClick={openCloseTutorial}
             id='tutorial-container'
-            className='open'
         >
             <div id='tutorial'>
                 <div id='tutorial-content-container'>
@@ -55,7 +54,7 @@ function Tutorial() {
                                 className='fas fa-graduation-cap'
                             ></i>
                         </a>
-                        <span id='tutorial-title'>How To Play</span>
+                        <span id='tutorial-title'>Credits</span>
                         <div id='tutorial-tabs'>
                             <TabButton title='Overview' tabId='overview-content' icon='fa-eye'></TabButton>
                             <TabButton title='Card Info' tabId='card-info-content' icon='fa-exclamation'></TabButton>

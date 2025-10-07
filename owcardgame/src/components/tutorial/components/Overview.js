@@ -54,230 +54,36 @@ function Overview() {
 
     return (
         <div id='overview-content' className='tutorial-content'>
-            <div
-                id='overview-container'
-                className='tutorial-content-container'
-            >
+            <div id='overview-container' className='tutorial-content-container'>
                 <div className='overview-section'>
-                    <img
-                        src={otherImages.overviewGif}
-                        alt='Game overview'
-                        className='tutorial-image'
-                    />
                     <div className='tutorial-section'>
-                        <div className='tutorial-heading'>
-                            How to win
+                        <div className='tutorial-heading'>Credits</div>
+                        <div>
+                            <p>Initial card design and concept: u/barberian912</p>
+                            <p>Digitisation by Nathan H Miles</p>
+                            <p>Ability overhaul, balance, AI mechanics, new cards, updated methods and other improvements by Cam Smith</p>
                         </div>
-                        <span>
-                            <p>
-                                When a card is played, that card's
-                                Power score is added to that
-                                player's Power score
-                                {/* <Counter value={8} styles={['power', 'tutorial']}></Counter> */}
-                                <span
-                                    style={{
-                                        ...powerStyle,
-                                        ...tutorialCounterStyle,
-                                    }}
-                                >
-                                    8
-                                </span>
-                                (please see the Card Info section
-                                for a detailed breakdown of the
-                                cards' layout). The player with the
-                                highest Power score at the end of
-                                the round wins the round, with two
-                                rounds needed to win the match
-                                <span
-                                    style={{
-                                        ...matchStyle,
-                                        ...tutorialCounterStyle,
-                                        backgroundColor: 'aqua',
-                                    }}
-                                >
-                                    2
-                                </span>
-                                <span
-                                    style={{
-                                        ...matchStyle,
-                                        ...tutorialCounterStyle,
-                                        backgroundColor: 'red',
-                                    }}
-                                >
-                                    1
-                                </span>
-                                . The round is over when both
-                                players have played six cards and
-                                pressed the Pass button.
-                            </p>
-                            <p>
-                                If both players have the same Power
-                                score, the player with the higher
-                                total Synergy wins. If both players'
-                                Synergy scores are also tied, the
-                                round is a draw and neither player
-                                receives a win.
-                            </p>
-                        </span>
                     </div>
-                    <div className='tutorial-section'>
-                        <div className='tutorial-heading'>
-                            Starting a game
-                        </div>
+                    <div className='tutorial-section' style={{ marginTop: '16px' }}>
+                        <div className='tutorial-heading'>How to win</div>
                         <p>
-                            <span>
-                                Both players should begin by drawing
-                                8 cards each. Then the players each
-                                take turns to play one card per
-                                turn. At the end of your turn, click
-                                the End Turn button to allow the
-                                other player to take their turn. You
-                                can tell which player's turn it is
-                                by which cards are facing up. To
-                                find out exactly what you can do on
-                                your turn, please see the Turn
-                                Actions section above.
-                            </span>
+                            When a card is played, that card's Power score is added to that player's Power score (please see the Card Info section for a detailed breakdown of the cards' layout). The player with the highest Power score at the end of the round wins the round, with two rounds needed to win the match. The round is over when both players have played six cards and pressed the Pass button.
+                        </p>
+                        <p>
+                            If both players have the same Power score, the player with the higher total Synergy wins. If both players' Synergy scores are also tied, the round is a draw and neither player receives a win.
                         </p>
                     </div>
                     <div className='tutorial-section'>
-                        <div className='tutorial-heading'>
-                            Scores, abilities and counters
-                        </div>
-
-                        <span>
-                            <ul className='tutorial-list'>
-                                <li>
-                                    <span
-                                        style={{
-                                            ...powerStyle,
-                                            ...tutorialCounterStyle,
-                                            width: '40px',
-                                            height: '40px',
-                                            fontSize: '2rem',
-                                        }}
-                                    >
-                                        8
-                                    </span>
-                                    <span className='counter-desc'>
-                                        <strong>Power: </strong>Each
-                                        player has one Power score
-                                        which increases as cards are
-                                        played. A card's Power is
-                                        subtracted from the player's
-                                        Power score if it is
-                                        defeated. The player with
-                                        the higher power score at
-                                        the end of the round wins.
-                                    </span>
-                                </li>
-                                <li>
-                                    <span
-                                        style={{
-                                            ...synergyStyle,
-                                            ...tutorialCounterStyle,
-                                            width: '40px',
-                                            height: '40px',
-                                            fontSize: '2rem',
-                                            border: '5px solid steelblue',
-                                        }}
-                                    >
-                                        3
-                                    </span>
-                                    <span className='counter-desc'>
-                                        <strong>Synergy: </strong>
-                                        Each row has its own Synergy
-                                        score. The row's synergy
-                                        increases as Heroes are
-                                        played into that row.
-                                        Synergy is spent when Heroes
-                                        use their Ultimate Ability.
-                                    </span>
-                                </li>
-                                <li>
-                                    <span
-                                        style={{
-                                            ...tutorialCounterStyle,
-                                            ...healthStyle,
-                                            width: '40px',
-                                            height: '44px',
-                                            fontSize: '2rem',
-                                        }}
-                                        className={`healthcounter counter tutorial-counter`}
-                                    >
-                                        4
-                                    </span>
-                                    <span className='counter-desc'>
-                                        <strong>Health: </strong>How
-                                        much damage the Hero can
-                                        take before it is defeated.
-                                        A defeated Hero's Power is
-                                        subtracted from the player's
-                                        Power score.
-                                    </span>
-                                </li>
-                                <li>
-                                    <span
-                                        style={{
-                                            ...tutorialCounterStyle,
-                                            ...healthStyle,
-                                            width: '40px',
-                                            height: '44px',
-                                            fontSize: '2rem',
-                                        }}
-                                        className={`shieldcounter counter`}
-                                    >
-                                        2
-                                    </span>
-                                    <span className='counter-desc'>
-                                        <strong>Shield: </strong>A
-                                        Shield can be placed either
-                                        on a specific Hero or on an
-                                        entire row. If a Hero has
-                                        Shield or is in a row that
-                                        has Shield, the Shield will
-                                        take any damage before the
-                                        Hero's Health takes damage.
-                                    </span>
-                                </li>
-                                <li>
-                                    <span
-                                        style={{
-                                            ...effectStyle,
-                                            ...tutorialCounterStyle,
-                                        }}
-                                        className='counter'
-                                    >
-                                        <img
-                                            src={
-                                                heroIconImages['mercy-icon']
-                                            }
-                                            className='counter herocounter'
-                                            alt='Hero Counter'
-                                        />
-                                    </span>
-                                    <span className='counter-desc'>
-                                        <strong>Effects: </strong>
-                                        There are a number of
-                                        different positive and
-                                        negative Effects that Heroes
-                                        can apply to ally and enemy
-                                        Heroes, as well as ally and
-                                        enemy rows. If a Hero
-                                        applies an Effect to a Hero
-                                        or row, the Hero's counter
-                                        will show up next to the row
-                                        or on the Hero card. These
-                                        counters can be clicked to
-                                        show the card which applied
-                                        the Effect, so that you can
-                                        easily read the Ability
-                                        description to understand
-                                        what the Effect does.
-                                    </span>
-                                </li>
-                            </ul>
-                        </span>
+                        <div className='tutorial-heading'>Starting a game</div>
+                        <p>
+                            Both players should begin by drawing 4 cards each +1 on draw step. Then the players each take turns to play as many cards as they want per turn. At the end of your turn, click the End Turn button to allow the other player to take their turn. You can tell which player's turn it is by which cards are facing up. To find out exactly what you can do on your turn, please see the Turn Actions section above.
+                        </p>
+                    </div>
+                    <div className='tutorial-section'>
+                        <div className='tutorial-heading'>Scores, abilities and counters</div>
+                        <p>
+                            See the Card Info and Turn Actions sections for details about counters, abilities, synergy, shields, and scoring.
+                        </p>
                     </div>
                 </div>
             </div>
