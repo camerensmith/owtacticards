@@ -1,13 +1,12 @@
 {
   "name": "owcardgame",
-  "homepage": "https://camerensmith.github.io/projectowtc",
+  "homepage": "https://camerensmith.github.io/owtacticards",
   "version": "0.3.1",
   "private": true,
   "dependencies": {
     "@testing-library/jest-dom": "^6.4.2",
     "@testing-library/react": "^14.2.1",
     "@testing-library/user-event": "^14.5.2",
-    "gh-pages": "^6.1.1",
     "immer": "^10.0.5",
     "jquery": "^3.7.1",
     "lodash": "^4.17.21",
@@ -22,8 +21,7 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "predeploy": "npm run build",
-    "deploy": "gh-pages -d build"
+    "postbuild": "cp build/index.html build/404.html || copy build\\index.html build\\404.html"
   },
   "eslintConfig": {
     "extends": [
