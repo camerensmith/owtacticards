@@ -177,11 +177,14 @@ export default function TurnEffectsRunner() {
                         }
                         
                         // Check for Zenyatta Harmony token healing and jumping
-                        const hasHarmony = card.effects.some(effect => 
-                            effect.hero === 'zenyatta' && effect.type === 'harmony'
+                        // Harmony tokens jump on friendly cards, placed by the current player
+                        const harmonyToken = card.effects.find(effect => 
+                            effect.hero === 'zenyatta' && 
+                            effect.type === 'harmony' &&
+                            effect.ownerPlayerNum === playerTurn
                         );
-                        if (hasHarmony && abilities.zenyatta?.processHarmonyJump) {
-                            console.log(`TurnEffectsRunner: Found Harmony token on card ${cardId}, processing jump`);
+                        if (harmonyToken && abilities.zenyatta?.processHarmonyJump) {
+                            console.log(`TurnEffectsRunner: Found Harmony token on card ${cardId} (placed by player ${playerTurn}), processing jump`);
                             abilities.zenyatta.processHarmonyJump(cardId);
                         }
                     }
@@ -193,16 +196,29 @@ export default function TurnEffectsRunner() {
                         abilities[effect.hero][effect.id].run(rowId);
                     }
                 }
-                
-                // Check for Discord token jumping on enemy cards
-                for (let cardId of gameState.rows[rowId].cardIds) {
-                    const card = gameState.playerCards[`player${playerTurn}cards`]?.cards?.[cardId];
-                    if (card && Array.isArray(card.effects)) {
-                        const hasDiscord = card.effects.some(effect => 
-                            effect.hero === 'zenyatta' && effect.type === 'discord'
+            }
+
+            // Check for Discord token jumping on current player's cards
+            // Discord tokens jump at the start of the target's turn (current player is the target)
+            // Example: Player 1 places Discord on Player 2's card, jumps at start of Player 2's turn
+            const currentPlayerRowIds = [`${playerTurn}f`, `${playerTurn}m`, `${playerTurn}b`];
+            const enemyPlayerNum = playerTurn === 1 ? 2 : 1;
+            
+            for (let rowId of currentPlayerRowIds) {
+                for (let cardId of gameState.rows[rowId]?.cardIds || []) {
+                    // Discord tokens are on the current player's cards (they are the target)
+                    // but placed by the enemy player (ownerPlayerNum is the enemy)
+                    const currentPlayerCard = gameState.playerCards[`player${playerTurn}cards`]?.cards?.[cardId];
+                    if (currentPlayerCard && Array.isArray(currentPlayerCard.effects)) {
+                        // Find Discord tokens placed by the enemy on current player's cards
+                        // At start of current player's turn, jump to another current player's card
+                        const discordToken = currentPlayerCard.effects.find(effect => 
+                            effect.hero === 'zenyatta' && 
+                            effect.type === 'discord' &&
+                            effect.ownerPlayerNum === enemyPlayerNum
                         );
-                        if (hasDiscord && abilities.zenyatta?.processDiscordJump) {
-                            console.log(`TurnEffectsRunner: Found Discord token on enemy card ${cardId}, processing jump`);
+                        if (discordToken && abilities.zenyatta?.processDiscordJump) {
+                            console.log(`TurnEffectsRunner: Found Discord token on card ${cardId} (placed by player ${enemyPlayerNum} on player ${playerTurn}), processing jump to another enemy card`);
                             abilities.zenyatta.processDiscordJump(cardId);
                         }
                     }

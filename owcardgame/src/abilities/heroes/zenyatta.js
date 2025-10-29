@@ -137,7 +137,7 @@ export async function onEnter1({ playerHeroId, rowId, playerNum }) {
         showToast('Zenyatta: Select an ally to place Harmony token');
 
         // Target any friendly hero (including Zenyatta) - enforce ally-only
-        const target = await selectCardTarget();
+        const target = await selectCardTarget({ isHeal: true, isBuff: true });
         if (!target) {
             clearToast();
             return;
@@ -185,7 +185,7 @@ export async function onEnter2({ playerHeroId, rowId, playerNum }) {
         showToast('Zenyatta: Select an enemy to place Discord token');
 
         // Target any enemy hero - enforce enemy-only
-        const target = await selectCardTarget({ isDamage: true });
+        const target = await selectCardTarget({ isDamage: true, isDebuff: true });
         if (!target) {
             clearToast();
             return;
