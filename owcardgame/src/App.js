@@ -2786,12 +2786,22 @@ export default function App() {
                 return;
             }
             // Check deployment limit (6 heroes maximum per player)
-            const deployedHeroes = gameState.rows[`${playerNum}f`].cardIds.length + 
-                                  gameState.rows[`${playerNum}m`].cardIds.length + 
-                                  gameState.rows[`${playerNum}b`].cardIds.length;
+            // BOB and Turret do NOT count as heroes
+            const countHeroes = (cardIds) => {
+                return cardIds.filter(cardId => {
+                    const card = gameState.playerCards[`player${playerNum}cards`]?.cards?.[cardId];
+                    const heroId = card?.id || cardId.slice(1); // Remove player number
+                    // Exclude turret and bob from hero count
+                    return heroId !== 'turret' && heroId !== 'bob';
+                }).length;
+            };
+            
+            const deployedHeroes = countHeroes(gameState.rows[`${playerNum}f`].cardIds) + 
+                                  countHeroes(gameState.rows[`${playerNum}m`].cardIds) + 
+                                  countHeroes(gameState.rows[`${playerNum}b`].cardIds);
             
             if (deployedHeroes >= gameLogic.maxHeroesPerPlayer) {
-                console.log(`Player ${playerNum} has reached the maximum deployment limit (${deployedHeroes}/${gameLogic.maxHeroesPerPlayer})`);
+                console.log(`Player ${playerNum} has reached the maximum deployment limit (${deployedHeroes}/${gameLogic.maxHeroesPerPlayer}) - turrets and BOB excluded`);
                 return; // Prevent deployment
             }
 

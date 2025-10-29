@@ -52,12 +52,29 @@ export default class BrowserGameAdapter extends GameAdapter {
         }
 
         // Enforce per-side max heroes (6) before placing
-        const totalOnBoard = (window.__ow_getRow?.('2f')?.cardIds?.length || 0) +
-                             (window.__ow_getRow?.('2m')?.cardIds?.length || 0) +
-                             (window.__ow_getRow?.('2b')?.cardIds?.length || 0);
+        // BOB and Turret do NOT count as heroes
+        const countHeroes = (rowId) => {
+            const row = window.__ow_getRow?.(rowId);
+            if (!row || !row.cardIds) return 0;
+            return row.cardIds.filter(cardId => {
+                const card = window.__ow_getCard?.(cardId);
+                const heroId = card?.id || cardId.slice(1); // Remove player number
+                // Exclude turret and bob from hero count
+                return heroId !== 'turret' && heroId !== 'bob';
+            }).length;
+        };
+        
+        const totalHeroesOnBoard = countHeroes('2f') + countHeroes('2m') + countHeroes('2b');
         const maxPerSide = typeof window.__ow_getGameLogic === 'function' ? (window.__ow_getGameLogic()?.maxHeroesPerPlayer || 6) : 6;
-        if (totalOnBoard >= maxPerSide) {
-            console.log(`AI placement blocked: side capacity ${totalOnBoard}/${maxPerSide}`);
+        
+        // Check if the card being played is a hero (not turret/bob)
+        const cardBeingPlayed = window.__ow_getCard?.(cardId);
+        const heroIdBeingPlayed = cardBeingPlayed?.id || cardId.slice(1);
+        const isHero = heroIdBeingPlayed !== 'turret' && heroIdBeingPlayed !== 'bob';
+        
+        // Only enforce limit if playing an actual hero (turrets and bob can always be played)
+        if (isHero && totalHeroesOnBoard >= maxPerSide) {
+            console.log(`AI placement blocked: hero capacity ${totalHeroesOnBoard}/${maxPerSide} (turrets and BOB excluded)`);
             throw new Error('Side capacity reached');
         }
 

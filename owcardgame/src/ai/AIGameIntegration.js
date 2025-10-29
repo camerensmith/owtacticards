@@ -2655,6 +2655,56 @@ class AIGameIntegration {
                 }
             }
 
+            // NEMESIS Annihilation: Sustained AOE damage (similar to Ramattra but persistent)
+            else if (heroId === 'nemesis') {
+                if (enemyDenseRow.count >= 2 || enemyDenseRow.power >= 8) {
+                    shouldFire = true;
+                    console.log(`Nemesis Annihilation: ${enemyDenseRow.count} enemies, power ${enemyDenseRow.power}`);
+                }
+            }
+
+            // D.VA+MEKA Self Destruct: Use when enemies are clustered in opposing row
+            else if (heroId === 'dvameka') {
+                const enemyPlayer = 1; // AI is always player 2
+                const mekaRow = ['2f', '2m', '2b'].find(r => window.__ow_getRow?.(r)?.cardIds?.includes(chosen.cardId));
+                if (mekaRow) {
+                    const opposingRowId = `1${mekaRow[1]}`; // Same row position, enemy side
+                    const opposingRow = window.__ow_getRow?.(opposingRowId);
+                    const enemyCount = opposingRow?.cardIds?.filter(id => {
+                        const card = window.__ow_getCard?.(id);
+                        return card && card.health > 0;
+                    }).length || 0;
+                    
+                    if (enemyCount >= 2) {
+                        shouldFire = true;
+                        console.log(`D.Va+MEKA Self Destruct: ${enemyCount} enemies in opposing row - good explosion target`);
+                    } else {
+                        // Also fire if our row has multiple enemies (damage both sides)
+                        const mekaRowCount = (window.__ow_getRow?.(mekaRow)?.cardIds?.filter(id => {
+                            const card = window.__ow_getCard?.(id);
+                            return card && card.health > 0;
+                        }).length || 0);
+                        if (mekaRowCount >= 2 || enemyCount >= 1) {
+                            shouldFire = true;
+                            console.log(`D.Va+MEKA Self Destruct: Row has ${mekaRowCount} allies, ${enemyCount} enemies - can trade`);
+                        }
+                    }
+                }
+            }
+
+            // BOB Smash: Use when enemies are clustered (low cost ultimate - 1 synergy)
+            else if (heroId === 'bob') {
+                // BOB's ultimate only costs 1 synergy, so be more aggressive
+                if (enemyDenseRow.count >= 2 || enemyDenseRow.power >= 6) {
+                    shouldFire = true;
+                    console.log(`BOB Smash: ${enemyDenseRow.count} enemies, power ${enemyDenseRow.power} - low cost ultimate`);
+                } else if (enemyDenseRow.count >= 1 && currentSynergy >= 1) {
+                    // Very low threshold since it only costs 1
+                    shouldFire = true;
+                    console.log(`BOB Smash: At least 1 enemy available, cost is only 1 synergy`);
+                }
+            }
+
             // ECHO Duplicate: Copy last powerful ultimate used
             else if (heroId === 'echo') {
                 // Echo's ultimate is complex - copy last ultimate

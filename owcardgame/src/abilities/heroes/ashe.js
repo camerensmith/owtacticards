@@ -278,6 +278,47 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
         showToast('Ashe: B.O.B. added to hand!');
         setTimeout(() => clearToast(), 2000);
         
+        // FOR AI: Force play BOB immediately after adding to hand
+        if (playerNum === 2 && (window.__ow_aiTriggering || window.__ow_isAITurn)) {
+            console.log('Ashe AI: BOB added - forcing immediate play');
+            setTimeout(async () => {
+                const handRow = window.__ow_getRow?.('player2hand');
+                const handIds = handRow?.cardIds || [];
+                const bobCardId = '2bob';
+                
+                if (handIds.includes(bobCardId)) {
+                    console.log('Ashe AI: BOB found in hand - MANDATORY play to front row');
+                    try {
+                        // Find best row for BOB (prefer front for tanking, then middle, then back)
+                        const rowCounts = {
+                            front: window.__ow_getRow?.('2f')?.cardIds?.length || 0,
+                            middle: window.__ow_getRow?.('2m')?.cardIds?.length || 0,
+                            back: window.__ow_getRow?.('2b')?.cardIds?.length || 0
+                        };
+                        
+                        let targetRow;
+                        if (rowCounts.front < 4) targetRow = 'front';
+                        else if (rowCounts.middle < 4) targetRow = 'middle';
+                        else if (rowCounts.back < 4) targetRow = 'back';
+                        else {
+                            console.warn('Ashe AI: All rows full, cannot play BOB');
+                            return;
+                        }
+                        
+                        // Force play BOB
+                        if (window.__ow_aiIntegration?.playCard) {
+                            await window.__ow_aiIntegration.playCard(bobCardId, targetRow);
+                            console.log(`Ashe AI: Successfully force-played BOB to ${targetRow} row`);
+                        }
+                    } catch (error) {
+                        console.error('Ashe AI: Failed to force-play BOB:', error);
+                    }
+                } else {
+                    console.warn('Ashe AI: BOB not found in hand after timeout');
+                }
+            }, 300);
+        }
+        
     } catch (error) {
         console.error('Ashe B.O.B. ultimate error:', error);
         showToast('Ashe ultimate cancelled');

@@ -17,6 +17,49 @@ export async function onEnter({ playerHeroId, rowId }) {
     setTimeout(() => clearToast(), 2000);
     
     console.log(`Torbjörn: Added turret to player ${playerNum} hand`);
+    
+    // FOR AI: Force play turret immediately after adding to hand
+    if (playerNum === 2 && (window.__ow_aiTriggering || window.__ow_isAITurn)) {
+        console.log('Torbjörn AI: Turret added - forcing immediate play');
+        // Wait a moment for the card to be added to hand
+        setTimeout(async () => {
+            const handRow = window.__ow_getRow?.('player2hand');
+            const handIds = handRow?.cardIds || [];
+            const turretCardId = '2turret';
+            
+            if (handIds.includes(turretCardId)) {
+                console.log('Torbjörn AI: Turret found in hand - MANDATORY play to back row');
+                try {
+                    // Find best row for turret (prefer back)
+                    const rowCounts = {
+                        back: window.__ow_getRow?.('2b')?.cardIds?.length || 0,
+                        middle: window.__ow_getRow?.('2m')?.cardIds?.length || 0,
+                        front: window.__ow_getRow?.('2f')?.cardIds?.length || 0
+                    };
+                    
+                    let targetRow = 'back';
+                    if (rowCounts.back >= 4) {
+                        if (rowCounts.middle < 4) targetRow = 'middle';
+                        else if (rowCounts.front < 4) targetRow = 'front';
+                        else {
+                            console.warn('Torbjörn AI: All rows full, cannot play turret');
+                            return;
+                        }
+                    }
+                    
+                    // Force play turret
+                    if (window.__ow_aiIntegration?.playCard) {
+                        await window.__ow_aiIntegration.playCard(turretCardId, targetRow);
+                        console.log(`Torbjörn AI: Successfully force-played turret to ${targetRow} row`);
+                    }
+                } catch (error) {
+                    console.error('Torbjörn AI: Failed to force-play turret:', error);
+                }
+            } else {
+                console.warn('Torbjörn AI: Turret not found in hand after timeout');
+            }
+        }, 300);
+    }
 }
 
 // Forge Hammer - Turret now does 2 damage to two Heroes, regardless of row

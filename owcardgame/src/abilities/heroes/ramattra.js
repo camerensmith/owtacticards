@@ -231,6 +231,48 @@ function transformToNemesis(playerNum, playerHeroId, rowId) {
     // Show toast about ephemeral card
     showToast('Nemesis Ramattra added to hand (ephemeral - play this turn or discard)');
     setTimeout(() => clearToast(), 3000);
+    
+    // FOR AI: Force play Nemesis immediately after adding to hand
+    if (playerNum === 2 && (window.__ow_aiTriggering || window.__ow_isAITurn)) {
+        console.log('Ramattra AI: Nemesis added - forcing immediate play');
+        // Wait a moment for the card to be added to hand
+        setTimeout(async () => {
+            const handRow = window.__ow_getRow?.('player2hand');
+            const handIds = handRow?.cardIds || [];
+            const nemesisCardId = '2nemesis';
+            
+            if (handIds.includes(nemesisCardId)) {
+                console.log('Ramattra AI: Nemesis found in hand - MANDATORY play to a row');
+                try {
+                    // Find best row for Nemesis (prefer middle, then front, then back)
+                    const rowCounts = {
+                        middle: window.__ow_getRow?.('2m')?.cardIds?.length || 0,
+                        front: window.__ow_getRow?.('2f')?.cardIds?.length || 0,
+                        back: window.__ow_getRow?.('2b')?.cardIds?.length || 0
+                    };
+                    
+                    let targetRow;
+                    if (rowCounts.middle < 4) targetRow = 'middle';
+                    else if (rowCounts.front < 4) targetRow = 'front';
+                    else if (rowCounts.back < 4) targetRow = 'back';
+                    else {
+                        console.warn('Ramattra AI: All rows full, cannot play Nemesis');
+                        return;
+                    }
+                    
+                    // Force play Nemesis
+                    if (window.__ow_aiIntegration?.playCard) {
+                        await window.__ow_aiIntegration.playCard(nemesisCardId, targetRow);
+                        console.log(`Ramattra AI: Successfully force-played Nemesis to ${targetRow} row`);
+                    }
+                } catch (error) {
+                    console.error('Ramattra AI: Failed to force-play Nemesis:', error);
+                }
+            } else {
+                console.warn('Ramattra AI: Nemesis not found in hand after timeout');
+            }
+        }, 300);
+    }
 }
 
 export default {

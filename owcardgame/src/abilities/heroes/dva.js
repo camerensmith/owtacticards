@@ -39,6 +39,46 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
             console.log('D.Va AI: Call Mech executed - D.Va+MEKA added to hand');
             showToast('D.Va AI: Call Mech - D.Va+MEKA added to hand');
             setTimeout(() => clearToast(), 2000);
+            
+            // FORCE PLAY MEKA immediately after adding to hand
+            console.log('D.Va AI: MEKA added - forcing immediate play');
+            setTimeout(async () => {
+                const handRow = window.__ow_getRow?.('player2hand');
+                const handIds = handRow?.cardIds || [];
+                const mekaCardId = '2dvameka';
+                
+                if (handIds.includes(mekaCardId)) {
+                    console.log('D.Va AI: MEKA found in hand - MANDATORY play to front row');
+                    try {
+                        // Find best row for MEKA (prefer front for tanking, then middle, then back)
+                        const rowCounts = {
+                            front: window.__ow_getRow?.('2f')?.cardIds?.length || 0,
+                            middle: window.__ow_getRow?.('2m')?.cardIds?.length || 0,
+                            back: window.__ow_getRow?.('2b')?.cardIds?.length || 0
+                        };
+                        
+                        let targetRow;
+                        if (rowCounts.front < 4) targetRow = 'front';
+                        else if (rowCounts.middle < 4) targetRow = 'middle';
+                        else if (rowCounts.back < 4) targetRow = 'back';
+                        else {
+                            console.warn('D.Va AI: All rows full, cannot play MEKA');
+                            return;
+                        }
+                        
+                        // Force play MEKA
+                        if (window.__ow_aiIntegration?.playCard) {
+                            await window.__ow_aiIntegration.playCard(mekaCardId, targetRow);
+                            console.log(`D.Va AI: Successfully force-played MEKA to ${targetRow} row`);
+                        }
+                    } catch (error) {
+                        console.error('D.Va AI: Failed to force-play MEKA:', error);
+                    }
+                } else {
+                    console.warn('D.Va AI: MEKA not found in hand after timeout');
+                }
+            }, 300);
+            
             return;
         } catch (error) {
             console.error('D.Va AI Call Mech error:', error);
