@@ -176,6 +176,7 @@ export function processAnnihilation(playerHeroId, rowId) {
             const card = window.__ow_getCard?.(cardId);
             if (card && card.health > 0) {
                 dealDamage(cardId, oppositeRowId, 1, false, playerHeroId);
+                try { effectsBus.publish(Effects.showDamage(cardId, 1)); } catch {}
             }
         });
     }
@@ -189,6 +190,7 @@ export function processAnnihilation(playerHeroId, rowId) {
             const card = window.__ow_getCard?.(targetCardId);
             if (card && card.health > 0) {
                 dealDamage(targetCardId, enemyRowId, 1, false, playerHeroId);
+                try { effectsBus.publish(Effects.showDamage(targetCardId, 1)); } catch {}
             }
         }
     });
