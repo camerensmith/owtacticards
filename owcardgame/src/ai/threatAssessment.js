@@ -96,7 +96,8 @@ function calculateThreatScore(card, row, enemyBoard, aiBoard) {
         // Check if enemy has damage dealers in same row that could combo
         const rowCards = enemyBoard[row] || [];
         const hasDamageDealers = rowCards.some(c =>
-            c && c.role === 'Damage' && (c.front_power + c.middle_power + c.back_power) >= 4
+            c && c.role === 'Damage' &&
+            ((c.front_power || 0) + (c.middle_power || 0) + (c.back_power || 0)) >= 4
         );
 
         if (hasDamageDealers) {

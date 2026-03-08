@@ -171,7 +171,7 @@ function analyzeUnshieldedEnemies(gameState) {
         const row = gameState.rows?.[rowId];
         if (row?.cardIds) {
             row.cardIds.forEach(cardId => {
-                const card = gameState.playerCards?.player1cards?.cards?.[cardId];
+                const card = window.__ow_getCard?.(cardId);
                 if (card && card.health > 0) {
                     const shieldCount = card.shield || 0;
                     if (shieldCount === 0) {
@@ -209,7 +209,7 @@ function analyzeEnemyHP(gameState) {
         
         if (row?.cardIds) {
             row.cardIds.forEach(cardId => {
-                const card = gameState.playerCards?.player1cards?.cards?.[cardId];
+                const card = window.__ow_getCard?.(cardId);
                 if (card && card.health > 0) {
                     totalHP += card.health;
                     cardCount++;

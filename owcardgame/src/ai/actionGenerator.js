@@ -196,8 +196,11 @@ function needsProtection(aiBoard, row) {
     const rowCards = aiBoard[row] || [];
 
     return rowCards.some(card => {
-        // Vulnerable supports or low HP heroes
-        return (card.role === 'Support' || (card.health || 0) < 3);
+        // Wounded supports or critically low HP heroes
+        const maxHealth = card.maxHealth || window.__ow_getMaxHealth?.(card.cardId) || card.health;
+        const isWoundedSupport = card.role === 'Support' && (card.health || 0) < maxHealth;
+        const isCritical = (card.health || 0) < 2;
+        return isWoundedSupport || isCritical;
     });
 }
 

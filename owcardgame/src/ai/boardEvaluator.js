@@ -251,11 +251,11 @@ function evaluateImminentKills(attackBoard, defenseBoard) {
         defenseBoard[row]?.forEach(card => {
             const effectiveHP = (card.health || 0) + (card.shield || 0) * 0.6;
 
-            if (effectiveHP <= totalDamage * 0.3) {
+            if (effectiveHP <= totalDamage) {
                 // Can kill this turn with focused fire
                 kills.thisTurn += 1;
-            } else if (effectiveHP <= totalDamage * 0.6) {
-                // Can kill next turn
+            } else if (effectiveHP <= totalDamage * 2) {
+                // Can kill next turn with sustained pressure
                 kills.nextTurn += 1;
             }
         });

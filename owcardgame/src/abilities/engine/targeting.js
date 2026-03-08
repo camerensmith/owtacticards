@@ -146,11 +146,11 @@ export function selectCardTarget(options = {}) {
             // Check if target card is frozen (has immunity effect)
             const targetCard = window.__ow_getCard?.(cardId);
             if (targetCard && Array.isArray(targetCard.effects)) {
-                const isFrozen = targetCard.effects.some(effect =>
-                    effect?.id === 'cryo-freeze' && effect?.type === 'immunity'
+                const isImmune = targetCard.effects.some(effect =>
+                    effect?.type === 'immunity'
                 );
-                if (isFrozen) {
-                    console.log(`Targeting: Cannot target frozen card ${cardId}`);
+                if (isImmune) {
+                    console.log(`Targeting: Cannot target immune card ${cardId}`);
                     return; // Don't resolve, keep listening for valid targets
                 }
             }

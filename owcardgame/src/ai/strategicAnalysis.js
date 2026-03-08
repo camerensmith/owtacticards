@@ -154,7 +154,7 @@ function analyzeBoardState(aiBoard, enemyBoard) {
     analysis.powerDeficit = enemyPower - aiPower;
 
     // Check for strong frontline
-    if (aiBoard.front.length > 0) {
+    if ((aiBoard.front?.length || 0) > 0) {
         const frontHealth = aiBoard.front.reduce((sum, card) => sum + (card.health || 0), 0);
         if (frontHealth > 8) analysis.hasStrongFrontline = true;
     }
@@ -163,7 +163,7 @@ function analyzeBoardState(aiBoard, enemyBoard) {
     analysis.enemyThreatLevel = assessThreatLevel(enemyBoard);
 
     // Count vulnerable allies (low health, high value)
-    aiBoard.front.concat(aiBoard.middle, aiBoard.back).forEach(card => {
+    (aiBoard.front || []).concat(aiBoard.middle || [], aiBoard.back || []).forEach(card => {
         if (card.health && card.health < 3) {
             analysis.vulnerableAllies++;
         }
@@ -175,7 +175,7 @@ function analyzeBoardState(aiBoard, enemyBoard) {
 function calculateBoardPower(board) {
     let total = 0;
     ['front', 'middle', 'back'].forEach(row => {
-        board[row].forEach(card => {
+        (board[row] || []).forEach(card => {
             total += (card[`${row}_power`] || 0);
         });
     });
@@ -185,7 +185,7 @@ function calculateBoardPower(board) {
 function assessThreatLevel(enemyBoard) {
     let threat = 0;
     ['front', 'middle', 'back'].forEach(row => {
-        enemyBoard[row].forEach(card => {
+        (enemyBoard[row] || []).forEach(card => {
             // High power = threat
             threat += (card[`${row}_power`] || 0) * 0.5;
             // High health = threat
