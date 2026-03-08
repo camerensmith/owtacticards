@@ -222,10 +222,10 @@ async function handleDamageBoostAbility(playerHeroId, rowId, playerNum) {
         });
         
         if (livingAllies.length > 0) {
-            // Prefer allies with high attack power or damage-dealing abilities
+            // Prefer allies with high damage output (front/middle/back power)
             const sortedAllies = livingAllies.sort((a, b) => {
-                const aPower = a.card.attack || 0;
-                const bPower = b.card.attack || 0;
+                const aPower = (a.card.front_power || 0) + (a.card.middle_power || 0) + (a.card.back_power || 0);
+                const bPower = (b.card.front_power || 0) + (b.card.middle_power || 0) + (b.card.back_power || 0);
                 return bPower - aPower;
             });
             
