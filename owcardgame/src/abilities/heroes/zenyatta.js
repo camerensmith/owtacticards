@@ -134,6 +134,32 @@ export async function onEnter1({ playerHeroId, rowId, playerNum }) {
         // Play audio
         playAudioByKey('zenyatta-ability1');
 
+        // For AI, auto-select a wounded ally (or any ally if none wounded)
+        if (window.__ow_aiTriggering || window.__ow_isAITurn) {
+            const friendlyRows = playerNum === 1 ? ['1f', '1m', '1b'] : ['2f', '2m', '2b'];
+            let bestTarget = null;
+            let bestScore = -1;
+            for (const r of friendlyRows) {
+                const row = window.__ow_getRow?.(r);
+                if (!row?.cardIds) continue;
+                for (const cid of row.cardIds) {
+                    const card = window.__ow_getCard?.(cid);
+                    if (!card || card.health <= 0) continue;
+                    // Skip if already has harmony token
+                    if (Array.isArray(card.effects) && card.effects.some(e => e?.type === 'harmony')) continue;
+                    const maxH = card.maxHealth || card.health;
+                    const score = card.health < maxH ? 2 : 1;
+                    if (score > bestScore) { bestScore = score; bestTarget = cid; }
+                }
+            }
+            if (!bestTarget) { clearToast(); return; }
+            placeHarmonyToken(bestTarget, playerNum);
+            clearToast();
+            showToast('Harmony: Token placed - will heal at start of turn');
+            setTimeout(() => clearToast(), 1500);
+            return;
+        }
+
         showToast('Zenyatta: Select an ally to place Harmony token');
 
         // Target any friendly hero (including Zenyatta) - enforce ally-only
@@ -181,6 +207,34 @@ export async function onEnter2({ playerHeroId, rowId, playerNum }) {
     try {
         // Play audio
         playAudioByKey('zenyatta-ability2');
+
+        // For AI, auto-select highest-power enemy that doesn't already have Discord
+        if (window.__ow_aiTriggering || window.__ow_isAITurn) {
+            const enemyRows = playerNum === 1 ? ['2f', '2m', '2b'] : ['1f', '1m', '1b'];
+            let bestTarget = null;
+            let bestScore = -1;
+            for (const r of enemyRows) {
+                const row = window.__ow_getRow?.(r);
+                if (!row?.cardIds) continue;
+                for (const cid of row.cardIds) {
+                    const card = window.__ow_getCard?.(cid);
+                    if (!card || card.health <= 0) continue;
+                    // Skip immune targets
+                    if (Array.isArray(card.effects) && card.effects.some(e => e?.type === 'immunity')) continue;
+                    // Skip targets that already have discord
+                    if (Array.isArray(card.effects) && card.effects.some(e => e?.type === 'discord')) continue;
+                    const rowPos = r[1];
+                    const score = (card[`${rowPos}_power`] || 0) + (card[`${rowPos}_synergy`] || 0);
+                    if (score > bestScore) { bestScore = score; bestTarget = cid; }
+                }
+            }
+            if (!bestTarget) { clearToast(); return; }
+            placeDiscordToken(bestTarget, playerNum);
+            clearToast();
+            showToast('Discord: Token placed on target');
+            setTimeout(() => clearToast(), 1500);
+            return;
+        }
 
         showToast('Zenyatta: Select an enemy to place Discord token');
 

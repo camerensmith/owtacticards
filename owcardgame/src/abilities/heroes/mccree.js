@@ -16,6 +16,32 @@ export function onEnter({ playerHeroId, rowId }) {
 
 async function handleFlashbang(playerHeroId, rowId, playerNum) {
     try {
+        // AI: pick enemy row with most living enemies
+        if (window.__ow_aiTriggering || window.__ow_isAITurn) {
+            const enemyPlayer = playerNum === 1 ? 2 : 1;
+            const enemyRows = [`${enemyPlayer}f`, `${enemyPlayer}m`, `${enemyPlayer}b`];
+            let bestRow = enemyRows[0];
+            let maxCount = -1;
+            for (const r of enemyRows) {
+                const rowData = window.__ow_getRow?.(r);
+                const living = rowData?.cardIds?.filter(cid => (window.__ow_getCard?.(cid)?.health || 0) > 0) || [];
+                if (living.length > maxCount) { maxCount = living.length; bestRow = r; }
+            }
+            const targetRowData = window.__ow_getRow?.(bestRow);
+            if (targetRowData) {
+                const livingEnemies = targetRowData.cardIds.filter(cid => (window.__ow_getCard?.(cid)?.health || 0) > 0);
+                const currentSynergy = targetRowData.synergy || 0;
+                const synergyToRemove = Math.min(livingEnemies.length, currentSynergy);
+                if (synergyToRemove > 0) {
+                    window.__ow_updateSynergy?.(bestRow, -synergyToRemove);
+                }
+                try { playAudioByKey('mccree-ability1'); } catch {}
+                showToast(`McCree AI: Flashbang! Removed ${synergyToRemove} synergy from ${bestRow}`);
+                setTimeout(() => clearToast(), 2000);
+            }
+            return;
+        }
+
         showToast('McCree: Select an enemy row for Flashbang');
         
         const targetRow = await selectRowTarget({ isDamage: true });

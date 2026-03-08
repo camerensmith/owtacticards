@@ -33,12 +33,58 @@ export function onEnter({ playerHeroId, rowId }) {
 
 export async function onUltimate({ playerHeroId, rowId, cost }) {
     const playerNum = parseInt(playerHeroId[0]);
+    const enemyPlayer = playerNum === 1 ? 2 : 1;
     
     console.log('Winston Ultimate: Starting Primal Rage for', playerHeroId, 'in row', rowId);
     
     try {
         playAudioByKey('winston-ultimate');
     } catch {}
+
+    // AI: auto-select best friendly row and enemy row to strike
+    if (window.__ow_aiTriggering || window.__ow_isAITurn) {
+        const friendlyRows = [`${playerNum}f`, `${playerNum}m`, `${playerNum}b`];
+        let bestFriendlyRow = rowId; // default to current row
+        let bestScore = -1;
+        for (const r of friendlyRows) {
+            if (window.__ow_isRowFull?.(r) && r !== rowId) continue;
+            const pos = r[1];
+            const friendlyCount = window.__ow_getRow?.(r)?.cardIds?.length || 0;
+            const enemyOpposingCount = window.__ow_getRow?.(`${enemyPlayer}${pos}`)?.cardIds?.length || 0;
+            const score = friendlyCount + enemyOpposingCount;
+            if (score > bestScore) { bestScore = score; bestFriendlyRow = r; }
+        }
+
+        // Move Winston to chosen row
+        if (bestFriendlyRow !== rowId) {
+            window.__ow_moveCardToRow?.(playerHeroId, bestFriendlyRow);
+        }
+
+        // Determine targetable enemy rows from new position
+        const winstonPos = bestFriendlyRow[1];
+        let targetableEnemyRows = [];
+        if (winstonPos === 'f') {
+            targetableEnemyRows = [`${enemyPlayer}m`];
+        } else if (winstonPos === 'm') {
+            targetableEnemyRows = [`${enemyPlayer}f`, `${enemyPlayer}b`];
+        } else if (winstonPos === 'b') {
+            targetableEnemyRows = [`${enemyPlayer}m`];
+        }
+
+        // Pick enemy row with most living enemies
+        let bestEnemyRow = targetableEnemyRows[0];
+        let maxEnemies = -1;
+        for (const r of targetableEnemyRows) {
+            const rowData = window.__ow_getRow?.(r);
+            const living = rowData?.cardIds?.filter(cid => (window.__ow_getCard?.(cid)?.health || 0) > 0) || [];
+            const count = living.length;
+            if (count > maxEnemies) { maxEnemies = count; bestEnemyRow = r; }
+        }
+        if (bestEnemyRow) {
+            strikeEnemyRow(bestEnemyRow, playerHeroId);
+        }
+        return;
+    }
     
     showToast('Winston: Select row to move to');
     const targetRow = await selectRowTarget({ isBuff: true });

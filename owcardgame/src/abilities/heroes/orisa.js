@@ -31,6 +31,20 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
     const playerNum = parseInt(playerHeroId[0]);
     
     try { playAudioByKey('orisa-ultimate'); } catch {}
+
+    // AI gating: only use if 3+ living heroes in Orisa's current row
+    if (window.__ow_aiTriggering || window.__ow_isAITurn) {
+        const currentRow = window.__ow_getRow?.(rowId);
+        const livingHeroes = (currentRow?.cardIds || []).filter(cid => {
+            const c = window.__ow_getCard?.(cid);
+            return c && c.health > 0 && c.id !== 'turret';
+        }).length;
+        if (livingHeroes < 3) {
+            showToast('Orisa AI: Skipping Supercharger (need 3+ heroes in row)');
+            setTimeout(() => clearToast(), 1500);
+            return;
+        }
+    }
     
     // Place Supercharger token on Orisa's current row
     const superchargerEffect = {

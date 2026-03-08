@@ -203,6 +203,19 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
             return;
         }
         
+        // AI gating: only use if 2+ living enemies in opposing row
+        if (window.__ow_aiTriggering || window.__ow_isAITurn) {
+            const enemyCount = opposingRow.cardIds.filter(cid => {
+                const c = window.__ow_getCard?.(cid);
+                return c && c.health > 0;
+            }).length;
+            if (enemyCount < 2) {
+                showToast('Reaper AI: Skipping Death Blossom (need 2+ enemies in row)');
+                setTimeout(() => clearToast(), 1500);
+                return;
+            }
+        }
+
         // Deal 3 damage to all living enemies in opposing row (ignores shields)
         const livingEnemies = opposingRow.cardIds.filter(cardId => {
             const card = window.__ow_getCard?.(cardId);

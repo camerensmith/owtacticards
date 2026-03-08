@@ -13,6 +13,28 @@ export function onEnter({ playerHeroId, rowId }) {
     try {
         playAudioByKey('lucio-enter');
     } catch {}
+
+    // AI: skip choice modal and directly handle based on game state
+    const getTurn = typeof window.__ow_getPlayerTurn === 'function' ? window.__ow_getPlayerTurn : null;
+    const currentPlayer = getTurn ? getTurn() : null;
+    const aiActing = (window.__ow_isAITurn || window.__ow_aiTriggering) && currentPlayer === 2;
+    if (aiActing) {
+        try {
+            const allyRows = [`${playerNum}f`, `${playerNum}m`, `${playerNum}b`];
+            const wounded = allyRows.some(r => (window.__ow_getRow?.(r)?.cardIds || []).some(id => {
+                const c = window.__ow_getCard?.(id);
+                return c && c.health < (c.maxHealth || c.health);
+            }));
+            if (wounded) {
+                try { playAudioByKey('lucio-ability2'); } catch {}
+                handleTokenAbility(playerHeroId, rowId, playerNum);
+            } else {
+                try { playAudioByKey('lucio-ability1'); } catch {}
+                handleShuffleAbility(playerHeroId, rowId, playerNum);
+            }
+        } catch {}
+        return;
+    }
     
     const opt1 = { 
         name: 'Crossfade (Shuffle)', 
@@ -24,21 +46,6 @@ export function onEnter({ playerHeroId, rowId }) {
     };
 
     showOnEnterChoice('Lúcio', opt1, opt2, async (choiceIndex) => {
-        // AI preference: if AI is acting (and it's actually AI turn), prefer healing if any ally is wounded
-        const getTurn = typeof window.__ow_getPlayerTurn === 'function' ? window.__ow_getPlayerTurn : null;
-        const currentPlayer = getTurn ? getTurn() : null;
-        const aiActing = (window.__ow_isAITurn || window.__ow_aiTriggering) && currentPlayer === 2;
-        if (aiActing) {
-            try {
-                const allyRows = [`${playerNum}f`, `${playerNum}m`, `${playerNum}b`];
-                const wounded = allyRows.some(r => (window.__ow_getRow?.(r)?.cardIds || []).some(id => {
-                    const c = window.__ow_getCard?.(id);
-                    return c && c.health < (c.maxHealth || c.health);
-                }));
-                if (wounded) choiceIndex = 1; // Healing
-                else choiceIndex = 0; // Shuffle (but will restrict to enemy rows)
-            } catch {}
-        }
         if (choiceIndex === 0) {
             // Play ability sound immediately on selection
             try {
