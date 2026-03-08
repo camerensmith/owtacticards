@@ -1615,8 +1615,8 @@ class AIGameIntegration {
                 const heroId = cardId.slice(1); // Remove player number
                 const heroData = data.heroes?.[heroId];
 
-                if (heroData && (heroData.attribute === 'Special' || heroData.attribute === 'Turret')) {
-                    priorityCards.push({ cardId, heroId, attribute: heroData.attribute });
+                if (heroData && (heroData.turret === true || heroData.special === true)) {
+                    priorityCards.push({ cardId, heroId, attribute: heroData.turret ? 'Turret' : 'Special' });
                 }
             }
 
