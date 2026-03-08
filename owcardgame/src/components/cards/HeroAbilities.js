@@ -3076,46 +3076,50 @@ export default function HeroAbilities(props) {
             ability1: {
                 audioFile: 'zenyatta-harmony',
                 run() {
-                    // Wait for user click
+                    // Harmony must only target allies (friendly side of the board).
+                    // Discord is a separate ability triggered via the on-enter choice modal.
                     return new Promise((resolve, reject) => {
-                        // When a row is clicked
+                        if (!playerHeroId || !playerHeroId[0]) {
+                            reject('Invalid player hero ID');
+                            return;
+                        }
+                        const ownerPlayerNum = parseInt(playerHeroId[0]);
+                        targetingBus.showMessage('Zenyatta: Select an ally to place Harmony token');
                         $('.card').on('click', (e) => {
-                            // Get target information & remove onclick
                             const targetCardId = $(e.target)
                                 .closest('.card')
                                 .attr('id');
                             $('.card').off('click');
+                            targetingBus.clearMessage();
                             const targetRow = $(e.target)
                                 .closest('.row')
                                 .attr('id');
                             const targetPlayer = parseInt(targetCardId[0]);
 
-                            // Check target is valid
+                            // Reject clicks in hand rows
                             if (targetRow[0] === 'p') {
                                 reject('Incorrect target');
                                 return;
                             }
 
-                            // Apply ally/enemy effect depending on which card was clicked
-                            let effectId;
-                            targetPlayer === playerTurn
-                                ? (effectId = 'zenyattaAllyEffect')
-                                : (effectId = 'zenyattaEnemyEffect');
-
-                            // Harmony orb applies healing immediately, as well as over time
-                            if (effectId === 'zenyattaAllyEffect') {
-                                const healingValue = 1;
-                                applyHealing(healingValue, targetCardId);
+                            // Harmony only affects the friendly side — reject enemy targets
+                            if (targetPlayer !== playerTurn) {
+                                reject('Harmony: Must target an ally on your side of the board!');
+                                return;
                             }
 
-                            // Set state
-                            dispatch({
-                                type: ACTIONS.ADD_CARD_EFFECT,
-                                payload: {
-                                    targetCardId: targetCardId,
-                                    playerHeroId: `${playerTurn}zenyatta`,
-                                    effectId: effectId,
-                                },
+                            // Place a Harmony token via the new token system so that
+                            // TurnEffectsRunner can process the per-turn heal and jump.
+                            // Combine Date.now() with Math.random() to avoid duplicate IDs
+                            // if the ability fires more than once within the same millisecond.
+                            window.__ow_appendCardEffect?.(targetCardId, {
+                                id: `harmony-token-${Date.now()}-${Math.floor(Math.random() * 1e6)}`,
+                                hero: 'zenyatta',
+                                type: 'harmony',
+                                sourceCardId: playerHeroId,
+                                ownerPlayerNum,
+                                tooltip: 'Harmony: Heals 1 health at start of turn, then jumps to another ally',
+                                visual: 'harmony',
                             });
 
                             resolve();

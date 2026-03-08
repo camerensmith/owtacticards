@@ -40,7 +40,11 @@ function placeDiscordToken(cardId, ownerPlayerNum) {
 
 // Helper function to find a random ally for Harmony to jump to
 function findRandomAlly(excludeCardId, playerNum) {
-    const friendlyRows = playerNum === 1 ? ['1f', '1m', '1b'] : ['2f', '2m', '2b'];
+    // Guard against invalid playerNum (NaN, undefined, etc.)
+    if (typeof playerNum !== 'number' || isNaN(playerNum)) return null;
+    // Build row IDs directly from playerNum so the friendly side is always correct
+    // (avoids the default-to-player-2 problem when playerNum is invalid/NaN)
+    const friendlyRows = [`${playerNum}f`, `${playerNum}m`, `${playerNum}b`];
     const availableAllies = [];
     
     friendlyRows.forEach(rowId => {
@@ -63,7 +67,12 @@ function findRandomAlly(excludeCardId, playerNum) {
 
 // Helper function to find a random enemy for Discord to jump to
 function findRandomEnemy(excludeCardId, playerNum) {
-    const enemyRows = playerNum === 1 ? ['2f', '2m', '2b'] : ['1f', '1m', '1b'];
+    // Guard against invalid playerNum (NaN, undefined, etc.)
+    if (typeof playerNum !== 'number' || isNaN(playerNum)) return null;
+    // Derive the opponent's player number explicitly so the enemy side is always
+    // the side opposite of the Zenyatta owner (never the owner's own side)
+    const enemyPlayerNum = playerNum === 1 ? 2 : 1;
+    const enemyRows = [`${enemyPlayerNum}f`, `${enemyPlayerNum}m`, `${enemyPlayerNum}b`];
     const availableEnemies = [];
     
     enemyRows.forEach(rowId => {
@@ -318,7 +327,11 @@ export function processHarmonyJump(cardId) {
     }
     
     // Try to jump to another ally using token owner
-    const owner = typeof harmonyToken.ownerPlayerNum === 'number' ? harmonyToken.ownerPlayerNum : parseInt(cardId[0]);
+    // Use !isNaN() guard: typeof NaN === 'number' is true, so a plain typeof check
+    // would let NaN through and cause findRandomAlly to pick the wrong side.
+    const owner = (typeof harmonyToken.ownerPlayerNum === 'number' && !isNaN(harmonyToken.ownerPlayerNum))
+        ? harmonyToken.ownerPlayerNum
+        : parseInt(cardId[0]);
     const newTarget = findRandomAlly(cardId, owner);
     
     if (newTarget) {
@@ -342,7 +355,11 @@ export function processDiscordJump(cardId) {
     if (!discordToken) return;
     
     // Try to jump to another enemy using token owner
-    const owner = typeof discordToken.ownerPlayerNum === 'number' ? discordToken.ownerPlayerNum : (3 - parseInt(cardId[0]));
+    // Use !isNaN() guard: typeof NaN === 'number' is true, so a plain typeof check
+    // would let NaN through and cause findRandomEnemy to pick the wrong side.
+    const owner = (typeof discordToken.ownerPlayerNum === 'number' && !isNaN(discordToken.ownerPlayerNum))
+        ? discordToken.ownerPlayerNum
+        : (3 - parseInt(cardId[0]));
     const newTarget = findRandomEnemy(cardId, owner);
     
     if (newTarget) {
