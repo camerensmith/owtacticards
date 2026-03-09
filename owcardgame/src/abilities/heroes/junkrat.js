@@ -98,7 +98,7 @@ export function onDeath({ playerHeroId, rowId }) {
     }
 }
 
-// onUltimate: RIP-Tire (4) - choose row to move to, deal synergy damage to opposing row
+// onUltimate: RIP-Tire (4) - select an enemy row, move to corresponding friendly row, deal [S] damage
 export async function onUltimate({ playerHeroId, rowId, cost }) {
     try {
         const playerNum = parseInt(playerHeroId[0]);
@@ -108,21 +108,25 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
             playAudioByKey('junkrat-ultimate');
         } catch {}
         
-        // For AI, select the friendly row with highest synergy BUT only fire
-        // if the opposing enemy row synergy is >= 4 (to ensure good value)
+        // For AI, select the enemy row corresponding to the friendly row with the highest
+        // synergy. Only trigger if that friendly row synergy is >= 4.
         if (window.__ow_aiTriggering || window.__ow_isAITurn) {
             const friendlyRows = [`${playerNum}f`, `${playerNum}m`, `${playerNum}b`];
             const enemyPlayer = playerNum === 1 ? 2 : 1;
 
-            // Score friendly rows by (friendly synergy) but only consider
-            // those whose opposing enemy row has synergy >= 4
+            // Score friendly rows by synergy; only consider rows Junkrat can move to
+            // (not full, or already Junkrat's current row) with synergy >= 4.
             let candidate = null;
             for (const friendlyRowId of friendlyRows) {
+                // Skip full rows that Junkrat isn't already in
+                if (friendlyRowId !== rowId && window.__ow_isRowFull?.(friendlyRowId)) continue;
+
                 const row = window.__ow_getRow?.(friendlyRowId);
                 const friendlySynergy = row?.synergy || 0;
                 const pos = friendlyRowId[1];
                 const opposingRowId = `${enemyPlayer}${pos}`;
                 const opposingSynergy = window.__ow_getRow?.(opposingRowId)?.synergy || 0;
+
                 if (friendlySynergy >= 4) {
                     if (!candidate || friendlySynergy > candidate.friendlySynergy ||
                         (friendlySynergy === candidate.friendlySynergy && opposingSynergy > candidate.opposingSynergy)) {
@@ -132,36 +136,36 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
             }
 
             if (!candidate) {
-                showToast('Junkrat AI: Holding RIP-Tire (friendly synergy < 4)');
+                showToast('Junkrat AI: Holding RIP-Tire (synergy < 4)');
                 setTimeout(() => clearToast(), 1500);
                 return;
             }
 
-            // Move Junkrat to the chosen friendly row
-            window.__ow_moveCardToRow?.(playerHeroId, candidate.friendlyRowId);
+            // Move Junkrat to the chosen friendly row if it differs from current row
+            if (candidate.friendlyRowId !== rowId) {
+                window.__ow_moveCardToRow?.(playerHeroId, candidate.friendlyRowId);
+            }
 
-            // Deal friendly synergy damage to all enemies in the opposing row
+            // Use post-move synergy for damage (consistent with human path)
+            const postMoveSynergy = window.__ow_getRow?.(candidate.friendlyRowId)?.synergy || 0;
+
+            // Deal [S] synergy damage to all enemies in the opposing row
             const opposingRow = window.__ow_getRow?.(candidate.opposingRowId);
             let targetsHit = 0;
             if (opposingRow && opposingRow.cardIds) {
                 for (const cardId of opposingRow.cardIds) {
                     const card = window.__ow_getCard?.(cardId);
                     if (card && card.health > 0) {
-                        // Flat +1 piercing (ignores shields)
-                        dealDamage(cardId, candidate.opposingRowId, 1, true, playerHeroId);
-                        try { effectsBus.publish(Effects.showDamage(cardId, 1)); } catch {}
-
-                        // Then synergy damage respecting shields
-                        if (candidate.friendlySynergy > 0) {
-                            dealDamage(cardId, candidate.opposingRowId, candidate.friendlySynergy, false, playerHeroId);
-                            try { effectsBus.publish(Effects.showDamage(cardId, candidate.friendlySynergy)); } catch {}
+                        if (postMoveSynergy > 0) {
+                            dealDamage(cardId, candidate.opposingRowId, postMoveSynergy, false, playerHeroId);
+                            try { effectsBus.publish(Effects.showDamage(cardId, postMoveSynergy)); } catch {}
                         }
                         targetsHit++;
                     }
                 }
             }
 
-            showToast(`Junkrat AI: RIP-Tire to ${candidate.friendlyRowId} → hit ${targetsHit} for ${candidate.friendlySynergy} (enemy synergy ${candidate.opposingSynergy})`);
+            showToast(`Junkrat AI: RIP-Tire → dealt ${postMoveSynergy} to ${targetsHit} enemies in ${candidate.opposingRowId}`);
             setTimeout(() => clearToast(), 2000);
             return;
         }
@@ -188,16 +192,11 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
         const friendlyRowObj = window.__ow_getRow?.(finalFriendlyRowForSynergy);
         const synergyS = friendlyRowObj?.synergy || 0;
 
-        // Deal S damage to all enemies in the selected enemy row
+        // Deal [S] damage to all enemies in the selected enemy row
         const enemyRowObj = window.__ow_getRow?.(enemyRowId);
         if (!enemyRowObj) { clearToast(); return; }
 
         enemyRowObj.cardIds.forEach(cardId => {
-            // Flat +1 piercing (ignores shields)
-            dealDamage(cardId, enemyRowId, 1, true, playerHeroId);
-            try { effectsBus.publish(Effects.showDamage(cardId, 1)); } catch {}
-
-            // Then synergy damage respecting shields
             if (synergyS > 0) {
                 dealDamage(cardId, enemyRowId, synergyS, false, playerHeroId);
                 try { effectsBus.publish(Effects.showDamage(cardId, synergyS)); } catch {}
