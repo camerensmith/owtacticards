@@ -15,10 +15,12 @@ export function onEnter({ playerHeroId, rowId }) {
     } catch {}
 
     // AI: skip choice modal and directly handle based on game state
+    // AI determines choice autonomously -- never show the modal to the human player
     const getTurn = typeof window.__ow_getPlayerTurn === 'function' ? window.__ow_getPlayerTurn : null;
     const currentPlayer = getTurn ? getTurn() : null;
     const aiActing = (window.__ow_isAITurn || window.__ow_aiTriggering) && currentPlayer === 2;
     if (aiActing) {
+        let choiceIndex = 0;
         try {
             const allyRows = [`${playerNum}f`, `${playerNum}m`, `${playerNum}b`];
             const wounded = allyRows.some(r => (window.__ow_getRow?.(r)?.cardIds || []).some(id => {
@@ -36,6 +38,19 @@ export function onEnter({ playerHeroId, rowId }) {
         return;
     }
     
+            if (wounded) choiceIndex = 1; // Healing
+            else choiceIndex = 0; // Shuffle
+        } catch {}
+        if (choiceIndex === 0) {
+            try { playAudioByKey('lucio-ability1'); } catch {}
+            handleShuffleAbility(playerHeroId, rowId, playerNum);
+        } else {
+            try { playAudioByKey('lucio-ability2'); } catch {}
+            handleTokenAbility(playerHeroId, rowId, playerNum);
+        }
+        return;
+    }
+
     const opt1 = { 
         name: 'Crossfade (Shuffle)', 
         description: 'Place Lúcio token near a row to shuffle positions at start of each turn' 
