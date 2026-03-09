@@ -281,14 +281,79 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
     try {
         playAudioByKey('mercy-ult');
     } catch {}
+
+    // AI-specific path: read the pre-selected target upfront before any targeting
+    // calls can consume it, then auto-execute the resurrection without UI prompts.
+    if (window.__ow_aiTriggering || window.__ow_isAITurn) {
+        // Consume the pre-selected target stored by __ow_useUltimate
+        const aiTarget = window.__ow_aiUltimateTarget || null;
+        try { window.__ow_aiUltimateTarget = null; } catch {}
+
+        let rezCardId = null;
+        let rezRowId = null;
+
+        if (aiTarget && aiTarget.cardId && aiTarget.rowId) {
+            // Use the target chosen by tryMercyResurrection
+            rezCardId = aiTarget.cardId;
+            rezRowId = aiTarget.rowId;
+        } else {
+            // Fallback: find the highest-value dead ally on the board
+            const allyRows = [`${playerNum}f`, `${playerNum}m`, `${playerNum}b`];
+            let bestScore = -1;
+            for (const r of allyRows) {
+                const row = window.__ow_getRow?.(r);
+                if (!row?.cardIds) continue;
+                for (const cId of row.cardIds) {
+                    const c = window.__ow_getCard?.(cId);
+                    if (!c || c.health > 0) continue;
+                    const score = (c.maxHealth || 4) + ((c.front_power || 0) + (c.middle_power || 0) + (c.back_power || 0)) * 2;
+                    if (score > bestScore) {
+                        bestScore = score;
+                        rezCardId = cId;
+                        rezRowId = r;
+                    }
+                }
+            }
+        }
+
+        if (!rezCardId || !rezRowId) {
+            console.log('AI Mercy: No dead allies found to resurrect');
+            try { clearToast(); } catch {}
+            return;
+        }
+
+        // Move Mercy to the row containing the dead ally
+        if (window.__ow_moveCardToRow) {
+            window.__ow_moveCardToRow(playerHeroId, rezRowId);
+        }
+
+        const rezCard = window.__ow_getCard?.(rezCardId);
+        if (!rezCard || rezCard.health > 0) {
+            console.log('AI Mercy: Target is no longer dead, skipping resurrection');
+            try { clearToast(); } catch {}
+            return;
+        }
+
+        // Resurrect with full health (allowRevive=true bypasses the heal-prevention guard)
+        const baseHealth = rezCard.maxHealth || 4;
+        window.__ow_setCardHealth?.(rezCardId, baseHealth, true);
+
+        // Remove any negative effects
+        if (Array.isArray(rezCard.effects)) {
+            rezCard.effects
+                .filter(e => e.type === 'debuff' || e.type === 'damage' || e.type === 'damageBoost')
+                .forEach(e => window.__ow_removeCardEffect?.(rezCardId, e.id));
+        }
+
+        try { playAudioByKey('mercy-ultimate-resolve'); } catch {}
+        try { effectsBus.publish({ type: 'fx:resurrect', cardId: rezCardId }); } catch {}
+
+        console.log(`AI Mercy: Resurrected ${rezCard.name || rezCardId}`);
+        try { clearToast(); } catch {}
+        return;
+    }
     
     showToast('Mercy: Guardian Angel - Select a friendly row to move to');
-    
-    // Get friendly rows
-    const friendlyRows = ['1f', '1m', '1b', '2f', '2m', '2b'].filter(rowId => {
-        const rowPlayerNum = parseInt(rowId[0]);
-        return rowPlayerNum === playerNum;
-    });
     
     // Select row to move to
     const targetRow = await selectRowTarget();
