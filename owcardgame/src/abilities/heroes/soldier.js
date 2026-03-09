@@ -88,15 +88,19 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
             return;
         }
         
-        // Select up to 3 random enemies
+        // Select up to 3 targets prioritizing low-HP enemies to maximize kills
         const targets = [];
         const damageAmounts = [3, 2, 1];
         const maxTargets = Math.min(3, livingEnemies.length);
         
-        // Shuffle and select targets
-        const shuffledEnemies = [...livingEnemies].sort(() => Math.random() - 0.5);
+        // Sort by HP ascending so we maximize kills (pair lowest HP with highest damage)
+        const sortedEnemies = [...livingEnemies].sort((a, b) => {
+            const hpA = window.__ow_getCard?.(a.cardId)?.health || 0;
+            const hpB = window.__ow_getCard?.(b.cardId)?.health || 0;
+            return hpA - hpB;
+        });
         for (let i = 0; i < maxTargets; i++) {
-            targets.push(shuffledEnemies[i]);
+            targets.push(sortedEnemies[i]);
         }
         
         console.log('Soldier AI Ultimate: Selected targets:', targets.map(t => t.cardId));

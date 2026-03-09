@@ -40,6 +40,19 @@ export function onUltimate({ playerHeroId, rowId, cost }) {
         }
         if (!anaRow) return;
 
+        // AI gating: only use if 3+ living heroes in Ana's row
+        if (window.__ow_aiTriggering || window.__ow_isAITurn) {
+            const livingHeroes = (window.__ow_getRow?.(anaRow)?.cardIds || []).filter(cid => {
+                const c = window.__ow_getCard?.(cid);
+                return c && c.health > 0;
+            }).length;
+            if (livingHeroes < 3) {
+                showToast('Ana AI: Skipping Nano Boost (need 3+ heroes in row)');
+                setTimeout(() => clearToast(), 1500);
+                return;
+            }
+        }
+
         // Add Ana token icon to the row effects with tooltip
         const modifier = {
             id: 'ana-token',

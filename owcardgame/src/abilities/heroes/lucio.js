@@ -14,6 +14,7 @@ export function onEnter({ playerHeroId, rowId }) {
         playAudioByKey('lucio-enter');
     } catch {}
 
+    // AI: skip choice modal and directly handle based on game state
     // AI determines choice autonomously -- never show the modal to the human player
     const getTurn = typeof window.__ow_getPlayerTurn === 'function' ? window.__ow_getPlayerTurn : null;
     const currentPlayer = getTurn ? getTurn() : null;
@@ -26,6 +27,17 @@ export function onEnter({ playerHeroId, rowId }) {
                 const c = window.__ow_getCard?.(id);
                 return c && c.health < (c.maxHealth || c.health);
             }));
+            if (wounded) {
+                try { playAudioByKey('lucio-ability2'); } catch {}
+                handleTokenAbility(playerHeroId, rowId, playerNum);
+            } else {
+                try { playAudioByKey('lucio-ability1'); } catch {}
+                handleShuffleAbility(playerHeroId, rowId, playerNum);
+            }
+        } catch {}
+        return;
+    }
+    
             if (wounded) choiceIndex = 1; // Healing
             else choiceIndex = 0; // Shuffle
         } catch {}

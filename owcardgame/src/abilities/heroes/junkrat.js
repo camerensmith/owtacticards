@@ -123,7 +123,7 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
                 const pos = friendlyRowId[1];
                 const opposingRowId = `${enemyPlayer}${pos}`;
                 const opposingSynergy = window.__ow_getRow?.(opposingRowId)?.synergy || 0;
-                if (opposingSynergy >= 4) {
+                if (friendlySynergy >= 4) {
                     if (!candidate || friendlySynergy > candidate.friendlySynergy ||
                         (friendlySynergy === candidate.friendlySynergy && opposingSynergy > candidate.opposingSynergy)) {
                         candidate = { friendlyRowId, friendlySynergy, opposingRowId, opposingSynergy };
@@ -132,7 +132,7 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
             }
 
             if (!candidate) {
-                showToast('Junkrat AI: Holding RIP-Tire (enemy synergy < 4)');
+                showToast('Junkrat AI: Holding RIP-Tire (friendly synergy < 4)');
                 setTimeout(() => clearToast(), 1500);
                 return;
             }
