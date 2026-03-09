@@ -170,7 +170,7 @@
     "back_power": 1,
     "back_synergy": 3,
     "on_enter1": "Total Mayhem — If Junkrat is Defeated, deal 2 damage to the enemy who defeated Junkrat and 1 damage to up to 2 more enemies in that same row.",
-    "ultimate": "RIP-Tire (4): Move Junkrat to any of your rows and deal [Row Synergy] damage to all enemies in opposing row + 1 piercing."
+    "ultimate": "RIP-Tire (4): Select an enemy row. Junkrat moves to the corresponding friendly row (if full, he stays put) and deals [S] damage to all enemies in the selected row."
   },
   {
     "name": "Junker Queen",
