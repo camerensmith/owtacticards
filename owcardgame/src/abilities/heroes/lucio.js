@@ -37,19 +37,6 @@ export function onEnter({ playerHeroId, rowId }) {
         } catch {}
         return;
     }
-    
-            if (wounded) choiceIndex = 1; // Healing
-            else choiceIndex = 0; // Shuffle
-        } catch {}
-        if (choiceIndex === 0) {
-            try { playAudioByKey('lucio-ability1'); } catch {}
-            handleShuffleAbility(playerHeroId, rowId, playerNum);
-        } else {
-            try { playAudioByKey('lucio-ability2'); } catch {}
-            handleTokenAbility(playerHeroId, rowId, playerNum);
-        }
-        return;
-    }
 
     const opt1 = { 
         name: 'Crossfade (Shuffle)', 
