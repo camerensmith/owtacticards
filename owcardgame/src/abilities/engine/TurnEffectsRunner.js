@@ -4,10 +4,12 @@ import turnContext from 'context/turnContext';
 import abilities from '../index';
 import { processAnnihilation } from '../heroes/nemesis';
 import junkerqueen from '../heroes/junkerqueen';
+import bob from '../heroes/bob';
 import { cleanupTemporaryHP } from '../heroes/lifeweaver';
 import { processTurretDamage } from '../heroes/turret';
 import { recomputeAnaTokens } from '../heroes/ana';
 import { tickDisorientOnCards } from '../../game/disorient';
+import { isSuitedUp, shouldKeepSuitedUpLock } from '../../game/dvaSuitedUp';
 
 export default function TurnEffectsRunner() {
     const { gameState } = useContext(gameContext);
@@ -44,6 +46,8 @@ export default function TurnEffectsRunner() {
 
             // Junker Queen: apply wound ticks at wounded hero's turn start
             try { junkerqueen.processWoundsAtTurnStart?.(playerTurn); } catch {}
+            // B.O.B.: +1 Smash turn counter at the start of his owner's turn
+            try { bob.processBobTurnsAtTurnStart?.(playerTurn); } catch {}
 
             try { recomputeAnaTokens(); } catch {}
 
@@ -95,6 +99,24 @@ export default function TurnEffectsRunner() {
                     console.log('TurnEffectsRunner: D.Va+MEKA was removed, cleaning up D.Va suited-up state');
                     window.__ow_cleanupDvaSuitedUp?.(playerTurn);
                 }
+            }
+
+            // If D.Va is still marked suited-up but her MEKA no longer exists
+            // anywhere, clear the lock so she can be played from hand again.
+            try {
+                const dvaId = `${playerTurn}dva`;
+                const dva = gameState.playerCards[`player${playerTurn}cards`]?.cards?.[dvaId];
+                if (isSuitedUp(dva)) {
+                    const mekaId = `${playerTurn}dvameka`;
+                    const mekaInHand = (gameState.rows[handId]?.cardIds || []).includes(mekaId);
+                    const mekaOnBoard = [`${playerTurn}f`, `${playerTurn}m`, `${playerTurn}b`]
+                        .some((rid) => (gameState.rows[rid]?.cardIds || []).includes(mekaId));
+                    if (!shouldKeepSuitedUpLock({ suitedUp: true, mekaOnBoard, mekaInHand })) {
+                        window.__ow_cleanupDvaSuitedUp?.(playerTurn);
+                    }
+                }
+            } catch (error) {
+                console.error('TurnEffectsRunner: Error clearing stranded D.Va suited-up:', error);
             }
 
             for (let rowId of playerRowIds) {

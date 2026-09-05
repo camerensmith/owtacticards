@@ -19,6 +19,7 @@ import ZenyattaImmunityOverlay from '../effects/ZenyattaImmunityOverlay';
 import JunkerQueenWoundOverlay from '../effects/JunkerQueenWoundOverlay';
 import SylvainElectrifiedOverlay from '../effects/SylvainElectrifiedOverlay';
 import JunkerQueenRampageCounterOverlay from '../effects/JunkerQueenRampageCounterOverlay';
+import BobSmashCounterOverlay from '../effects/BobSmashCounterOverlay';
 import { heroCardImages } from '../../assets/imageImports';
 import ContextMenu from './ContextMenu';
 import actionsBus, { Actions } from '../../abilities/engine/actionsBus';
@@ -85,7 +86,8 @@ export default function Card(props) {
     const __cardSafe__ = gameState.playerCards?.[playerCardsId]?.cards?.[playerHeroId];
     if (!__cardSafe__) {
         // Defensive: card might have been removed or state not yet synced; avoid crash
-        if (process?.env?.NODE_ENV !== 'production') {
+        // Use process.env.NODE_ENV (not optional chaining) so CRA/webpack can replace it at build time.
+        if (process.env.NODE_ENV !== 'production') {
             console.warn('Card.js: Missing card for', { playerHeroId, playerNum, playerCardsId, rowId });
         }
         return null;
@@ -329,6 +331,9 @@ export default function Card(props) {
                             )}
                             {health > 0 && Array.isArray(effects) && effects.some(e => e?.id === 'electrified') && (
                                 <SylvainElectrifiedOverlay cardId={playerHeroId} effects={effects} />
+                            )}
+                            {id === 'bob' && health > 0 && Array.isArray(effects) && (
+                                <BobSmashCounterOverlay cardId={playerHeroId} effects={effects} />
                             )}
                             {id === 'junkerqueen' && health > 0 && (
                                 <JunkerQueenRampageCounterOverlay playerHeroId={playerHeroId} effects={effects} />

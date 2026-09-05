@@ -57,7 +57,8 @@ export default function CardFocus(props) {
         // Get card attributes from relevant player with safety guard
         const __cardSafe__ = gameState.playerCards?.[`player${playerNum}cards`]?.cards?.[playerHeroId];
         if (!__cardSafe__) {
-            if (process?.env?.NODE_ENV !== 'production') {
+            // Use process.env.NODE_ENV (not optional chaining) so CRA/webpack can replace it at build time.
+            if (process.env.NODE_ENV !== 'production') {
                 console.warn('CardFocus.js: Missing card for', { playerHeroId, playerNum, rowId });
             }
             return null;

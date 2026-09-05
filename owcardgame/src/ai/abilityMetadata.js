@@ -46,7 +46,7 @@ export const heroAbilities = {
             type: abilityMetadata.DAMAGE,
             targeting: targetingTypes.SINGLE_ENEMY,
             damage: 2,
-            effect: 'Move target enemy to front row',
+            effect: 'Move to front, 2 damage, +1 armor if target survives',
             priority: 8, // High priority for removal/disruption
         },
         onUltimate: {

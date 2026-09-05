@@ -22,6 +22,7 @@ import mercy from './heroes/cards/mercy.png';
 import moira from './heroes/cards/moira.png';
 import orisa from './heroes/cards/orisa.png';
 import protectiveBarrier from './heroes/cards/protectivebarrier.png';
+import clearDead from './cleardead.png';
 import annihilation from './annihilation.png';
 import pharah from './heroes/cards/pharah.png';
 import reaper from './heroes/cards/reaper.png';
@@ -409,6 +410,7 @@ import lockjawUltimateResolve from './audio/lockjaw-ultimate-resolve.mp3';
 import sylvainIntro from './audio/sylvain-intro.mp3';
 import sylvainEnter from './audio/sylvain-enter.mp3';
 import sylvainAbility1Resolve from './audio/sylvain-ability1-resolve.mp3';
+import sylvainAbility1Trigger from './audio/sylvain-ability1-trigger.mp3';
 import sylvainUlt from './audio/sylvain-ult.mp3';
 import sylvainUltResolve from './audio/sylvain-ult-resolve.mp3';
 import axiomIntro from './audio/axiom-intro.mp3';
@@ -431,6 +433,8 @@ import mantisUltResolve from './audio/mantis-ult-resolve.mp3';
 export const heroCardImages = {
     ana, ashe, baptiste, bastion, bob, brigitte, doomfist, dva, dvameka, echo, genji, hanzo, junkrat, lifeweaver, lucio, mccree, mei, mercy, moira, orisa, pharah, reaper, reinhardt, roadhog, sigma, soldier, sombra, symmetra, torbjorn, tracer, widowmaker, winston, wreckingball, zarya, zenyatta, ramattra, nemesis, turret, hazard, mauga, junkerqueen, venture, bravox2, cyclo, emre, fika, rajah, mirage: rajah, warden, wuyang, sylvain, axiom, lockjaw, stoneguard, vega, mantis, 'card-back': cardBack
 };
+
+export const clearDeadCursor = clearDead;
 
 export const heroIconImages = {
     'ana-icon': anaIcon, 'baptiste-icon': baptisteIcon, 'bastion-icon': bastionIcon, 'bob-icon': bobIcon, 'hanzo-icon': hanzoIcon, 'lucio-icon': lucioIcon, 'mei-icon': meiIcon, 'mercy-icon': mercyIcon, 'orisa-icon': orisaIcon, 'protectivebarrier-icon': protectiveBarrier, 'sigma-icon': sigmaIcon, 'torbjorn-icon': torbjornIcon, 'widowmaker-icon': infrasight, 'infrasight-icon': infrasight, 'wreckingball-icon': wreckingballIcon, 'zarya-icon': zaryaIcon, 'zenyatta-icon': zenyattaIcon, 'lockjaw-icon': lockjawIcon, 'sylvain-icon': sylvainIcon, 'axiom-icon': relic, 'relic-icon': relic
@@ -724,6 +728,7 @@ export const abilityAudioFiles = {
     'sylvain-intro': sylvainIntro,
     'sylvain-enter': sylvainEnter,
     'sylvain-ability1-resolve': sylvainAbility1Resolve,
+    'sylvain-ability1-trigger': sylvainAbility1Trigger,
     'sylvain-ult': sylvainUlt,
     'sylvain-ult-resolve': sylvainUltResolve,
     'sylvain-ultimate': sylvainUlt,

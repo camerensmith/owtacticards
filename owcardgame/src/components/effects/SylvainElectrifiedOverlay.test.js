@@ -9,7 +9,10 @@ test('shows a stylized E on electrified cards', () => {
             effects={[{ id: 'electrified', tooltip: 'Electrified' }]}
         />
     );
-    expect(screen.getByTitle('Electrified').textContent).toBe('E');
+    const badge = screen.getByTitle('Electrified');
+    expect(badge.textContent).toBe('E');
+    expect(badge.style.left).toBe('6px');
+    expect(badge.style.right).toBe('');
 });
 
 test('hides when the card is not electrified', () => {

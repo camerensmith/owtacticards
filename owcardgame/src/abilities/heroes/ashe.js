@@ -35,6 +35,12 @@ function playAbilitySound(abilityNumber) {
     }
 }
 
+function fireViperShot(playerHeroId, targetCardId, targetRowId, amount) {
+    try { effectsBus.publish(Effects.bullet(playerHeroId, targetCardId, 1)); } catch {}
+    dealDamage(targetCardId, targetRowId, amount, true, playerHeroId, false, { skipProjectileFx: true });
+    try { effectsBus.publish(Effects.showDamage(targetCardId, amount)); } catch {}
+}
+
 // Ashe modular onEnter implementation
 export async function onEnter({ playerHeroId, rowId }) {
     const playerNum = parseInt(playerHeroId[0]);
@@ -98,8 +104,7 @@ export async function onEnter1({ playerHeroId, rowId, playerNum }) {
         console.log('Ashe AI: Selected random enemy:', randomEnemy.cardId);
         
         // Deal damage
-        dealDamage(randomEnemy.cardId, randomEnemy.rowId, 2, true, playerHeroId);
-        try { effectsBus.publish(Effects.showDamage(randomEnemy.cardId, 2)); } catch {}
+        fireViperShot(playerHeroId, randomEnemy.cardId, randomEnemy.rowId, 2);
         playAbilitySound(1);
         playAudioByKey('ashe-shoot1');
         
@@ -124,8 +129,7 @@ export async function onEnter1({ playerHeroId, rowId, playerNum }) {
             return;
         }
 
-        dealDamage(target.cardId, target.rowId, 2, true, playerHeroId);
-        try { effectsBus.publish(Effects.showDamage(target.cardId, 2)); } catch {}
+        fireViperShot(playerHeroId, target.cardId, target.rowId, 2);
         playAbilitySound(1);
         playAudioByKey('ashe-shoot1');
 
@@ -182,10 +186,8 @@ export async function onEnter2({ playerHeroId, rowId, playerNum }) {
         console.log('Ashe AI: Selected 2 enemies for split fire:', targets.map(t => t.cardId));
         
         // Deal damage to both targets
-        dealDamage(targets[0].cardId, targets[0].rowId, 1, true, playerHeroId);
-        dealDamage(targets[1].cardId, targets[1].rowId, 1, true, playerHeroId);
-        try { effectsBus.publish(Effects.showDamage(targets[0].cardId, 1)); } catch {}
-        try { effectsBus.publish(Effects.showDamage(targets[1].cardId, 1)); } catch {}
+        fireViperShot(playerHeroId, targets[0].cardId, targets[0].rowId, 1);
+        fireViperShot(playerHeroId, targets[1].cardId, targets[1].rowId, 1);
         playAbilitySound(2);
         playAudioByKey('ashe-shoot2');
         
@@ -221,8 +223,7 @@ export async function onEnter2({ playerHeroId, rowId, playerNum }) {
         }
 
         for (const target of targets) {
-            dealDamage(target.cardId, target.rowId, 1, true, playerHeroId);
-            try { effectsBus.publish(Effects.showDamage(target.cardId, 1)); } catch {}
+            fireViperShot(playerHeroId, target.cardId, target.rowId, 1);
         }
         playAbilitySound(2);
         playAudioByKey('ashe-shoot2');

@@ -19,19 +19,39 @@ jest.mock('../engine/targetingBus', () => ({
     clearMessage: jest.fn(),
 }));
 
-function setupBoard() {
+jest.mock('../engine/effectsBus', () => {
+    const Effects = {
+        chainHook: (...args) => ({ type: 'fx:chainHook', payload: args }),
+        showDamage: (...args) => ({ type: 'fx:showDamage', payload: args }),
+    };
+    return {
+        __esModule: true,
+        default: { publish: jest.fn() },
+        Effects,
+    };
+});
+
+function setupBoard({ anaHealth = 3 } = {}) {
+    const cards = {
+        '2ana': { id: 'ana', health: anaHealth, shield: 0, armor: 0 },
+        '1roadhog': { id: 'roadhog', health: 5, armor: 0 },
+    };
     window.__ow_getRow = (id) => ({
-        cardIds: id === '2m' ? ['2ana'] : [],
+        cardIds: id === '2m' ? ['2ana'] : id === '1f' ? ['1roadhog'] : [],
     });
-    window.__ow_getCard = (id) => (
-        id === '2ana'
-            ? { id: 'ana', health: 3, shield: 2 }
-            : { id: 'roadhog', health: 5 }
-    );
+    window.__ow_getCard = (id) => cards[id];
     window.__ow_isRowFull = () => false;
     window.__ow_moveCardToRow = jest.fn();
+    window.__ow_dispatchArmorUpdate = jest.fn((id, armor) => {
+        if (cards[id]) cards[id].armor = armor;
+    });
     window.__ow_aiTriggering = false;
     window.__ow_isAITurn = false;
+    dealDamage.mockImplementation((cardId, _row, amount) => {
+        const card = cards[cardId];
+        if (card) card.health = Math.max(0, (card.health || 0) - amount);
+    });
+    return cards;
 }
 
 test('Chain Hook deals 2 damage that ignores shields and armor', async () => {
@@ -40,9 +60,25 @@ test('Chain Hook deals 2 damage that ignores shields and armor', async () => {
 
     await onEnter({ playerHeroId: '1roadhog', rowId: '1f' });
 
-    // skipProjectileFx keeps the damage bus from firing a beam alongside the
-    // hook — the hook itself is the projectile.
     expect(dealDamage).toHaveBeenCalledWith(
         '2ana', '2f', 2, true, '1roadhog', false, { skipProjectileFx: true },
     );
+});
+
+test('Chain Hook gives Roadhog +1 armor when the target survives', async () => {
+    setupBoard({ anaHealth: 3 });
+    selectCardTarget.mockResolvedValue({ cardId: '2ana', rowId: '2m' });
+
+    await onEnter({ playerHeroId: '1roadhog', rowId: '1f' });
+
+    expect(window.__ow_dispatchArmorUpdate).toHaveBeenCalledWith('1roadhog', 1);
+});
+
+test('Chain Hook grants no armor when the target dies', async () => {
+    setupBoard({ anaHealth: 2 });
+    selectCardTarget.mockResolvedValue({ cardId: '2ana', rowId: '2m' });
+
+    await onEnter({ playerHeroId: '1roadhog', rowId: '1f' });
+
+    expect(window.__ow_dispatchArmorUpdate).not.toHaveBeenCalled();
 });

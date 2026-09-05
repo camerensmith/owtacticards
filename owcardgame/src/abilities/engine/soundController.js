@@ -157,7 +157,7 @@ export const AvailableAudio = {
         zarya: ['zarya-barrier', 'zarya-barrierally'],
         zenyatta: ['zenyatta-discord', 'zenyatta-discord2', 'zenyatta-harmony'],
         lockjaw: ['lockjaw-ability1-resolve'],
-        sylvain: ['sylvain-ability1-resolve'],
+        sylvain: ['sylvain-ability1-resolve', 'sylvain-ability1-trigger'],
         axiom: ['axiom-ability1-resolve'],
     },
 };

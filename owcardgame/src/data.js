@@ -228,7 +228,7 @@ const data = {
                 m: 0,
                 b: 0,
             },
-            ultimate: 'Smash (1): Deal 1 damage and 1 Synergy damage to up to 3 adjacent enemies in target row.',
+            ultimate: 'Smash (2): Deal X damage to an enemy in the opposite row, where X is the number of turns B.O.B. has been on the field.',
             special: true,
         },
 
@@ -691,7 +691,7 @@ const data = {
                 m: 2,
                 b: 2,
             },
-            ultimate: 'Whole Hog (3)',
+            ultimate: 'Whole Hog (3): Deal (+2 per enemy) damage spread randomly between each and all enemy targets.',
             isImplemented: true,
         },
 

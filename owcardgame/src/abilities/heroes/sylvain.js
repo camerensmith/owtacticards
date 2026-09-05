@@ -42,6 +42,7 @@ export function applyTripwireEnter(cardId, rowId) {
         const entering = parseInt(String(cardId || '')[0], 10);
         if (owner && entering !== owner) {
             window.__ow_appendCardEffect?.(cardId, electrifyEffect(wire.sourceCardId));
+            try { playAudioByKey('sylvain-ability1-trigger'); } catch {}
             return;
         }
     }
@@ -105,16 +106,24 @@ export async function onEnter({ playerHeroId, rowId }) {
         firstId = enemyRows[0];
         secondId = enemyRows[1];
     } else {
-        showToast('Tripwire: Select first row');
-        const first = await selectRowTarget();
+        showToast('Tripwire: Select first enemy row');
+        const first = await selectRowTarget({ isDamage: true });
         clearToast();
         if (!first?.rowId) return;
         firstId = first.rowId;
-        showToast('Tripwire: Select an adjacent row (front-middle or middle-back)');
-        const second = await selectRowTarget();
+        showToast('Tripwire: Select an adjacent enemy row (front-middle or middle-back)');
+        const second = await selectRowTarget({ isDamage: true });
         clearToast();
         if (!second?.rowId) return;
         secondId = second.rowId;
+    }
+
+    const firstOwner = parseInt(String(firstId)[0], 10);
+    const secondOwner = parseInt(String(secondId)[0], 10);
+    if (firstOwner === playerNum || secondOwner === playerNum) {
+        showToast('Tripwire: Must wire enemy rows only');
+        setTimeout(() => clearToast(), 2000);
+        return;
     }
 
     if (!rowsAreAdjacent(firstId, secondId)) {

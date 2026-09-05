@@ -1,4 +1,5 @@
 import React, { useState, useReducer, useEffect, useRef } from 'react';
+import { flushSync } from 'react-dom';
 import gameContext from 'context/gameContext';
 import turnContext from 'context/turnContext';
 import './App.css';
@@ -62,6 +63,7 @@ import { createDirector } from './presentation/director';
 import { playCardIntent } from './presentation/intents';
 import { DragDropContext } from 'react-beautiful-dnd';
 import { openingDealBeats, pickHeroFromRole, matchResultAnnouncerKey, nextRoundFirstPlayer, shouldDrawOnTurnStart } from './game/openingDeal';
+import { runOpeningDealBeats } from './game/runOpeningDeal';
 import { handCardIdsToDiscard } from './game/roundCleanup';
 import { shiftDrawQueue } from './game/drawQueue';
 import { playClip, warmGameEventAudio } from './abilities/engine/soundController';
@@ -1255,6 +1257,7 @@ export default function App() {
     const [theaterLocked, setTheaterLocked] = useState(false);
     const theaterLockedRef = useRef(false);
     const openingDealRef = useRef(false);
+    const openingDealGenerationRef = useRef(0);
     const [shufflingPlayer, setShufflingPlayer] = useState(null);
 
     // AI Turn End Handler
@@ -2061,22 +2064,36 @@ export default function App() {
             includeInitiating,
             firstPlayer: turnStateRef.current.playerTurn,
         });
-        for (const beat of beats) {
-            if (beat.type === 'audio') {
-                await playClip(beat.key, {
-                    awaitEnd: !!beat.awaitEnd,
-                    fallbackMs: beat.fallbackMs || 800,
+        const dealGeneration = ++openingDealGenerationRef.current;
+        // Flush shuffle into the DOM and wait a frame before the timed hold,
+        // otherwise React can commit the first draw in the same paint as the
+        // overlay and the card lands before the shuffle animation is seen.
+        const ensurePainted = () => new Promise((resolve) => {
+            requestAnimationFrame(() => {
+                requestAnimationFrame(resolve);
+            });
+        });
+        await runOpeningDealBeats(beats, {
+            shouldAbort: () => dealGeneration !== openingDealGenerationRef.current,
+            playAudio: (beat) => playClip(beat.key, {
+                awaitEnd: !!beat.awaitEnd,
+                fallbackMs: beat.fallbackMs || 800,
+            }),
+            wait,
+            ensurePainted,
+            onShuffle: (playerNum) => {
+                flushSync(() => {
+                    setShufflingPlayer(playerNum);
                 });
-            } else if (beat.type === 'wait') {
-                await wait(beat.ms);
-            } else if (beat.type === 'shuffle') {
-                setShufflingPlayer(beat.playerNum);
                 playClip('cardshuffle');
-            } else if (beat.type === 'draw') {
-                setShufflingPlayer(null);
-                dealOne(beat.playerNum, beat.role);
-            }
-        }
+            },
+            onDraw: (playerNum, role) => {
+                flushSync(() => {
+                    setShufflingPlayer(null);
+                });
+                dealOne(playerNum, role);
+            },
+        });
 
         setShufflingPlayer(null);
         openingDealRef.current = false;
@@ -2445,7 +2462,7 @@ export default function App() {
                 // Row surcharges — BOB's suppression, Mei's Blizzard — all in
                 // one pure rule, so the order they apply in is written down
                 // once rather than re-derived at each call site.
-                let adjustedCost = (heroId === 'bob') ? 1 : cost;
+                let adjustedCost = cost;
                 try {
                     adjustedCost = rowUltimateCost(adjustedCost, gs.rows[rowId]?.enemyEffects);
                 } catch {}

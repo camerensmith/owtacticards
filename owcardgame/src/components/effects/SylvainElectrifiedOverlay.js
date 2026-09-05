@@ -7,7 +7,7 @@ export default function SylvainElectrifiedOverlay({ cardId, effects }) {
     const style = {
         position: 'absolute',
         top: '4px',
-        right: '6px',
+        left: '6px',
         width: '22px',
         height: '22px',
         backgroundColor: '#0aa8c8',

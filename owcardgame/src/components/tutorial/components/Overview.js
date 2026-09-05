@@ -76,7 +76,7 @@ function Overview() {
                     <div className='tutorial-section'>
                         <div className='tutorial-heading'>Starting a game</div>
                         <p>
-                            Both players should begin by drawing 4 cards each +1 on draw step. Then the players each take turns to play as many cards as they want per turn. At the end of your turn, click the End Turn button to allow the other player to take their turn. You can tell which player's turn it is by which cards are facing up. To find out exactly what you can do on your turn, please see the Turn Actions section above.
+                            Both players begin by drawing 4 cards. The player who goes first skips their first draw step; the second player draws one on their first turn. Then each player takes turns playing as many cards as they want. At the end of your turn, click End Turn. You can tell whose turn it is by which cards are facing up. See Turn Actions for what you can do on your turn.
                         </p>
                     </div>
                     <div className='tutorial-section'>

@@ -29,7 +29,7 @@ export function selectBestAction(aiHand, aiBoard, enemyBoard, gameState, difficu
     console.log(`Generated ${candidates.length} candidate actions`);
 
     if (candidates.length === 0) {
-        return { type: 'pass', reasoning: 'No valid actions' };
+        return { type: 'wait', reasoning: 'No valid actions' };
     }
 
     // 3. Evaluate each candidate with shallow lookahead
@@ -47,32 +47,42 @@ export function selectBestAction(aiHand, aiBoard, enemyBoard, gameState, difficu
         console.log(`  ${i + 1}. [${action.score.toFixed(2)}] ${action.description}`);
     });
 
-    // 5. Select best action with safety fallback
-    const bestAction = evaluatedActions[0];
-
-    // Safety check: if action has very low score, pass instead
-    if (bestAction.score < -5) {
-        console.log('All actions negative - passing turn');
-        return { type: 'pass', reasoning: 'All actions unfavorable' };
+    // 5. Select best action.
+    //
+    // evaluateBoard returns an absolute position score. When the AI is already
+    // behind, every candidate — including the best deploy — is a large negative
+    // number. The old `score < -5 ⇒ pass` check treated that as "bad action"
+    // and parked a full hand for the whole match. Compare candidates to each
+    // other instead: only pass when no deploy/ultimate beats passing.
+    const passAction = evaluatedActions.find((action) => action.type === 'pass');
+    const actionable = evaluatedActions.filter((action) => action.type !== 'pass');
+    if (actionable.length === 0) {
+        return { type: 'wait', reasoning: 'No valid actions' };
     }
 
-    // Add difficulty-based randomness
-    let selectedAction = bestAction;
+    const bestActionable = actionable[0];
+    if (passAction && bestActionable.score + 0.01 < passAction.score) {
+        console.log('Passing: no deploy/ultimate improves on standing still');
+        return { type: 'wait', reasoning: 'Pass outscores every play' };
+    }
+
+    // Add difficulty-based randomness among actionable plays only
+    let selectedAction = bestActionable;
     const random = rng ? rng.next() : Math.random();
-    const randomIndex = rng ? () => Math.floor(rng.next() * evaluatedActions.length) : () => Math.floor(Math.random() * evaluatedActions.length);
+    const randomIndex = rng ? () => Math.floor(rng.next() * actionable.length) : () => Math.floor(Math.random() * actionable.length);
 
     if (difficulty === 'medium') {
         // 70% best, 30% random from top 3
-        if (random > 0.7 && evaluatedActions.length > 1) {
-            const topThree = evaluatedActions.slice(0, Math.min(3, evaluatedActions.length));
+        if (random > 0.7 && actionable.length > 1) {
+            const topThree = actionable.slice(0, Math.min(3, actionable.length));
             const idx = rng ? Math.floor(rng.next() * topThree.length) : Math.floor(Math.random() * topThree.length);
             selectedAction = topThree[idx];
             console.log('Medium AI: Chose alternative action');
         }
     } else if (difficulty === 'easy') {
         // 50% best, 50% random
-        if (random > 0.5 && evaluatedActions.length > 1) {
-            selectedAction = evaluatedActions[randomIndex()];
+        if (random > 0.5 && actionable.length > 1) {
+            selectedAction = actionable[randomIndex()];
             console.log('Easy AI: Chose random action');
         }
     }

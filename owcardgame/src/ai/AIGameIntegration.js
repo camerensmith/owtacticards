@@ -14,6 +14,7 @@ import { getAbilityMetadata, abilityMetadata } from './abilityMetadata';
 import { assessThreats, getKillPriority, assessAllyProtection, recommendDefensiveAction } from './threatAssessment';
 import { getCardForAi } from '../game/rosterRules';
 import { isDisoriented } from '../game/disorient';
+import { canAutoPlayHandDva, isSuitedUp, shouldKeepSuitedUpLock } from '../game/dvaSuitedUp';
 import data from '../data';
 
 function aiCard(cardId) {
@@ -1577,42 +1578,51 @@ class AIGameIntegration {
             const handIds = handRow?.cardIds || [];
             const dvaCardId = '2dva';
 
-            // Check if D.Va is in hand
             if (!handIds.includes(dvaCardId)) {
                 return null;
             }
 
-            // Check if D.Va was just returned (has the special return flag or we just lost MEKA)
             const card = aiCard(dvaCardId);
             if (!card) return null;
 
-            // Check if MEKA is no longer on board (indicating it died/was replaced)
-            const allyRows = ['2f','2m','2b'];
-            const hasMekaOnBoard = allyRows.some(r => {
+            const allyRows = ['2f', '2m', '2b'];
+            const mekaOnBoard = allyRows.some((r) => {
                 const row = window.__ow_getRow?.(r);
-                return row?.cardIds?.some(id => id.endsWith('dvameka'));
+                return row?.cardIds?.some((id) => id.endsWith('dvameka'));
             });
+            const mekaInHand = handIds.some((id) => id.endsWith('dvameka'));
+            const suitedUp = isSuitedUp(card);
 
-            // If MEKA is gone and D.Va is in hand, she was likely returned - play her!
-            if (!hasMekaOnBoard) {
-                console.log('AI detected returned D.Va from MEKA death - playing immediately');
+            // Still piloting — humans cannot drag her; AI must not either.
+            if (shouldKeepSuitedUpLock({ suitedUp, mekaOnBoard, mekaInHand })) {
+                return null;
+            }
 
-                // Find best available row (prefer middle for safety)
-                const rowCounts = {
-                    middle: window.__ow_getRow?.('2m')?.cardIds?.length || 0,
-                    front: window.__ow_getRow?.('2f')?.cardIds?.length || 0,
-                    back: window.__ow_getRow?.('2b')?.cardIds?.length || 0
-                };
+            // MEKA is gone but the pilot lock stuck — clear it so she is playable.
+            if (suitedUp) {
+                window.__ow_cleanupDvaSuitedUp?.(2);
+            }
 
-                const availableRows = Object.entries(rowCounts)
-                    .filter(([_, count]) => count < 4)
-                    .sort((a, b) => a[1] - b[1]);
+            if (!canAutoPlayHandDva({ suitedUp: false, mekaOnBoard, mekaInHand })) {
+                return null;
+            }
 
-                if (availableRows.length > 0) {
-                    const bestRow = availableRows[0][0];
-                    await this.playCard(dvaCardId, bestRow);
-                    return dvaCardId;
-                }
+            console.log('AI detected returned D.Va from MEKA death - playing immediately');
+
+            const rowCounts = {
+                middle: window.__ow_getRow?.('2m')?.cardIds?.length || 0,
+                front: window.__ow_getRow?.('2f')?.cardIds?.length || 0,
+                back: window.__ow_getRow?.('2b')?.cardIds?.length || 0,
+            };
+
+            const availableRows = Object.entries(rowCounts)
+                .filter(([, count]) => count < 4)
+                .sort((a, b) => a[1] - b[1]);
+
+            if (availableRows.length > 0) {
+                const bestRow = availableRows[0][0];
+                await this.playCard(dvaCardId, bestRow);
+                return dvaCardId;
             }
 
             return null;
@@ -2691,16 +2701,11 @@ class AIGameIntegration {
                 }
             }
 
-            // BOB Smash: Use when enemies are clustered (low cost ultimate - 1 synergy)
+            // BOB Smash: X damage to one opposite-row enemy (cost 2)
             else if (heroId === 'bob') {
-                // BOB's ultimate only costs 1 synergy, so be more aggressive
-                if (enemyDenseRow.count >= 2 || enemyDenseRow.power >= 6) {
+                if (enemyDenseRow.count >= 1 && currentSynergy >= 2) {
                     shouldFire = true;
-                    console.log(`BOB Smash: ${enemyDenseRow.count} enemies, power ${enemyDenseRow.power} - low cost ultimate`);
-                } else if (enemyDenseRow.count >= 1 && currentSynergy >= 1) {
-                    // Very low threshold since it only costs 1
-                    shouldFire = true;
-                    console.log(`BOB Smash: At least 1 enemy available, cost is only 1 synergy`);
+                    console.log(`BOB Smash: opposite-row pressure available (synergy ${currentSynergy})`);
                 }
             }
 

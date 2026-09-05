@@ -18,20 +18,18 @@ export function matchResultAnnouncerKey(winner, humanPlayer = 1) {
     return winner === humanPlayer ? 'announcer-victory' : 'announcer-defeat';
 }
 
-/** First player opens on 4; second opens on 5. */
-export function openingHandSize(playerNum, firstPlayer) {
-    const first = Number(firstPlayer) === 2 ? 2 : 1;
-    return Number(playerNum) === first ? 4 : 5;
+/** Both seats open on 4. The second player's +1 comes on their draw step. */
+export function openingHandSize() {
+    return 4;
 }
 
 /**
- * Start-of-turn draws begin after each player has had their opening turn.
- * turn 1 = first player's open (already dealt 4)
- * turn 2 = second player's open (already dealt 5)
- * turn 3+ = normal +1 draw
+ * Start-of-turn draws.
+ * turn 1 = first player's open — they skip the draw (already have 4, go first)
+ * turn 2+ = normal +1 draw (second player gets theirs here; first gets theirs next)
  */
 export function shouldDrawOnTurnStart(turnCount) {
-    return Number(turnCount) > 2;
+    return Number(turnCount) > 1;
 }
 
 /** Round winner opens the next round; a draw randomizes. */
@@ -41,8 +39,8 @@ export function nextRoundFirstPlayer(winningPlayer, random = Math.random) {
 }
 
 /**
- * Opening deal order: whoever goes first draws four roles, then the second
- * player draws the same four plus one bonus card of any role.
+ * Opening deal order: both players draw the same four roles.
+ * Going first is the advantage; the second player draws on their first turn.
  */
 export function openingDealBeats({
     round = 1,
@@ -69,7 +67,7 @@ export function openingDealBeats({
     };
 
     dealPlayer(first, OPENING_ROLES);
-    dealPlayer(second, [...OPENING_ROLES, 'bonus']);
+    dealPlayer(second, OPENING_ROLES);
     return beats;
 }
 

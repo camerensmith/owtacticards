@@ -40,12 +40,13 @@ export default function PlayerHand(props) {
     const drawnHeroes = gameLogic[`player${playerNum}DrawnHeroes`] || [];
     const deck = deckCounts({ heroes: data.heroes, drawnHeroes });
 
-    // Draw a card at the start of the player's turn, after both opening turns.
-    // Opening hands are already asymmetric (first 4 / second 5), so turn 1 and
-    // turn 2 must not draw again.
+    // Draw a card at the start of the player's turn.
+    // Both seats open on 4; the first player skips this draw on turn 1,
+    // and everyone draws from turn 2 onward (second player's first turn).
     useEffect(() => {
         // Practice deals nothing: you add exactly the cards you want to test.
         const shouldDraw = !window.__ow_practiceMode
+            && !props.theaterLocked
             && turnState.playerTurn === playerNum
             && shouldDrawOnTurnStart(turnState.turnCount);
         if (shouldDraw) {

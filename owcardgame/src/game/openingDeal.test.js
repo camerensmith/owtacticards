@@ -9,7 +9,7 @@ import {
     matchResultAnnouncerKey,
 } from './openingDeal';
 
-test('first player is dealt 4 roles, second player 4 roles plus a bonus', () => {
+test('both players are dealt the same four roles; nobody gets a bonus fifth', () => {
     const beats = openingDealBeats({ round: 1, includeInitiating: true, firstPlayer: 1 });
     expect(beats[0]).toEqual(expect.objectContaining({
         type: 'audio',
@@ -26,32 +26,31 @@ test('first player is dealt 4 roles, second player 4 roles plus a bonus', () => 
         [2, 'tank'],
         [2, 'support'],
         [2, 'defense'],
-        [2, 'bonus'],
     ]);
-    expect(beats.filter((b) => b.key === 'drawcard')).toHaveLength(9);
+    expect(beats.filter((b) => b.key === 'drawcard')).toHaveLength(8);
     expect(beats.find((b) => b.type === 'shuffle').playerNum).toBe(1);
 });
 
-test('when player 2 goes first, they are dealt four and player 1 gets the bonus fifth', () => {
+test('when player 2 goes first, they are still dealt four and player 1 is dealt four', () => {
     const draws = openingDealBeats({ round: 1, includeInitiating: false, firstPlayer: 2 })
         .filter((b) => b.type === 'draw')
         .map((b) => [b.playerNum, b.role]);
     expect(draws.slice(0, 4).every(([p]) => p === 2)).toBe(true);
     expect(draws.slice(4).every(([p]) => p === 1)).toBe(true);
-    expect(draws).toHaveLength(9);
-    expect(draws[8]).toEqual([1, 'bonus']);
+    expect(draws).toHaveLength(8);
+    expect(draws.some(([, role]) => role === 'bonus')).toBe(false);
 });
 
-test('openingHandSize is 4 for the starter and 5 for the second', () => {
+test('openingHandSize is 4 for both seats', () => {
     expect(openingHandSize(1, 1)).toBe(4);
-    expect(openingHandSize(2, 1)).toBe(5);
+    expect(openingHandSize(2, 1)).toBe(4);
     expect(openingHandSize(2, 2)).toBe(4);
-    expect(openingHandSize(1, 2)).toBe(5);
+    expect(openingHandSize(1, 2)).toBe(4);
 });
 
-test('start-of-turn draws wait until both opening turns are done', () => {
+test('first player skips the opening draw step; second player draws on theirs', () => {
     expect(shouldDrawOnTurnStart(1)).toBe(false);
-    expect(shouldDrawOnTurnStart(2)).toBe(false);
+    expect(shouldDrawOnTurnStart(2)).toBe(true);
     expect(shouldDrawOnTurnStart(3)).toBe(true);
 });
 

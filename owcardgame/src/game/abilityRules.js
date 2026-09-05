@@ -26,7 +26,6 @@ export function nanoBoostSynergyDelta(previousContribution, newCount) {
 
 export function parseUltimateCost(ultimateText, { heroId, currentSynergy } = {}) {
     if (heroId === 'wreckingball') return Number(currentSynergy) || 0;
-    if (heroId === 'bob') return 1;
     const match = typeof ultimateText === 'string' && ultimateText.match(/\((\d+)\)/);
     return match ? parseInt(match[1], 10) : 3;
 }

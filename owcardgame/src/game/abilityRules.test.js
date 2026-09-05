@@ -71,8 +71,9 @@ describe('parseUltimateCost', () => {
         })).toBe(7);
     });
 
-    test('BOB ultimate costs 1', () => {
-        expect(parseUltimateCost('Smash (1): ...', { heroId: 'bob' })).toBe(1);
+    test('BOB ultimate costs 2', () => {
+        expect(parseUltimateCost('Smash (2): ...', { heroId: 'bob' })).toBe(2);
+        expect(parseUltimateCost(data.heroes.bob.ultimate, { heroId: 'bob' })).toBe(2);
     });
 });
 
@@ -313,6 +314,15 @@ describe('killswitchRowCleanup', () => {
         ]);
         expect(result.destroyIds).toEqual(['2turret']);
         expect(result.stripArmorIds).toEqual(['2ana']);
+    });
+
+    test('destroys structures but not BOB', () => {
+        const result = killswitchRowCleanup([
+            { cardId: '2turret', card: { id: 'turret', turret: true, special: true, health: 3, armor: 0 } },
+            { cardId: '2bob', card: { id: 'bob', special: true, health: 3, armor: 0 } },
+            { cardId: '2ana', card: { id: 'ana', health: 3, armor: 0 } },
+        ]);
+        expect(result.destroyIds).toEqual(['2turret']);
     });
 });
 
