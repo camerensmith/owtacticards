@@ -6,6 +6,7 @@
 import { dealDamage } from '../abilities/engine/damageBus';
 import effectsBus, { Effects } from '../abilities/engine/effectsBus';
 import { selectCardTarget, selectRowTarget } from '../abilities/engine/targeting';
+import { isRedeployLocked } from '../game/rules';
 import { showMessage as showToast, clearMessage as clearToast } from '../abilities/engine/targetingBus';
 import { determineWinCondition, determineCardPlayCount, shouldHoldCard, WIN_CONDITIONS } from './strategicAnalysis';
 import { determineBestRow } from './positioningIntelligence';
@@ -14,13 +15,7 @@ import { evaluateBoard } from './boardEvaluator';
 import BrowserGameAdapter from './adapters/BrowserGameAdapter'
 import { pickAllyHealTarget, pickEnemyRemovalTarget, pickRowTarget, inferIntentFromAbilityKey, resolveRowTargetForEffect, inferRowEffectIntent } from './targetingEvaluator'
 import { SeededRNG } from './utils/rng'
-
-// AI Difficulty Levels
-export const AI_DIFFICULTY = {
-    EASY: 'easy',
-    MEDIUM: 'medium', 
-    HARD: 'hard'
-};
+import { defaultAiProfile, noisyScore, pickFromRanked, rollAiProfile } from './aiProfile'
 
 // AI Personality Types
 export const AI_PERSONALITY = {
@@ -40,9 +35,16 @@ class Logger {
 }
 
 class AIController {
-    constructor(difficulty = AI_DIFFICULTY.MEDIUM, personality = AI_PERSONALITY.BALANCED, adapter = null) {
-        this.difficulty = difficulty;
+    constructor(personality = AI_PERSONALITY.BALANCED, adapter = null) {
         this.personality = personality;
+        /*
+         * One opponent, re-rolled every turn.
+         *
+         * There were three fixed tiers; this spans the whole range they covered
+         * instead of sitting at one point in it, so the same opponent plays
+         * sharply one turn and loosely the next. See ai/aiProfile.js.
+         */
+        this.profile = defaultAiProfile();
         this.isActive = false;
         this.gameState = null;
         this.decisionHistory = [];
@@ -56,24 +58,25 @@ class AIController {
         this.decisionDelay = this.getDecisionDelay();
     }
 
-    // Get decision delay based on difficulty with human-like variance
+    /** Thinking time for this turn, straight off the rolled profile. */
     getDecisionDelay() {
-        const baseDelays = {
-            [AI_DIFFICULTY.EASY]: 3000,    // 3 seconds base
-            [AI_DIFFICULTY.MEDIUM]: 5000,  // 5 seconds base
-            [AI_DIFFICULTY.HARD]: 7000     // 7 seconds base
-        };
+        const delay = this.profile?.decisionDelayMs || 5000;
+        console.log(`AI decision delay: ${delay}ms`);
+        return delay;
+    }
 
-        const baseDelay = baseDelays[this.difficulty] || 5000;
-
-        // Add random variance (±30%) to make timing more human-like
-        const variance = 0.3;
-        const rand = (this.rng && typeof this.rng.next === 'function') ? this.rng.next() : Math.random();
-        const randomFactor = 1 + (rand * 2 - 1) * variance; // 0.7 to 1.3
-        const finalDelay = Math.floor(baseDelay * randomFactor);
-
-        console.log(`AI decision delay: ${finalDelay}ms (base: ${baseDelay}ms, factor: ${randomFactor.toFixed(2)})`);
-        return finalDelay;
+    /**
+     * Rolls how sharply the opponent plays this turn.
+     *
+     * Called once at the top of each AI turn, so every knob — thinking time,
+     * how many ultimates it will spend, how much noise goes into its scoring —
+     * moves together rather than being fixed for the match.
+     */
+    rollProfile() {
+        this.profile = rollAiProfile(() => this.rng.next());
+        this.decisionDelay = this.getDecisionDelay();
+        console.log('AI profile for this turn:', this.profile);
+        return this.profile;
     }
 
     // Initialize AI for a new game
@@ -85,7 +88,7 @@ class AIController {
         this.isActive = true;
         this.decisionHistory = [];
         this._aiTurnsTaken = 0;
-        console.log(`AI Controller initialized: ${this.difficulty} difficulty, ${this.personality} personality`);
+        console.log(`AI Controller initialized: ${this.personality} personality`);
     }
 
     // Main AI turn handler
@@ -105,7 +108,10 @@ class AIController {
         }
 
         console.log('AI Controller: Starting turn analysis...');
-        
+
+        // How sharply it plays this turn.
+        this.rollProfile();
+
         // Initialize per-turn cache
         this._turnCache = { boards: {}, cardRow: new Map() };
         
@@ -174,9 +180,9 @@ class AIController {
         // Don't continue if hand is empty
         if (analysis.player2Hand.length === 0) return false;
         
-        // Don't continue if we've hit the 6-hero limit
+        // Don't continue if every row is already at capacity (4 per row)
         const boardSize = analysis.player2Board.front.length + analysis.player2Board.middle.length + analysis.player2Board.back.length;
-        if (boardSize >= 6) return false;
+        if (boardSize >= 12) return false;
         
         // Don't continue if we've played too many already (safety cap)
         if (playsDone >= 5) return false;
@@ -596,7 +602,7 @@ class AIController {
 
     // Main decision making logic
     makeDecision(analysis) {
-        console.log('makeDecision called with difficulty:', this.difficulty);
+        console.log('makeDecision called with profile:', this.profile);
         console.log('Analysis player2Hand:', analysis.player2Hand);
 
         const decision = {
@@ -608,204 +614,22 @@ class AIController {
             reasoning: ''
         };
 
-        // Decision logic based on difficulty and personality
-        switch (this.difficulty) {
-            case AI_DIFFICULTY.EASY:
-                console.log('Calling makeEasyDecision');
-                return this.makeEasyDecision(analysis);
-            case AI_DIFFICULTY.MEDIUM:
-                console.log('Calling makeMediumDecision');
-                return this.makeMediumDecision(analysis);
-            case AI_DIFFICULTY.HARD:
-                console.log('Calling makeHardDecision');
-                return this.makeHardDecision(analysis);
-            default:
-                console.log('No difficulty matched, returning default wait decision');
-                return decision;
-        }
+        // One planner. How loose it plays is the profile's business, not a
+        // choice between three separate routines.
+        if (!analysis) return decision;
+        return this.makePlan(analysis);
     }
 
-    // Easy AI decision making
-    makeEasyDecision(analysis) {
-        console.log('Easy AI Decision Making:');
-        console.log('Player 2 Hand Length:', analysis.player2Hand.length);
-        console.log('Player 2 Hand Cards:', analysis.player2Hand);
-
-        // Easy AI has high randomness - sometimes plays, sometimes waits
-        const shouldPlayCard = this.rng.next() < 0.75; // 75% chance to play a card
-
-        console.log('Should play card:', shouldPlayCard);
-
-        if (shouldPlayCard && analysis.player2Hand.length > 0) {
-            // 50% of the time, pick randomly (human mistakes)
-            // 50% of the time, evaluate cards but with poor judgment
-            let chosenCard;
-            let chosenRow;
-
-            if (this.rng.next() < 0.5) {
-                // Completely random choice
-                chosenCard = analysis.player2Hand[Math.floor(this.rng.next() * analysis.player2Hand.length)];
-                console.log('Easy AI: Random card selection');
-            } else {
-                // Evaluate cards but poorly
-                const cardScores = analysis.player2Hand.map(card => {
-                    // Simple scoring - just add up all stats without strategy
-                    const score = (card.front_power || 0) + (card.middle_power || 0) +
-                                (card.back_power || 0) + (card.health || 0);
-                    return { card, score };
-                });
-
-                cardScores.sort((a, b) => b.score - a.score);
-
-                // 60% best, 40% random from top 3
-                if (this.rng.next() < 0.6) {
-                    chosenCard = cardScores[0].card;
-                } else {
-                    const topCards = cardScores.slice(0, Math.min(3, cardScores.length));
-                    chosenCard = topCards[Math.floor(this.rng.next() * topCards.length)].card;
-                }
-                console.log('Easy AI: Semi-evaluated card selection');
-            }
-
-            // Row selection with slight preference for middle, but often suboptimal
-            const rowWeights = [0.3, 0.4, 0.3]; // front, middle, back
-            const rand = this.rng.next();
-            if (rand < rowWeights[0]) {
-                chosenRow = 'front';
-            } else if (rand < rowWeights[0] + rowWeights[1]) {
-                chosenRow = 'middle';
-            } else {
-                chosenRow = 'back';
-            }
-
-            console.log('Selected card:', chosenCard.name);
-            console.log('Selected row:', chosenRow);
-
-            return {
-                type: 'play_card',
-                card: chosenCard,
-                row: chosenRow,
-                reasoning: `Easy AI: Playing ${chosenCard.name} in ${chosenRow} row (casual play)`
-            };
-        }
-
-        console.log('Easy AI: No cards to play or chose to wait');
-        return {
-            type: 'wait',
-            reasoning: 'Easy AI: Ending turn'
-        };
-    }
-
-    // Medium AI decision making
-    makeMediumDecision(analysis) {
-        console.log('Medium AI Decision Making:');
-        console.log('Player 2 Hand Length:', analysis.player2Hand.length);
-
-        // Strategic with some randomization
-        if (analysis.player2Hand.length > 0) {
-            // Evaluate all cards and build weighted choices
-            const cardEvaluations = [];
-
-            analysis.player2Hand.forEach(card => {
-                const opportunity = this.evaluateCardOpportunity(card);
-                console.log(`Card ${card.name}: base score ${opportunity.score}, recommended row: ${opportunity.recommendedRow}`);
-
-                // Add personality-based scoring
-                let adjustedScore = opportunity.score;
-
-                if (this.personality === AI_PERSONALITY.AGGRESSIVE) {
-                    // Prefer high power cards and front row
-                    adjustedScore += (card.front_power || 0) * 0.3;
-                    adjustedScore += (card.health || 0) * 0.15; // Value survivability
-                    console.log(`Aggressive personality: boosting score by power/health`);
-                } else if (this.personality === AI_PERSONALITY.CALCULATED) {
-                    // Prefer synergy cards and strategic positioning
-                    const cardSynergy = (card.synergy?.f || 0) + (card.synergy?.m || 0) + (card.synergy?.b || 0);
-                    adjustedScore += cardSynergy * 0.2;
-                    // Prefer cards with on-enter abilities (calculated play)
-                    if (card.on_enter1 || card.on_enter2) {
-                        adjustedScore *= 1.15;
-                    }
-                    console.log(`Calculated personality: boosting score by synergy/abilities`);
-                } else {
-                    // Balanced - slight boost to versatile cards
-                    const avgPower = ((card.front_power || 0) + (card.middle_power || 0) + (card.back_power || 0)) / 3;
-                    const avgSynergy = ((card.synergy?.f || 0) + (card.synergy?.m || 0) + (card.synergy?.b || 0)) / 3;
-                    adjustedScore += (avgPower + avgSynergy) * 0.1;
-                }
-
-                console.log(`Card ${card.name}: adjusted score ${adjustedScore}`);
-
-                cardEvaluations.push({
-                    card,
-                    row: opportunity.recommendedRow,
-                    score: adjustedScore
-                });
-            });
-
-            // Sort by score
-            cardEvaluations.sort((a, b) => b.score - a.score);
-
-            console.log('All card evaluations:', cardEvaluations.map(e => `${e.card.name}: ${e.score.toFixed(1)}`));
-
-            // 70% chance to pick best, 20% second best, 10% random (human-like imperfection)
-            const rand = this.rng.next();
-            let chosenEval;
-            if (rand < 0.7 && cardEvaluations.length > 0) {
-                chosenEval = cardEvaluations[0];
-            } else if (rand < 0.9 && cardEvaluations.length > 1) {
-                chosenEval = cardEvaluations[1];
-            } else {
-                chosenEval = cardEvaluations[Math.floor(this.rng.next() * cardEvaluations.length)];
-            }
-
-            console.log('Chosen card:', chosenEval?.card?.name, 'score:', chosenEval?.score);
-            console.log('Score threshold check:', chosenEval?.score, '> 0.25 =', chosenEval?.score > 0.25);
-
-            // Try to use an ability if no good card play exists and enemy has threats
-            if (!chosenEval || chosenEval.score <= 0.25) {
-                const enemyBoard = analysis.player1Board;
-                const hasThreats = Object.values(enemyBoard).some(arr => (arr||[]).length > 0);
-                if (hasThreats) {
-                    // Minimal heuristic: use ability of the highest impact card in hand if available
-                    const abilityUser = analysis.player2Hand.find(c => c.on_enter1 || c.on_enter2 || c.ultimate);
-                    if (abilityUser) {
-                        const abilityKey = abilityUser.on_enter1 ? 'on_enter1' : (abilityUser.on_enter2 ? 'on_enter2' : 'ultimate');
-                        return {
-                            type: abilityKey === 'ultimate' ? 'use_ultimate' : 'use_ability',
-                            card: abilityUser,
-                            ability: abilityKey,
-                            reasoning: 'Medium AI: Using ability due to low quality card plays'
-                        };
-                    }
-                }
-            }
-
-            // Lower threshold - Medium AI should play if score > 0.25 (very low threshold to ensure it plays)
-            if (chosenEval && chosenEval.score > 0.25) {
-                const balancedRow = this.chooseBalancedRow(chosenEval.row);
-                if (!balancedRow) {
-                    console.log('No available row under cap; skipping play.');
-                    return { type: 'wait', reasoning: 'No available row under cap' };
-                }
-                return {
-                    type: 'play_card',
-                    card: chosenEval.card,
-                    row: balancedRow,
-                    reasoning: `Medium AI (${this.personality}): Playing ${chosenEval.card.name} in ${balancedRow} row (score: ${chosenEval.score.toFixed(1)})`
-                };
-            }
-        }
-
-        console.log('Medium AI: No cards with sufficient score');
-        return {
-            type: 'wait',
-            reasoning: 'Medium AI: Ending turn'
-        };
-    }
-
-    // Hard AI decision making
-    makeHardDecision(analysis) {
+    /**
+     * Plans one action.
+     *
+     * The only planner. It used to be the "hard" one of three, and still holds
+     * the looser branches that were written for the easy and medium tiers —
+     * those never ran, because the tier switch had already routed those
+     * difficulties to their own routines. They are live now, driven by the
+     * turn's rolled profile instead of a fixed setting.
+     */
+    makePlan(analysis) {
         this.turnNumber++;
         console.log(`===== HARD AI TURN ${this.turnNumber} =====`);
 
@@ -867,6 +691,7 @@ class AIController {
 
             // Filter cards based on hold logic (difficulty-adjusted)
             const playableCards = analysis.player2Hand.filter(card => {
+                if (isRedeployLocked(card, window.__ow_getTurnCount?.())) return false;
                 // DESPERATION MODE: Play everything, ignore holds
                 if (desperationMode) {
                     console.log(`⚠️ Desperation: Playing ${card.name} (no holds)`);
@@ -884,15 +709,15 @@ class AIController {
                     return true;
                 }
 
-                // Easy/Medium AI: Disable combo planning, only hold supports with no board
-                if (this.difficulty === 'easy' || this.difficulty === 'medium') {
-                    // Only apply basic holds (supports needing allies)
+                // Some turns it plans combos, some turns it just plays out. On a
+                // no-combo turn it still holds a support that has nobody to support.
+                if (!this.profile.holdsForCombos) {
                     const boardSize = aiBoard.front.length + aiBoard.middle.length + aiBoard.back.length;
                     if (boardSize === 0 && ['ana', 'mercy', 'brigitte', 'zenyatta', 'lifeweaver'].includes(card.id)) {
-                        console.log(`Holding ${card.name} - needs allies on board (${this.difficulty} AI)`);
+                        console.log(`Holding ${card.name} - needs allies on board`);
                         return false;
                     }
-                    return true; // Don't hold for combos
+                    return true;
                 }
 
                 // Hard AI: Full strategic holding
@@ -1021,7 +846,7 @@ class AIController {
                 const cardSynergy = (card.synergy?.f || 0) + (card.synergy?.m || 0) + (card.synergy?.b || 0);
 
                 // If we have a small board, prioritize synergy generators
-                if (this.difficulty === 'hard') {
+                {
                     if (currentBoardSize <= 1 && cardSynergy >= 2) {
                         strategicMultiplier += 0.4; // Play synergy generators first
                         console.log(`Sequencing bonus: ${card.name} (+0.4) - synergy generator played early`);
@@ -1041,7 +866,7 @@ class AIController {
                 }
 
                 // ROLE-BASED SEQUENCING: Play tanks first for protection
-                if (this.difficulty === 'hard' && currentBoardSize === 0) {
+                if (currentBoardSize === 0) {
                     if (card.role === 'Tank') {
                         strategicMultiplier += 0.35;
                         console.log(`Sequencing bonus: ${card.name} (+0.35) - tank played first for protection`);
@@ -1078,24 +903,14 @@ class AIController {
                     strategicMultiplier += synergy * 0.08;
                 }
 
-                // Apply difficulty-based scoring adjustments
-                let difficultyAdjusted = opportunity.score * strategicMultiplier;
+                // This turn's judgement, blurred by this turn's noise.
+                const totalScore = noisyScore(
+                    opportunity.score * strategicMultiplier,
+                    this.profile,
+                    () => this.rng.next(),
+                );
 
-                // Easy AI: Add random noise (-30% to +30%) to make decisions less consistent
-                if (this.difficulty === 'easy') {
-                    const noise = (this.rng.next() * 0.6 - 0.3); // -0.3 to +0.3
-                    difficultyAdjusted *= (1 + noise);
-                }
-
-                // Medium AI: Add smaller random noise (-15% to +15%)
-                if (this.difficulty === 'medium') {
-                    const noise = (this.rng.next() * 0.3 - 0.15); // -0.15 to +0.15
-                    difficultyAdjusted *= (1 + noise);
-                }
-
-                const totalScore = difficultyAdjusted;
-
-                console.log(`Evaluating ${card.name}: base=${opportunity.score.toFixed(1)}, multiplier=${strategicMultiplier.toFixed(2)}, total=${totalScore.toFixed(1)}, smartRow=${smartRow} (${this.difficulty} AI)`);
+                console.log(`Evaluating ${card.name}: base=${opportunity.score.toFixed(1)}, multiplier=${strategicMultiplier.toFixed(2)}, total=${totalScore.toFixed(1)}, smartRow=${smartRow}`);
 
                 cardEvaluations.push({
                     card,
@@ -1107,40 +922,14 @@ class AIController {
             // Sort by score
             cardEvaluations.sort((a, b) => b.score - a.score);
 
-            // Difficulty-based card selection
-            const rand = this.rng.next();
-            let chosenEval;
-
-            if (this.difficulty === 'easy') {
-                // Easy AI: 30% best, 70% random (very inconsistent)
-                if (rand < 0.30 && cardEvaluations.length > 0) {
-                    chosenEval = cardEvaluations[0];
-                } else {
-                    const randomIndex = Math.floor(this.rng.next() * cardEvaluations.length);
-                    chosenEval = cardEvaluations[randomIndex];
-                }
-            } else if (this.difficulty === 'medium') {
-                // Medium AI: 60% best, 30% second best, 10% random
-                if (rand < 0.60 && cardEvaluations.length > 0) {
-                    chosenEval = cardEvaluations[0];
-                } else if (rand < 0.90 && cardEvaluations.length > 1) {
-                    chosenEval = cardEvaluations[1];
-                } else {
-                    const randomIndex = Math.floor(this.rng.next() * Math.min(3, cardEvaluations.length));
-                    chosenEval = cardEvaluations[randomIndex];
-                }
-            } else {
-                // Hard AI: 90% best, 8% second best, 2% third best (unchanged)
-                if (rand < 0.90 && cardEvaluations.length > 0) {
-                    chosenEval = cardEvaluations[0];
-                } else if (rand < 0.98 && cardEvaluations.length > 1) {
-                    chosenEval = cardEvaluations[1];
-                } else if (cardEvaluations.length > 2) {
-                    chosenEval = cardEvaluations[2];
-                } else {
-                    chosenEval = cardEvaluations[0];
-                }
-            }
+            // One ladder. How often it takes the best card is the profile's
+            // `bestPickChance`, which spans the three the tiers used to hold.
+            const chosenIndex = pickFromRanked(
+                cardEvaluations.length,
+                this.profile,
+                () => this.rng.next(),
+            );
+            const chosenEval = cardEvaluations[chosenIndex] || cardEvaluations[0];
 
             if (chosenEval && chosenEval.score > 0.2) {
                 const balancedRow = this.chooseBalancedRow(chosenEval.row);
@@ -1260,13 +1049,6 @@ class AIController {
         }
     }
 
-    // Set difficulty level
-    setDifficulty(difficulty) {
-        this.difficulty = difficulty;
-        this.decisionDelay = this.getDecisionDelay();
-        console.log(`AI difficulty changed to: ${difficulty}`);
-    }
-
     // Set personality type
     setPersonality(personality) {
         this.personality = personality;
@@ -1276,8 +1058,8 @@ class AIController {
     // Get current AI status
     getStatus() {
         return {
-            difficulty: this.difficulty,
             personality: this.personality,
+            profile: this.profile,
             isActive: this.isActive,
             decisionDelay: this.decisionDelay
         };

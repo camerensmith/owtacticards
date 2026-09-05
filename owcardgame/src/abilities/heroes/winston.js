@@ -1,9 +1,8 @@
-import { selectRowTarget } from '../engine/targeting';
-import { selectCardTarget } from '../engine/targeting';
 import { showMessage as showToast, clearMessage as clearToast } from '../engine/targetingBus';
 import { playAudioByKey } from '../../assets/imageImports';
 import { dealDamage } from '../engine/damageBus';
 import effectsBus, { Effects } from '../engine/effectsBus';
+import { planPrimalRage } from '../../game/rosterRules';
 
 export function onEnter({ playerHeroId, rowId }) {
     const playerNum = parseInt(playerHeroId[0]);
@@ -31,153 +30,55 @@ export function onEnter({ playerHeroId, rowId }) {
     setTimeout(() => clearToast(), 2000);
 }
 
-export async function onUltimate({ playerHeroId, rowId, cost }) {
-    const playerNum = parseInt(playerHeroId[0]);
+export async function onUltimate({ playerHeroId, rowId }) {
+    const playerNum = parseInt(playerHeroId[0], 10);
     const enemyPlayer = playerNum === 1 ? 2 : 1;
-    
-    console.log('Winston Ultimate: Starting Primal Rage for', playerHeroId, 'in row', rowId);
-    
-    try {
-        playAudioByKey('winston-ultimate');
-    } catch {}
+    const friendlyRowIds = [`${playerNum}f`, `${playerNum}m`, `${playerNum}b`];
+    const enemyRowIds = [`${enemyPlayer}f`, `${enemyPlayer}m`, `${enemyPlayer}b`];
 
-    // AI: auto-select best friendly row and enemy row to strike
-    if (window.__ow_aiTriggering || window.__ow_isAITurn) {
-        const friendlyRows = [`${playerNum}f`, `${playerNum}m`, `${playerNum}b`];
-        let bestFriendlyRow = rowId; // default to current row
-        let bestScore = -1;
-        for (const r of friendlyRows) {
-            if (window.__ow_isRowFull?.(r) && r !== rowId) continue;
-            const pos = r[1];
-            const friendlyCount = window.__ow_getRow?.(r)?.cardIds?.length || 0;
-            const enemyOpposingCount = window.__ow_getRow?.(`${enemyPlayer}${pos}`)?.cardIds?.length || 0;
-            const score = friendlyCount + enemyOpposingCount;
-            if (score > bestScore) { bestScore = score; bestFriendlyRow = r; }
-        }
+    try { playAudioByKey('winston-ultimate'); } catch {}
 
-        // Move Winston to chosen row
-        if (bestFriendlyRow !== rowId) {
-            window.__ow_moveCardToRow?.(playerHeroId, bestFriendlyRow);
-        }
-
-        // Determine targetable enemy rows from new position
-        const winstonPos = bestFriendlyRow[1];
-        let targetableEnemyRows = [];
-        if (winstonPos === 'f') {
-            targetableEnemyRows = [`${enemyPlayer}m`];
-        } else if (winstonPos === 'm') {
-            targetableEnemyRows = [`${enemyPlayer}f`, `${enemyPlayer}b`];
-        } else if (winstonPos === 'b') {
-            targetableEnemyRows = [`${enemyPlayer}m`];
-        }
-
-        // Pick enemy row with most living enemies
-        let bestEnemyRow = targetableEnemyRows[0];
-        let maxEnemies = -1;
-        for (const r of targetableEnemyRows) {
-            const rowData = window.__ow_getRow?.(r);
-            const living = rowData?.cardIds?.filter(cid => (window.__ow_getCard?.(cid)?.health || 0) > 0) || [];
-            const count = living.length;
-            if (count > maxEnemies) { maxEnemies = count; bestEnemyRow = r; }
-        }
-        if (bestEnemyRow) {
-            strikeEnemyRow(bestEnemyRow, playerHeroId);
-        }
-        return;
-    }
-    
-    showToast('Winston: Select row to move to');
-    const targetRow = await selectRowTarget({ isBuff: true });
-    
-    console.log('Winston Ultimate: Target row selected:', targetRow);
-    
-    if (targetRow) {
-        // Validate it's Winston's side
-        const targetPlayerNum = parseInt(targetRow.rowId[0]);
-        if (targetPlayerNum !== playerNum) {
-            showToast('Winston: Can only move to your own rows');
-            setTimeout(() => clearToast(), 1500);
-            return;
-        }
-        
-        // Move Winston to target row
-        window.__ow_moveCardToRow?.(playerHeroId, targetRow.rowId);
-        
-        // Determine which enemy rows Winston can strike
-        const winstonRowPosition = targetRow.rowId[1]; // 'f', 'm', 'b'
-        let targetableEnemyRows = [];
-        
-        console.log('Winston Ultimate: Winston moved to row position', winstonRowPosition, 'player', playerNum);
-        
-        if (winstonRowPosition === 'f') {
-            // Front row can strike middle row
-            targetableEnemyRows = [`${playerNum === 1 ? 2 : 1}m`];
-        } else if (winstonRowPosition === 'm') {
-            // Middle row can strike front OR back row
-            targetableEnemyRows = [`${playerNum === 1 ? 2 : 1}f`, `${playerNum === 1 ? 2 : 1}b`];
-        } else if (winstonRowPosition === 'b') {
-            // Back row can strike middle row
-            targetableEnemyRows = [`${playerNum === 1 ? 2 : 1}m`];
-        }
-        
-        console.log('Winston Ultimate: Targetable enemy rows:', targetableEnemyRows);
-        
-        if (targetableEnemyRows.length === 1) {
-            // Only one target row, strike it automatically
-            const enemyRowId = targetableEnemyRows[0];
-            strikeEnemyRow(enemyRowId, playerHeroId);
-        } else {
-            // Multiple target rows, let player choose
-            showToast('Winston: Select enemy row to strike');
-            const strikeTarget = await selectRowTarget({ isDamage: true });
-            
-            if (strikeTarget && targetableEnemyRows.includes(strikeTarget.rowId)) {
-                strikeEnemyRow(strikeTarget.rowId, playerHeroId);
-            } else {
-                showToast('Winston: Invalid target row');
-                setTimeout(() => clearToast(), 1500);
-            }
-        }
-    } else {
-        showToast('Winston: Primal Rage cancelled');
-        setTimeout(() => clearToast(), 1500);
-    }
-}
-
-function strikeEnemyRow(enemyRowId, playerHeroId) {
-    console.log('Winston Ultimate: Striking enemy row', enemyRowId);
-    
-    try {
-        playAudioByKey('winston-ultimate-resolve');
-    } catch {}
-    
-    // Deal 2 damage to all living enemies in the target row
-    const enemyRow = window.__ow_getRow?.(enemyRowId);
-    console.log('Winston Ultimate: Enemy row data:', enemyRow);
-    
-    if (enemyRow && enemyRow.cardIds) {
-        let enemiesStruck = 0;
-        
-        console.log('Winston Ultimate: Processing', enemyRow.cardIds.length, 'cards in row');
-        
-        enemyRow.cardIds.forEach(cardId => {
+    const occupancy = {};
+    const enemies = [];
+    [...friendlyRowIds, ...enemyRowIds].forEach((rid) => {
+        const ids = window.__ow_getRow?.(rid)?.cardIds || [];
+        occupancy[rid] = ids.length;
+        if (!enemyRowIds.includes(rid)) return;
+        ids.forEach((cardId) => {
             const card = window.__ow_getCard?.(cardId);
-            console.log('Winston Ultimate: Checking card', cardId, 'health:', card?.health);
-            
-            if (card && card.health > 0) {
-                console.log('Winston Ultimate: Dealing 2 damage to', cardId);
-                dealDamage(cardId, enemyRowId, 2, false, playerHeroId);
-                effectsBus.publish(Effects.showDamage(cardId, 2));
-                enemiesStruck++;
-            }
+            if (card && card.health > 0) enemies.push({ cardId, rowId: rid, health: card.health });
         });
-        
-        console.log('Winston Ultimate: Struck', enemiesStruck, 'enemies');
-        showToast(`Winston: Primal Rage struck ${enemiesStruck} enemies!`);
-        setTimeout(() => clearToast(), 2000);
-    } else {
-        console.log('Winston Ultimate: No enemy row found or no cards in row');
+    });
+
+    const plan = planPrimalRage({
+        winstonRowId: rowId,
+        friendlyRowIds,
+        enemyRowIds,
+        enemies,
+        occupancy,
+    });
+
+    if (plan.leapRowId && plan.leapRowId !== rowId) {
+        window.__ow_moveCardToRow?.(playerHeroId, plan.leapRowId);
     }
+
+    try { playAudioByKey('winston-ultimate-resolve'); } catch {}
+    try { effectsBus.publish(Effects.primalRage(playerHeroId, plan.leapRowId)); } catch {}
+
+    const shuffledIds = [];
+    plan.shuffles.forEach((shuffle) => {
+        if (shuffle.destRowId !== shuffle.fromRowId) {
+            window.__ow_moveCardToRow?.(shuffle.cardId, shuffle.destRowId);
+            try { effectsBus.publish(Effects.push(shuffle.cardId, shuffle.fromRowId, shuffle.destRowId)); } catch {}
+        }
+        dealDamage(shuffle.cardId, shuffle.destRowId, shuffle.damage, false, playerHeroId, false, { skipProjectileFx: true });
+        try { effectsBus.publish(Effects.showDamage(shuffle.cardId, shuffle.damage)); } catch {}
+        shuffledIds.push(shuffle.cardId);
+    });
+
+    try { effectsBus.publish(Effects.tectonic(shuffledIds)); } catch {}
+    showToast(`Winston: Primal Rage shuffled ${plan.shuffles.length} ${plan.shuffles.length === 1 ? 'enemy' : 'enemies'}`);
+    setTimeout(() => clearToast(), 2000);
 }
 
 // Toggle function for Barrier Protector

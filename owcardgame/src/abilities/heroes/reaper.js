@@ -4,6 +4,16 @@ import effectsBus, { Effects } from '../engine/effectsBus';
 import { showMessage as showToast, clearMessage as clearToast } from '../engine/targetingBus';
 import { playAudioByKey } from '../../assets/imageImports';
 import { withAIContext } from '../engine/aiContextHelper';
+import {
+    BLOSSOM_DAMAGE_PER_TARGET,
+    buildBlossomTicks,
+    deathBlossomTargets,
+} from '../../game/reaperRules';
+import { BLOSSOM } from '../../presentation/pixi/fxConfig';
+
+function waitMs(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 // Hellfire Shotguns - onEnter
 export async function onEnter({ playerHeroId, rowId }) {
@@ -83,7 +93,8 @@ async function handleSingleTarget(playerHeroId, rowId, playerNum) {
         }
         
         // Deal 3 damage (respects shields)
-        dealDamage(targetCardId, opposingRowId, 3, false, playerHeroId);
+        try { effectsBus.publish(Effects.pellets(playerHeroId, targetCardId)); } catch {}
+        dealDamage(targetCardId, opposingRowId, 3, false, playerHeroId, false, { skipProjectileFx: true });
         try { effectsBus.publish(Effects.showDamage(targetCardId, 3)); } catch {}
         
         showToast('Reaper: Hellfire Shotguns fired!');
@@ -137,7 +148,8 @@ async function handleSplitTarget(playerHeroId, rowId, playerNum) {
         }
         
         // Deal 2 damage to primary target (respects shields)
-        dealDamage(primaryTargetId, opposingRowId, 2, false, playerHeroId);
+        try { effectsBus.publish(Effects.pellets(playerHeroId, primaryTargetId)); } catch {}
+        dealDamage(primaryTargetId, opposingRowId, 2, false, playerHeroId, false, { skipProjectileFx: true });
         try { effectsBus.publish(Effects.showDamage(primaryTargetId, 2)); } catch {}
         
         // Find enemy directly behind primary target
@@ -157,7 +169,8 @@ async function handleSplitTarget(playerHeroId, rowId, playerNum) {
                 
                 if (behindTarget && behindTarget.health > 0) {
                     // Deal 1 damage to enemy behind (respects shields)
-                    dealDamage(behindTargetId, behindRowId, 1, false, playerHeroId);
+                    try { effectsBus.publish(Effects.pellets(playerHeroId, behindTargetId)); } catch {}
+                    dealDamage(behindTargetId, behindRowId, 1, false, playerHeroId, false, { skipProjectileFx: true });
                     try { effectsBus.publish(Effects.showDamage(behindTargetId, 1)); } catch {}
                 }
             }
@@ -182,6 +195,9 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
         playAudioByKey('reaper-ultimate');
     } catch {}
     
+    // Hoisted so the cleanup below can close the blossom on any exit path.
+    let blossomRowId = null;
+
     try {
         // Get Reaper's current position
         const reaperRow = window.__ow_getRow?.(rowId);
@@ -190,68 +206,69 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
             setTimeout(() => clearToast(), 1500);
             return;
         }
-        
-        // Find opposing row
+
+        // Death Blossom lands at the centre of the enemy's middle row and
+        // catches the two centre columns across all three rows.
         const enemyPlayer = playerNum === 1 ? 2 : 1;
-        const rowType = rowId[1]; // f, m, or b
-        const opposingRowId = `${enemyPlayer}${rowType}`;
-        const opposingRow = window.__ow_getRow?.(opposingRowId);
-        
-        if (!opposingRow) {
-            showToast('Reaper: No opposing row found');
-            setTimeout(() => clearToast(), 1500);
-            return;
-        }
-        
+        blossomRowId = `${enemyPlayer}m`;
+        const targets = deathBlossomTargets(
+            enemyPlayer,
+            window.__ow_getRow,
+            window.__ow_getCard,
+        );
+
         // AI gating: only use if 2+ living enemies in opposing row
         if (window.__ow_aiTriggering || window.__ow_isAITurn) {
-            const enemyCount = opposingRow.cardIds.filter(cid => {
-                const c = window.__ow_getCard?.(cid);
-                return c && c.health > 0;
-            }).length;
-            if (enemyCount < 2) {
-                showToast('Reaper AI: Skipping Death Blossom (need 2+ enemies in row)');
+            if (targets.length < 2) {
+                showToast('Reaper AI: Skipping Death Blossom (need 2+ enemies in the blast)');
                 setTimeout(() => clearToast(), 1500);
                 return;
             }
         }
 
-        // Deal 3 damage to all living enemies in opposing row (ignores shields)
-        const livingEnemies = opposingRow.cardIds.filter(cardId => {
-            const card = window.__ow_getCard?.(cardId);
-            return card && card.health > 0;
-        });
-        
-        if (livingEnemies.length === 0) {
-            showToast('Reaper: No living enemies in opposing row');
+        if (targets.length === 0) {
+            showToast('Reaper: No enemies caught in the blast');
             setTimeout(() => clearToast(), 1500);
             return;
         }
-        
-        // Deal damage to all enemies
-        livingEnemies.forEach(enemyCardId => {
-            dealDamage(enemyCardId, opposingRowId, 3, true, playerHeroId); // ignoreShields = true
-            try { effectsBus.publish(Effects.showDamage(enemyCardId, 3)); } catch {}
-        });
-        
-        // Play ultimate resolve sound
-        try {
-            playAudioByKey('reaper-ultimate-resolve');
-        } catch {}
-        
-        showToast(`Reaper: Death Blossom hit ${livingEnemies.length} enemies!`);
+
+        try { effectsBus.publish(Effects.deathBlossom(blossomRowId, true)); } catch {}
+        try { playAudioByKey('reaper-ultimate-resolve'); } catch {}
+
+        // The blast lands one point at a time in a random order. The shuffle only
+        // changes the order, so every target still takes the full amount.
+        const ticks = buildBlossomTicks(targets, BLOSSOM_DAMAGE_PER_TARGET);
+        for (const target of ticks) {
+            const card = window.__ow_getCard?.(target.cardId);
+            if (!card || (card.health || 0) <= 0) continue;
+            // fixedDamage: the blast is exactly 3 per target. Without it every
+            // tick would re-apply per-hit modifiers (Discord, Mercy boost,
+            // Widowmaker) so a boosted target took them three times over.
+            // The blossom spinning in the row is the effect; without this each
+            // of the three ticks per target fires a beam from Reaper as well.
+            dealDamage(target.cardId, target.rowId, 1, true, playerHeroId, true, { skipProjectileFx: true });
+            try { effectsBus.publish(Effects.showDamage(target.cardId, 1)); } catch {}
+            await waitMs(BLOSSOM.tickMs);
+        }
+
+        showToast(`Reaper: Death Blossom hit ${targets.length} enemies!`);
         setTimeout(() => clearToast(), 2000);
-        
+
         // Discard Reaper after damage is dealt
         window.__ow_dispatchAction?.({
             type: 'remove-alive-card',
             payload: { cardId: playerHeroId }
         });
-        
+
     } catch (error) {
         console.error('Reaper ultimate error:', error);
         showToast('Reaper: Ultimate failed');
         setTimeout(() => clearToast(), 1500);
+    } finally {
+        // Must close on every path, or the blossom spins over the board forever.
+        if (blossomRowId) {
+            try { effectsBus.publish(Effects.deathBlossom(blossomRowId, false)); } catch {}
+        }
     }
 }
 

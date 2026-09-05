@@ -1,0 +1,183 @@
+/* Sandbox card-injection panel. Floats over the board in practice mode. */
+
+.practice-panel {
+    position: fixed;
+    top: 50%;
+    right: 0;
+    transform: translateY(-50%);
+    z-index: 9000;
+    display: flex;
+    align-items: flex-start;
+    font-family: system-ui, sans-serif;
+}
+
+.practice-toggle {
+    flex: 0 0 auto;
+    width: 34px;
+    padding: 14px 0;
+    background: var(--ow-dark-blue, #2e3651);
+    border: 2px solid #1b2035;
+    border-right: 0;
+    border-radius: 5px 0 0 5px;
+    color: #ffcc6a;
+    font-family: Big-Noodle-Titling, 'Arial Narrow', sans-serif;
+    font-size: 15px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    writing-mode: vertical-rl;
+    cursor: pointer;
+}
+
+.practice-toggle:hover {
+    background: #3b4568;
+}
+
+.practice-body {
+    width: 320px;
+    max-height: 78vh;
+    display: flex;
+    flex-direction: column;
+    background: #f4f2f1;
+    border: 3px solid var(--ow-dark-blue, #2e3651);
+    box-shadow: -6px 0 24px rgba(0, 0, 0, 0.4);
+}
+
+.practice-head {
+    padding: 10px 12px;
+    background: var(--ow-dark-blue, #2e3651);
+    color: #fff;
+}
+
+.practice-head h3 {
+    margin: 0;
+    font-family: Big-Noodle-Titling, 'Arial Narrow', sans-serif;
+    font-size: 22px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.practice-head p {
+    margin: 2px 0 0;
+    font-size: 11px;
+    opacity: 0.75;
+}
+
+.practice-controls {
+    padding: 10px 12px;
+    border-bottom: 2px solid #d6d2cf;
+}
+
+.practice-sides {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.practice-side {
+    flex: 1;
+    padding: 7px 0;
+    background: #e4e1df;
+    border: 2px solid #c3bdb8;
+    color: #4a4a4a;
+    font-family: Big-Noodle-Titling, 'Arial Narrow', sans-serif;
+    font-size: 17px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background-color 0.12s, border-color 0.12s, color 0.12s;
+}
+
+.practice-side:hover {
+    border-color: #8d8681;
+}
+
+.practice-side.is-active {
+    background: var(--ow-dark-blue, #2e3651);
+    border-color: #1b2035;
+    color: #ffcc6a;
+}
+
+.practice-search {
+    width: 100%;
+    padding: 7px 9px;
+    border: 2px solid #c3bdb8;
+    font-size: 13px;
+}
+
+.practice-search:focus {
+    outline: none;
+    border-color: var(--ow-dark-blue, #2e3651);
+}
+
+.practice-list {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: 8px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+    gap: 7px;
+    align-content: start;
+}
+
+.practice-card {
+    padding: 0;
+    background: transparent;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: transform 0.12s, border-color 0.12s;
+}
+
+.practice-card img {
+    display: block;
+    width: 100%;
+    border-radius: 2px;
+}
+
+.practice-card:hover:not(:disabled) {
+    transform: translateY(-2px);
+    border-color: #ffcc6a;
+}
+
+.practice-card:disabled {
+    cursor: not-allowed;
+    opacity: 0.35;
+}
+
+.practice-card span {
+    display: block;
+    margin-top: 2px;
+    font-family: Big-Noodle-Titling, 'Arial Narrow', sans-serif;
+    font-size: 13px;
+    line-height: 1.1;
+    text-align: center;
+    text-transform: uppercase;
+    color: #333;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.practice-special {
+    color: #8a5cc4;
+}
+
+.practice-empty {
+    grid-column: 1 / -1;
+    padding: 16px 4px;
+    text-align: center;
+    font-size: 12px;
+    color: #777;
+}
+
+.practice-foot {
+    padding: 8px 12px;
+    border-top: 2px solid #d6d2cf;
+    font-size: 11px;
+    color: #666;
+}
+
+@media (max-width: 900px) {
+    .practice-body {
+        width: 240px;
+    }
+}

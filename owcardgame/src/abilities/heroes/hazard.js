@@ -33,14 +33,18 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
     const enemyRows = [`${enemyPlayer}f`, `${enemyPlayer}m`, `${enemyPlayer}b`];
     let enemiesHit = 0;
 
+    // Crystal rain across the whole enemy side.
+    try { effectsBus.publish(Effects.crystalRain(enemyPlayer)); } catch {}
+
     for (const erow of enemyRows) {
         const row = window.__ow_getRow?.(erow);
         if (!row || !row.cardIds) continue;
         for (const cid of row.cardIds) {
             const card = window.__ow_getCard?.(cid);
             if (card && card.health > 0) {
-                dealDamage(cid, erow, 1, true, playerHeroId); // ignoreShields = true
+                dealDamage(cid, erow, 1, true, playerHeroId, false, { skipProjectileFx: true });
                 try { effectsBus.publish(Effects.showDamage(cid, 1)); } catch {}
+                try { effectsBus.publish(Effects.impact(cid)); } catch {}
                 enemiesHit++;
             }
         }

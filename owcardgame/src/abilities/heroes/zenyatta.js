@@ -15,7 +15,7 @@ function placeHarmonyToken(cardId, ownerPlayerNum) {
         type: 'harmony',
         sourceCardId: cardId,
         ownerPlayerNum,
-        tooltip: 'Harmony: Heals 1 health at start of turn, then jumps to another ally',
+        tooltip: 'Harmony Orb: Heals 1 at the start of your turn, then jumps to a new ally. Discarded if the ally dies with it.',
         visual: 'harmony'
     };
     
@@ -31,7 +31,7 @@ function placeDiscordToken(cardId, ownerPlayerNum) {
         type: 'discord',
         sourceCardId: cardId,
         ownerPlayerNum,
-        tooltip: 'Discord: Target takes +1 damage from attacks, jumps to another enemy at start of their turn',
+        tooltip: 'Discord Orb: +1 damage from attacks. Jumps to a new enemy at the start of their turn. Discarded if the enemy dies with it.',
         visual: 'discord'
     };
     
@@ -108,12 +108,12 @@ export async function onEnter({ playerHeroId, rowId }) {
     const harmonyChoice = {
         name: 'Harmony',
         title: 'Harmony',
-        description: 'Heal ally and place token. Token heals 1 health at start of turn and jumps to another ally.'
+        description: 'Place Harmony Orb on an ally. They heal 1 at the start of your turn, then the orb jumps to a new ally. Discarded if they die with it.'
     };
     const discordChoice = {
         name: 'Discord',
         title: 'Discord',
-        description: 'Damage amplify enemy and place token. Target takes +1 damage from attacks, token jumps to another enemy at start of their turn.'
+        description: 'Place Discord Orb on an enemy. They take +1 from attacks. The orb jumps to a new enemy at the start of their turn. Discarded if they die with it.'
     };
 
     showOnEnterChoice('Zenyatta', harmonyChoice, discordChoice, async (choiceIndex) => {
@@ -358,6 +358,12 @@ export function processHarmonyJump(cardId) {
     );
     
     if (!harmonyToken) return;
+
+    // Printed: orb is discarded if the ally dies with it — it does not jump.
+    if ((card.health || 0) <= 0) {
+        window.__ow_removeCardEffect?.(cardId, harmonyToken.id);
+        return;
+    }
     
     // Heal the target
     const currentHealth = card.health;
@@ -375,13 +381,15 @@ export function processHarmonyJump(cardId) {
     const owner = typeof harmonyToken.ownerPlayerNum === 'number' ? harmonyToken.ownerPlayerNum : parseInt(cardId[0]);
     const newTarget = findRandomAlly(cardId, owner);
     
+    // Remove from the current holder either way: the orb always leaves.
+    window.__ow_removeCardEffect?.(cardId, harmonyToken.id);
+
     if (newTarget) {
-        // Remove token from current target
-        window.__ow_removeCardEffect?.(cardId, harmonyToken.id);
-        
-        // Place token on new target preserving owner
         placeHarmonyToken(newTarget.cardId, owner);
         console.log(`Harmony: Jumped from ${cardId} to ${newTarget.cardId}`);
+    } else {
+        // Nowhere left to go — the orb winks out rather than sticking.
+        console.log(`Harmony: No ally left to jump to; orb discarded from ${cardId}`);
     }
 }
 
@@ -394,18 +402,24 @@ export function processDiscordJump(cardId) {
     );
     
     if (!discordToken) return;
+
+    // Printed: discarded if the enemy dies whilst afflicted — it does not jump.
+    if ((card.health || 0) <= 0) {
+        window.__ow_removeCardEffect?.(cardId, discordToken.id);
+        return;
+    }
     
     // Try to jump to another enemy using token owner
     const owner = typeof discordToken.ownerPlayerNum === 'number' ? discordToken.ownerPlayerNum : (3 - parseInt(cardId[0]));
     const newTarget = findRandomEnemy(cardId, owner);
     
+    window.__ow_removeCardEffect?.(cardId, discordToken.id);
+
     if (newTarget) {
-        // Remove token from current target
-        window.__ow_removeCardEffect?.(cardId, discordToken.id);
-        
-        // Place token on new target preserving owner
         placeDiscordToken(newTarget.cardId, owner);
         console.log(`Discord: Jumped from ${cardId} to ${newTarget.cardId}`);
+    } else {
+        console.log(`Discord: No enemy left to jump to; orb discarded from ${cardId}`);
     }
 }
 

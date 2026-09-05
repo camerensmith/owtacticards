@@ -46,6 +46,10 @@ export async function onEnter({ playerHeroId, rowId }) {
         try {
             playAudioByKey('sombra-ability1');
         } catch {}
+
+        // Binary runs over the hacked card. The board-wide version of this is
+        // E.M.P.; Hack takes one hero, and should not look like the ultimate.
+        try { effectsBus.publish(Effects.hack(randomEnemy.cardId)); } catch {}
         
         let removedShields = 0;
         let removedTokens = 0;
@@ -126,6 +130,10 @@ export async function onEnter({ playerHeroId, rowId }) {
         try {
             playAudioByKey('sombra-ability1');
         } catch {}
+
+        // Binary runs over the hacked card. The board-wide version of this is
+        // E.M.P.; Hack takes one hero, and should not look like the ultimate.
+        try { effectsBus.publish(Effects.hack(target.cardId)); } catch {}
         
         let removedShields = 0;
         let removedTokens = 0;
@@ -186,6 +194,9 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
         playAudioByKey('sombra-ultimate');
     } catch {}
     
+    // E.M.P. strips both sides, so the binary crosses the whole board.
+    try { effectsBus.publish(Effects.hack()); } catch {}
+
     showToast('Sombra: E.M.P. activated - Clearing all tokens and shields');
     
     let totalShieldsRemoved = 0;
@@ -244,6 +255,21 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
         }
     }
     
+    /*
+     * The Warden's drone is machinery too.
+     *
+     * It is not a card and not a row token — it lives on its own on the bridge
+     * — so the sweeps above walked straight past it and an EMP that stripped
+     * the whole board left the drone circling.
+     */
+    let seekerDowned = false;
+    if (window.__ow_getSeeker?.()) {
+        window.__ow_setSeeker?.(null);
+        seekerDowned = true;
+        try { effectsBus.publish(Effects.orbitStop('seeker')); } catch {}
+        console.log('Sombra E.M.P.: Warden seeker drone shut down');
+    }
+
     // Show floating text for turret destruction
     if (turretsDestroyed > 0) {
         // Find and show destruction effect for each destroyed turret
@@ -262,10 +288,10 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
     
     setTimeout(() => clearToast(), 2000);
     
-    showToast(`Sombra: E.M.P. complete - ${totalShieldsRemoved} shields, ${totalTokensRemoved} tokens, ${turretsDestroyed} turrets destroyed`);
+    showToast(`Sombra: E.M.P. complete - ${totalShieldsRemoved} shields, ${totalTokensRemoved} tokens, ${turretsDestroyed} turrets destroyed${seekerDowned ? ', seeker drone downed' : ''}`);
     setTimeout(() => clearToast(), 3000);
     
-    console.log(`Sombra: E.M.P. complete - ${totalShieldsRemoved} shields, ${totalTokensRemoved} tokens, ${turretsDestroyed} turrets destroyed`);
+    console.log(`Sombra: E.M.P. complete - ${totalShieldsRemoved} shields, ${totalTokensRemoved} tokens, ${turretsDestroyed} turrets destroyed${seekerDowned ? ', seeker drone downed' : ''}`);
 }
 
 export default { onEnter, onUltimate };

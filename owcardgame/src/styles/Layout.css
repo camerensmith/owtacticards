@@ -1,18 +1,48 @@
 #page-wrapper {
+    position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
     height: 100%;
     width: 100%;
     padding: 4px;
+    z-index: 1;
+}
+
+.match-map-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
 }
 
 #landscape-wrapper {
+    position: relative;
+    z-index: 1;
     display: flex;
     flex: 24;
     width: 100%;
     height: 100%;
     padding: 0;
+    min-height: 0;
+}
+
+.pixi-fx-overlay {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 5000;
+}
+
+.pixi-fx-overlay canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
 }
 
 .title-corners {
@@ -126,7 +156,8 @@
 }
 
 .healthvalue,
-.shieldvalue {
+.shieldvalue,
+.armorvalue {
 }
 
 .rowarea {
@@ -137,6 +168,7 @@
     /* background-color: #c4c3d5; */
     margin: 2px;
     padding: 0px;
+    min-height: 0;
 }
 
 .boardrow {
@@ -166,6 +198,78 @@
     height: 100%;
     flex-grow: 1;
     padding: 4px;
+    position: relative;
+    --column-guide: rgba(46, 54, 81, 0.16);
+}
+
+/*
+ * The four columns of a row, marked out faintly.
+ *
+ * A row holds four cards and both sides drop into a chosen one of those slots,
+ * so the slots are drawn rather than left to be inferred from where the cards
+ * happen to sit. Three interior lines, no line on the edges — the row border
+ * already closes the ends.
+ *
+ * These are a reference, not a grid the cards snap to. The list stays centred,
+ * so a lone card sits in the middle of the row as it always has, and a pair
+ * sits across the middle two columns.
+ */
+.rowlist::before {
+    content: '';
+    position: absolute;
+    inset: 6px;
+    pointer-events: none;
+    z-index: 0;
+    background-repeat: no-repeat;
+    background-image:
+        linear-gradient(var(--column-guide), var(--column-guide)),
+        linear-gradient(var(--column-guide), var(--column-guide)),
+        linear-gradient(var(--column-guide), var(--column-guide));
+}
+
+.rowlist.vertical::before {
+    background-size: 100% 1px, 100% 1px, 100% 1px;
+    background-position: 0 25%, 0 50%, 0 75%;
+}
+
+.rowlist.horizontal::before {
+    background-size: 1px 100%, 1px 100%, 1px 100%;
+    background-position: 25% 0, 50% 0, 75% 0;
+}
+
+/*
+ * One slot per column, so a card always occupies the same share of the row
+ * whether it is the first played or the fourth, and the AI's placements line up
+ * with the player's. Cards centre inside their own slot.
+ */
+.rowlist > .cardcontainer {
+    flex: 0 0 25%;
+    min-height: 0;
+    min-width: 0;
+    z-index: 1;
+}
+
+.rowlist .card {
+    max-height: 100%;
+    max-width: 100%;
+    min-height: 0;
+}
+
+/*
+ * The gap the drag library opens ahead of the dragged card is one column wide,
+ * so the cards already in the row shift by exactly one slot as you hover above
+ * or below them. Its own inline sizing comes from the card's measured box,
+ * which for a card coming out of the hand is the wrong shape for a row.
+ */
+.rowlist > [data-rbd-placeholder-context-id] {
+    flex: 0 0 25% !important;
+    width: auto !important;
+    height: auto !important;
+    margin: 0 !important;
+}
+
+.rowlist.dragging-over {
+    --column-guide: rgba(46, 54, 81, 0.34);
 }
 
 #player1board {
@@ -176,7 +280,7 @@
 
 .board {
     display: flex;
-    flex: 2;
+    flex: 2.4;
 }
 
 .playerhalf {
@@ -188,7 +292,7 @@
     display: flex;
     align-items: center;
     flex-direction: column;
-    flex: 1.5;
+    flex: 1.2;
 }
 
 #player1area {
@@ -291,6 +395,7 @@ li {
 .playercards-row {
     overflow: auto;
     width: 100%;
+    position: relative;
 }
 
 footer {

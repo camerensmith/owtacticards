@@ -69,21 +69,16 @@ export async function onEnter({ playerHeroId, rowId }) {
         if (destinationRow && destinationRow !== randomEnemy.rowId) {
             window.__ow_moveCardToRow?.(randomEnemy.cardId, destinationRow);
             
-            // Show chain hook visual effect
-            if (window.effectsBus) {
-                window.effectsBus.publish({
-                    type: 'fx:chainHook',
-                    sourceCardId: playerHeroId,
-                    targetCardId: randomEnemy.cardId,
-                    duration: 1000
-                });
-            }
+            // window.effectsBus was never assigned, so this never fired; publish
+            // through the imported bus with the payload shape subscribers expect.
+            try { effectsBus.publish(Effects.chainHook(playerHeroId, randomEnemy.cardId, 1000)); } catch {}
         }
         
         // Deal damage (only to living heroes)
         if (targetCard && targetCard.health > 0) {
             // Chain Hook damage should ignore shields/barriers in the destination row
-            dealDamage(randomEnemy.cardId, destinationRow || randomEnemy.rowId, 2, true, playerHeroId);
+            // The hook is the projectile; no beam should fire as well.
+            dealDamage(randomEnemy.cardId, destinationRow || randomEnemy.rowId, 2, true, playerHeroId, false, { skipProjectileFx: true });
             try { effectsBus.publish(Effects.showDamage(randomEnemy.cardId, 2)); } catch {}
         }
         
@@ -152,21 +147,16 @@ export async function onEnter({ playerHeroId, rowId }) {
         if (destinationRow && destinationRow !== target.rowId) {
             window.__ow_moveCardToRow?.(target.cardId, destinationRow);
             
-            // Show chain hook visual effect
-            if (window.effectsBus) {
-                window.effectsBus.publish({
-                    type: 'fx:chainHook',
-                    sourceCardId: playerHeroId,
-                    targetCardId: target.cardId,
-                    duration: 1000
-                });
-            }
+            // window.effectsBus was never assigned, so this never fired; publish
+            // through the imported bus with the payload shape subscribers expect.
+            try { effectsBus.publish(Effects.chainHook(playerHeroId, target.cardId, 1000)); } catch {}
         }
         
         // Deal damage (only to living heroes)
         if (targetCard && targetCard.health > 0) {
             // Chain Hook damage should ignore shields/barriers in the destination row
-            dealDamage(target.cardId, destinationRow || target.rowId, 2, true, playerHeroId);
+            // The hook is the projectile; no beam should fire as well.
+            dealDamage(target.cardId, destinationRow || target.rowId, 2, true, playerHeroId, false, { skipProjectileFx: true });
             try { effectsBus.publish(Effects.showDamage(target.cardId, 2)); } catch {}
         }
         
@@ -248,14 +238,21 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
     }
     
     // Apply damage over 4 seconds
-    const damageInterval = 4000 / totalDamage; // Spread over 4 seconds
+    const WHOLE_HOG_MS = 4000;
+    // Spray for exactly as long as the damage runs, so sound, damage and
+    // visuals all finish together.
+    // Pass the victims so the spray aims at them rather than at a guessed axis.
+    const hogTargets = [...new Set(damageInstances.map((e) => e.cardId))];
+    try { effectsBus.publish(Effects.wholeHog(playerHeroId, WHOLE_HOG_MS, hogTargets)); } catch {}
+    const damageInterval = WHOLE_HOG_MS / totalDamage;
     
     damageInstances.forEach((enemy, index) => {
         setTimeout(() => {
             // Check if enemy is still alive
             const currentCard = window.__ow_getCard?.(enemy.cardId);
             if (currentCard && currentCard.health > 0) {
-                dealDamage(enemy.cardId, enemy.rowId, 1, false, playerHeroId);
+                // Whole Hog is a spray, not aimed shots.
+                dealDamage(enemy.cardId, enemy.rowId, 1, false, playerHeroId, false, { skipProjectileFx: true });
                 
                 // Show floating damage text
                 effectsBus.publish(Effects.showDamage(enemy.cardId, 1));

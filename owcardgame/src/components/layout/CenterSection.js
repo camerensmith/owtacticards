@@ -29,10 +29,6 @@ function CenterSection(props) {
                         <span>P1: {gameLogic.player1Turns}/7</span>
                         <span>P2: {gameLogic.player2Turns}/7</span>
                     </div>
-                    <div className='deployment-count'>
-                        <span>P1 Heroes: {gameLogic.player1Deployed || 0}/6</span>
-                        <span>P2 Heroes: {gameLogic.player2Deployed || 0}/6</span>
-                    </div>
                 </div>
             </div>
         </div>

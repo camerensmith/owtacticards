@@ -2,12 +2,24 @@ import { dealDamage } from '../engine/damageBus';
 import { selectCardTarget, selectRowTarget } from '../engine/targeting';
 import { showOnEnterChoice } from '../engine/modalController';
 import { showMessage as showToast, clearMessage as clearToast } from '../engine/targetingBus';
-import effectsBus from '../engine/effectsBus';
+import effectsBus, { Effects } from '../engine/effectsBus';
 import { playAudioByKey } from '../../assets/imageImports';
 import { withAIContext } from '../engine/aiContextHelper';
+import { selectFromGraveyard } from '../engine/graveyardBus';
+import data from '../../data';
+import { isStructureCard } from '../../game/abilityRules';
+import { occupiedCount } from '../../game/rules';
+import { BESTOW } from '../../presentation/pixi/fxConfig';
 
 // Track healing effects for turn-based healing
 let healingEffects = new Map();
+
+/** Which of the given rows currently holds this card. */
+function findCardRow(playerHeroId, rowIds) {
+    return rowIds.find((rowId) =>
+        (window.__ow_getRow?.(rowId)?.cardIds || []).includes(playerHeroId)
+    ) || null;
+}
 
 export async function onEnter({ playerHeroId, rowId }) {
     const playerNum = parseInt(playerHeroId[0]);
@@ -182,9 +194,9 @@ async function handleHealingAbility(playerHeroId, rowId, playerNum) {
         setTimeout(() => clearToast(), 1500);
         return;
     }
-    // Prevent turrets from being healed (exception: Brigitte's armor pack only)
-    if (targetCard.turret === true) {
-        showToast('Mercy: Cannot target turrets');
+    // Prevent structures from being healed (exception: Brigitte's Repair Pack)
+    if (isStructureCard(targetCard)) {
+        showToast('Mercy: Cannot target structures');
         setTimeout(() => clearToast(), 1500);
         return;
     }
@@ -289,79 +301,96 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
         const aiTarget = window.__ow_aiUltimateTarget || null;
         try { window.__ow_aiUltimateTarget = null; } catch {}
 
-        let rezCardId = null;
-        let rezRowId = null;
-
-        if (aiTarget && aiTarget.cardId && aiTarget.rowId) {
-            // Use the target chosen by tryMercyResurrection
-            rezCardId = aiTarget.cardId;
-            rezRowId = aiTarget.rowId;
-        } else {
-            // Fallback: find the highest-value dead ally on the board
-            const allyRows = [`${playerNum}f`, `${playerNum}m`, `${playerNum}b`];
-            let bestScore = -1;
-            for (const r of allyRows) {
-                const row = window.__ow_getRow?.(r);
-                if (!row?.cardIds) continue;
-                for (const cId of row.cardIds) {
-                    const c = window.__ow_getCard?.(cId);
-                    if (!c || c.health > 0) continue;
-                    const score = (c.maxHealth || 4) + ((c.front_power || 0) + (c.middle_power || 0) + (c.back_power || 0)) * 2;
-                    if (score > bestScore) {
-                        bestScore = score;
-                        rezCardId = cId;
-                        rezRowId = r;
-                    }
-                }
-            }
-        }
-
-        if (!rezCardId || !rezRowId) {
-            console.log('AI Mercy: No dead allies found to resurrect');
+        const graveyard = window.__ow_getGraveyard?.(playerNum) || [];
+        if (graveyard.length === 0) {
+            console.log('AI Mercy: Graveyard is empty, nothing to resurrect');
             try { clearToast(); } catch {}
             return;
         }
 
-        // Move Mercy to the row containing the dead ally
-        if (window.__ow_moveCardToRow) {
+        // tryMercyResurrection may have picked a hero; otherwise rank the graveyard.
+        let rezHeroId = aiTarget?.heroId || null;
+        if (!rezHeroId || !graveyard.some((entry) => entry.heroId === rezHeroId)) {
+            rezHeroId = window.__ow_pickBestGraveyardTarget?.(playerNum)?.heroId || null;
+        }
+        if (!rezHeroId) {
+            console.log('AI Mercy: Could not rank a resurrection target');
+            try { clearToast(); } catch {}
+            return;
+        }
+
+        // Land in Mercy's own row, falling back to any friendly row with a free slot.
+        const allyRows = [`${playerNum}f`, `${playerNum}m`, `${playerNum}b`];
+        // occupiedCount, not length: a hole in the row is a free slot, not a body.
+        const hasSpace = (r) => occupiedCount(window.__ow_getRow?.(r)?.cardIds) < 4;
+        const mercyRow = findCardRow(playerHeroId, allyRows);
+        const rezRowId = (mercyRow && hasSpace(mercyRow))
+            ? mercyRow
+            : allyRows.find(hasSpace);
+
+        if (!rezRowId) {
+            console.log('AI Mercy: No room to resurrect');
+            try { clearToast(); } catch {}
+            return;
+        }
+
+        if (rezRowId !== mercyRow && window.__ow_moveCardToRow) {
             window.__ow_moveCardToRow(playerHeroId, rezRowId);
         }
 
-        const rezCard = window.__ow_getCard?.(rezCardId);
-        if (!rezCard || rezCard.health > 0) {
-            console.log('AI Mercy: Target is no longer dead, skipping resurrection');
+        // Same path the human uses: no on-enter fires, passives and ultimates work.
+        const revivedId = window.__ow_resurrectFromGraveyard?.(playerNum, rezHeroId, rezRowId);
+        if (!revivedId) {
+            console.log('AI Mercy: Resurrection was rejected');
             try { clearToast(); } catch {}
             return;
         }
 
-        // Resurrect with full health (allowRevive=true bypasses the heal-prevention guard)
-        const baseHealth = rezCard.maxHealth || 4;
-        window.__ow_setCardHealth?.(rezCardId, baseHealth, true);
-
-        // Remove any negative effects
-        if (Array.isArray(rezCard.effects)) {
-            rezCard.effects
-                .filter(e => e.type === 'debuff' || e.type === 'damage' || e.type === 'damageBoost')
-                .forEach(e => window.__ow_removeCardEffect?.(rezCardId, e.id));
-        }
-
         try { playAudioByKey('mercy-ultimate-resolve'); } catch {}
-        try { effectsBus.publish({ type: 'fx:resurrect', cardId: rezCardId }); } catch {}
+        try { effectsBus.publish({ type: 'fx:resurrect', cardId: revivedId }); } catch {}
+        try { effectsBus.publish(Effects.rezReturn(revivedId, playerHeroId)); } catch {}
 
-        console.log(`AI Mercy: Resurrected ${rezCard.name || rezCardId}`);
+        console.log(`AI Mercy: Resurrected ${data.heroes[rezHeroId]?.name || rezHeroId} into ${rezRowId}`);
         try { clearToast(); } catch {}
         return;
     }
     
+    // The light holds around Mercy for as long as the choice takes. It is
+    // toggled, not timed, so it must come down on every exit — including the
+    // half-dozen early returns below.
+    try { effectsBus.publish(Effects.rezAura(playerHeroId, true)); } catch {}
+    try {
+        return await guardianAngel({ playerHeroId, rowId, playerNum });
+    } finally {
+        try { effectsBus.publish(Effects.rezAura(playerHeroId, false)); } catch {}
+    }
+}
+
+async function guardianAngel({ playerHeroId, rowId, playerNum }) {
+    // The graveyard comes first. Whether there is anyone to bring back decides
+    // whether the ultimate does anything at all, so it is asked before the
+    // player is walked through picking a row for nothing.
+    const graveyard = window.__ow_getGraveyard?.(playerNum) || [];
+    if (graveyard.length === 0) {
+        showToast('Mercy: Your graveyard is empty');
+        setTimeout(() => clearToast(), 1500);
+        return;
+    }
+
+    showToast('Mercy: Guardian Angel - Choose a hero from your graveyard');
+    const heroId = await selectFromGraveyard(playerNum);
+    clearToast();
+    if (!heroId) return;
+
     showToast('Mercy: Guardian Angel - Select a friendly row to move to');
-    
+
     // Select row to move to
     const targetRow = await selectRowTarget();
     if (!targetRow) {
         clearToast();
         return;
     }
-    
+
     const targetPlayerNum = parseInt(targetRow.rowId[0]);
     if (targetPlayerNum !== playerNum) {
         showToast('Mercy: Guardian Angel can only target friendly rows');
@@ -393,69 +422,37 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
         }
     }
     
-    showToast('Mercy: Guardian Angel - Select a defeated hero to resurrect');
-    
-    // Get defeated heroes in the target row (after moving)
-    const defeatedHeroes = [];
-    const targetRowData = window.__ow_getRow?.(targetRow.rowId);
-    if (targetRowData) {
-        targetRowData.cardIds.forEach(cardId => {
-            const card = window.__ow_getCard?.(cardId);
-            if (card && card.health <= 0) {
-                defeatedHeroes.push({
-                    cardId,
-                    name: card.name || card.id,
-                    maxHealth: card.maxHealth || 4
-                });
-            }
-        });
-    }
-    
-    if (defeatedHeroes.length === 0) {
-        showToast('Mercy: No defeated heroes in this row to resurrect');
+    // Mercy has moved in, so the row needs a slot for her passenger too.
+    if (occupiedCount(window.__ow_getRow?.(targetRow.rowId)?.cardIds) >= 4) {
+        showToast('Mercy: That row is full');
         setTimeout(() => clearToast(), 1500);
         return;
     }
-    
-    // Select defeated hero to resurrect
-    const target = await selectCardTarget();
-    if (!target) {
-        clearToast();
-        return;
-    }
-    
-    const targetCard = window.__ow_getCard?.(target.cardId);
-    if (!targetCard || targetCard.health > 0) {
-        showToast('Mercy: Can only resurrect defeated heroes');
+
+    // Resurrection pulls from the graveyard rather than from corpses on the
+    // board, since dead heroes leave the board the moment they die.
+    // Placed straight into the row: this deliberately bypasses the deploy path,
+    // so no on-enter ability fires. Passives and ultimates work as normal.
+    const revivedId = window.__ow_resurrectFromGraveyard?.(playerNum, heroId, targetRow.rowId);
+    if (!revivedId) {
+        showToast('Mercy: Could not resurrect that hero');
         setTimeout(() => clearToast(), 1500);
         return;
     }
-    
-    // Resurrect the hero (use allowRevive=true to bypass heal-prevention guard)
-    const baseHealth = targetCard.maxHealth || 4;
-    window.__ow_setCardHealth?.(target.cardId, baseHealth, true);
-    
-    // Remove any negative effects
-    if (Array.isArray(targetCard.effects)) {
-        const negativeEffects = targetCard.effects.filter(effect => 
-            effect.type === 'debuff' || effect.type === 'damage' || effect.type === 'damageBoost'
-        );
-        negativeEffects.forEach(effect => {
-            window.__ow_removeCardEffect?.(target.cardId, effect.id);
-        });
-    }
-    
-    // Play resurrection sound and effect
+
     try {
         playAudioByKey('mercy-ultimate-resolve');
     } catch {}
-    
-    // Show floating resurrection effect
+
     try {
-        effectsBus.publish({ type: 'fx:resurrect', cardId: target.cardId });
+        effectsBus.publish({ type: 'fx:resurrect', cardId: revivedId });
     } catch {}
-    
-    showToast(`Mercy: ${targetCard.name} has been resurrected!`);
+
+    // They wash back in under a slow light, and both of them get wings.
+    try { effectsBus.publish(Effects.rezReturn(revivedId, playerHeroId)); } catch {}
+
+    const heroName = data.heroes[heroId]?.name || heroId;
+    showToast(`Mercy: ${heroName} has been resurrected!`);
     setTimeout(() => clearToast(), 2000);
 }
 
@@ -494,9 +491,9 @@ export function mercyTokenHealing(cardId) {
     const card = window.__ow_getCard?.(cardId);
     if (!card || card.health <= 0) return;
     
-    // Prevent turrets from being healed
-    if (card.turret === true) {
-        console.log(`Mercy: Cannot heal turret ${cardId} - turrets cannot be healed`);
+    // Prevent structures from being healed
+    if (isStructureCard(card)) {
+        console.log(`Mercy: Cannot heal structure ${cardId}`);
         return;
     }
     
@@ -510,16 +507,10 @@ export function mercyTokenHealing(cardId) {
         
         if (healingAmount > 0) {
             window.__ow_setCardHealth?.(cardId, newHealth);
-            
-            // Show floating text
-            if (window.effectsBus) {
-                window.effectsBus.publish({
-                    type: 'fx:heal',
-                    cardId: cardId,
-                    amount: healingAmount,
-                    text: `+${healingAmount}`
-                });
-            }
+            // This went through `window.effectsBus`, which is never assigned,
+            // so the per-turn heal showed nothing at all.
+            try { effectsBus.publish(Effects.showHeal(cardId, healingAmount)); } catch {}
+            try { effectsBus.publish(Effects.bestow(cardId, BESTOW.heal)); } catch {}
         }
     }
 }
@@ -542,7 +533,10 @@ async function applyHealingEffect(playerHeroId, rowId, target, playerNum) {
         tooltip: 'Mercy Healing: Heals 1 HP at start of each turn',
         visual: 'mercyheal.png'
     });
-    
+
+    // Warm gold light settling onto whoever she attaches to.
+    try { effectsBus.publish(Effects.bestow(target.cardId, BESTOW.heal)); } catch {}
+
     // Immediate 2 healing
     const currentHealth = targetCard.health;
     const newHealth = Math.min(currentHealth + 2, targetCard.maxHealth || 4);
@@ -550,16 +544,8 @@ async function applyHealingEffect(playerHeroId, rowId, target, playerNum) {
     
     if (healingAmount > 0) {
         window.__ow_setCardHealth?.(target.cardId, newHealth);
-        
-        // Show floating text
-        if (window.effectsBus) {
-            window.effectsBus.publish({
-                type: 'fx:heal',
-                cardId: target.cardId,
-                amount: healingAmount,
-                text: `+${healingAmount}`
-            });
-        }
+        // Same dead-bus publish as the per-turn heal: never rendered anything.
+        try { effectsBus.publish(Effects.showHeal(target.cardId, healingAmount)); } catch {}
     }
     
     console.log(`Mercy: Caduceus Staff healing applied to ${targetCard.name}`);
@@ -584,7 +570,10 @@ async function applyDamageBoostEffect(playerHeroId, rowId, target, playerNum) {
         tooltip: 'Mercy Damage Boost: +1 damage to all abilities',
         visual: 'mercydamage.png'
     });
-    
+
+    // The same light, in deep blue: one mechanic, two moods.
+    try { effectsBus.publish(Effects.bestow(target.cardId, BESTOW.boost)); } catch {}
+
     console.log(`Mercy: Damage boost applied to ${targetCard.name}`);
 }
 

@@ -7,9 +7,9 @@ export function subscribe(listener) {
     return () => listeners.delete(listener);
 }
 
-export function publish(action) {
+export async function publish(action) {
     for (const l of listeners) {
-        try { l(action); } catch (e) {}
+        try { await l(action); } catch (e) {}
     }
 }
 

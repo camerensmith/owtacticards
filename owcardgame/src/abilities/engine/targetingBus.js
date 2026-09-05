@@ -25,6 +25,11 @@ export function isTargeting() {
     return currentMessage !== null;
 }
 
-export default { subscribe, showMessage, clearMessage, isTargeting };
+/** The banner currently up, so a refusal can restore the prompt it replaced. */
+export function getMessage() {
+    return currentMessage;
+}
+
+export default { subscribe, showMessage, clearMessage, isTargeting, getMessage };
 
 

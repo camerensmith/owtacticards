@@ -73,7 +73,8 @@ export const heroAbilities = {
             name: 'Nano Boost',
             type: abilityMetadata.BUFF,
             targeting: targetingTypes.ROW_ALLY,
-            effect: 'Place Ana Token in row, adds X synergy where X = heroes in row',
+            cost: 2,
+            effect: 'Choose any row; add +X synergy where X = heroes on that row',
             priority: 8,
         }
     },
@@ -154,11 +155,18 @@ export const heroAbilities = {
 
     tracer: {
         onEnter: {
-            name: 'Blink / Recall',
-            type: [abilityMetadata.DAMAGE, abilityMetadata.HEAL],
+            name: 'Pulse Pistols',
+            type: abilityMetadata.DAMAGE,
             hasChoice: true,
             priority: 6,
-        }
+        },
+        onUltimate: {
+            name: 'Recall',
+            type: abilityMetadata.UTILITY,
+            cost: 2,
+            effect: 'On death return to hand if row has 2 synergy',
+            priority: 9,
+        },
     },
 
     widowmaker: {
@@ -222,9 +230,46 @@ export const heroAbilities = {
         onUltimate: {
             name: 'Duplicate',
             type: abilityMetadata.UTILITY,
+            cost: 4,
             effect: 'Copy last enemy ultimate',
             priority: 8,
         }
+    },
+
+    vega: {
+        onEnter: {
+            name: 'Temporal Rift',
+            type: abilityMetadata.UTILITY,
+            targeting: targetingTypes.NONE,
+            effect: 'Rearrange the next 3 cards of your deck',
+            priority: 6,
+        },
+        onUltimate: {
+            name: 'Chronoshift',
+            type: abilityMetadata.UTILITY,
+            cost: 3,
+            targeting: targetingTypes.SINGLE_ALLY,
+            effect: 'Activate target ally Enter again',
+            priority: 8,
+        },
+    },
+
+    mantis: {
+        onEnter: {
+            name: 'Cloak',
+            type: abilityMetadata.UTILITY,
+            targeting: targetingTypes.NONE,
+            effect: 'Deploy on enemy row; power/synergy to opposite',
+            priority: 7,
+        },
+        onUltimate: {
+            name: 'Blade Dance',
+            type: abilityMetadata.DAMAGE,
+            cost: 2,
+            targeting: targetingTypes.AOE_ENEMY,
+            effect: 'X = all enemy targets; damage split randomly among enemy heroes only',
+            priority: 7,
+        },
     },
 
     mccree: {
@@ -356,7 +401,14 @@ export const heroAbilities = {
             targeting: targetingTypes.AOE_ENEMY,
             damage: 1,
             priority: 5,
-        }
+        },
+        onUltimate: {
+            name: 'Primal Rage',
+            type: [abilityMetadata.DAMAGE, abilityMetadata.UTILITY],
+            targeting: targetingTypes.NONE,
+            damage: 1,
+            priority: 7,
+        },
     },
 
     wreckingball: {
@@ -419,7 +471,15 @@ export const heroAbilities = {
             type: [abilityMetadata.DAMAGE, abilityMetadata.BUFF],
             hasChoice: true,
             priority: 7,
-        }
+        },
+        onUltimate: {
+            name: 'Rampage',
+            type: abilityMetadata.DAMAGE,
+            cost: 3,
+            targeting: targetingTypes.AOE_ENEMY,
+            effect: 'Split wound damage this round evenly among living enemies',
+            priority: 8,
+        },
     },
 
     mauga: {

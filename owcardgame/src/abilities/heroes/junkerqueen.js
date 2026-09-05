@@ -5,6 +5,7 @@ import { showMessage as showToast, clearMessage as clearToast } from '../engine/
 
 // Track total wound damage dealt this round per Junker Queen card
 const roundWoundDamageByCard = new Map(); // key: playerHeroId -> number
+const JAGGED_BLADE_TURNS = 2;
 
 // Helper: cleanse conditions
 function isCleansedByEffects(card) {
@@ -61,7 +62,8 @@ export function onEnter({ playerHeroId, rowId }) {
                     type: 'wound',
                     sourceCardId: playerHeroId,
                     sourceRowId: rowId,
-                    tooltip: 'Wound: Cannot gain shields. Takes 1 damage at start of own turn.',
+                    turnsRemaining: JAGGED_BLADE_TURNS,
+                    tooltip: 'Wound: Cannot gain shields. Takes 1 damage at start of own turn (2 turns).',
                     visual: 'junkerqueen-icon'
                 });
             }
@@ -89,38 +91,46 @@ export function processWoundsAtTurnStart(currentPlayerNum) {
 
             // Wounds tick: deal 1 damage piercing all shields/barriers (ignoreShields=true)
             const sourceCardId = wound.sourceCardId;
-            dealDamage(cid, rid, 1, true, sourceCardId);
+            // A wound bleeds on the victim; nothing should fly in from the
+            // Queen, so the damage bus's default beam/impact is suppressed.
+            dealDamage(cid, rid, 1, true, sourceCardId, false, { skipProjectileFx: true });
+            try { effectsBus.publish(Effects.bleed(cid)); } catch {}
             try { effectsBus.publish(Effects.showDamage(cid, 1)); } catch {}
 
             // Track total wound damage this round for the Junker Queen who applied it
             if (sourceCardId) {
                 // Check if this Junker Queen has already used her ultimate this round
                 const sourceCard = window.__ow_getCard?.(sourceCardId);
-                if (sourceCard && Array.isArray(sourceCard.effects)) {
-                    const ultimateUsed = sourceCard.effects.find(e => e?.id === 'jq-ultimate-used');
-                    if (ultimateUsed) {
-                        // Ultimate already used, don't count this wound damage
-                        return;
-                    }
+                const ultimateUsed = sourceCard && Array.isArray(sourceCard.effects)
+                    && sourceCard.effects.find(e => e?.id === 'jq-ultimate-used');
+                if (!ultimateUsed) {
+                    const prev = roundWoundDamageByCard.get(sourceCardId) || 0;
+                    const next = prev + 1;
+                    roundWoundDamageByCard.set(sourceCardId, next);
+                    // Update JQ's visible counter effect (defer to avoid read-only mutations)
+                    try {
+                        window.__ow_removeCardEffect?.(sourceCardId, 'jq-rampage-counter');
+                        setTimeout(() => {
+                            window.__ow_appendCardEffect?.(sourceCardId, {
+                                id: 'jq-rampage-counter',
+                                hero: 'junkerqueen',
+                                type: 'counter',
+                                value: next,
+                                amount: next,
+                                tooltip: 'Rampage: Total wound damage this round'
+                            });
+                        }, 10);
+                    } catch {}
                 }
-                
-                const prev = roundWoundDamageByCard.get(sourceCardId) || 0;
-                const next = prev + 1;
-                roundWoundDamageByCard.set(sourceCardId, next);
-                // Update JQ's visible counter effect (defer to avoid read-only mutations)
-                try {
-                    window.__ow_removeCardEffect?.(sourceCardId, 'jq-rampage-counter');
-                    setTimeout(() => {
-                        window.__ow_appendCardEffect?.(sourceCardId, {
-                            id: 'jq-rampage-counter',
-                            hero: 'junkerqueen',
-                            type: 'counter',
-                            value: next,
-                            amount: next,
-                            tooltip: 'Rampage: Total wound damage this round'
-                        });
-                    }, 10);
-                } catch {}
+            }
+
+            const remaining = Number.isFinite(wound.turnsRemaining) ? wound.turnsRemaining : JAGGED_BLADE_TURNS;
+            window.__ow_removeCardEffect?.(cid, 'jq-wound');
+            if (remaining > 1) {
+                window.__ow_appendCardEffect?.(cid, {
+                    ...wound,
+                    turnsRemaining: remaining - 1,
+                });
             }
         });
     });
@@ -191,6 +201,11 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
             // Rampage respects shields/modifiers (ignoreShields=false)
             dealDamage(enemy.cardId, enemy.rowId, dmg, false, playerHeroId);
             try { effectsBus.publish(Effects.showDamage(enemy.cardId, dmg)); } catch {}
+            // Blade cut, then blood once the slash lands.
+            try { effectsBus.publish(Effects.slice(enemy.cardId)); } catch {}
+            setTimeout(() => {
+                try { effectsBus.publish(Effects.bleed(enemy.cardId)); } catch {}
+            }, 200);
         }, index * interval);
     });
 

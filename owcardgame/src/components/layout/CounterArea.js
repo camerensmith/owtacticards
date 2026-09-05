@@ -27,6 +27,7 @@ export default function CounterArea(props) {
                         <HeroCounter
                             playerHeroId={effect.playerHeroId}
                             heroId={effect.hero}
+                            iconId={effect.visual}
                             key={`${effect.hero}-${effect.id || 'row'}-${idx}`}
                             setCardFocus={props.setCardFocus}
                             playerNum={props.playerNum}

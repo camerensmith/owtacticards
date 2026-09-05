@@ -1,51 +1,68 @@
 // Static imports for all images to work with webpack
-// Hero card images
-import ana from './heroes/cards/ana.webp';
-import ashe from './heroes/cards/ashe.webp';
-import baptiste from './heroes/cards/baptiste.webp';
-import bastion from './heroes/cards/bastion.webp';
-import bob from './heroes/cards/bob.webp';
-import brigitte from './heroes/cards/brigitte.webp';
-import doomfist from './heroes/cards/doomfist.webp';
-import dva from './heroes/cards/dva.webp';
-import dvameka from './heroes/cards/dvameka.webp';
-import echo from './heroes/cards/echo.webp';
-import genji from './heroes/cards/genji.webp';
-import hanzo from './heroes/cards/hanzo.webp';
-import junkrat from './heroes/cards/junkrat.webp';
-import lifeweaver from './heroes/cards/lifeweaver.webp';
-import lucio from './heroes/cards/lucio.webp';
-import mccree from './heroes/cards/mccree.webp';
-import mei from './heroes/cards/mei.webp';
-import mercy from './heroes/cards/mercy.webp';
-import moira from './heroes/cards/moira.webp';
-import orisa from './heroes/cards/orisa.webp';
+import { playSrc } from './audioPool';
+// Hero card images — prefer png/jpg over leftover webp
+import ana from './heroes/cards/ana.png';
+import ashe from './heroes/cards/ashe.png';
+import baptiste from './heroes/cards/baptiste.png';
+import bastion from './heroes/cards/bastion.png';
+import bob from './heroes/cards/bob.png';
+import brigitte from './heroes/cards/brigitte.png';
+import doomfist from './heroes/cards/doomfist.png';
+import dva from './heroes/cards/dva.png';
+import dvameka from './heroes/cards/dvameka.png';
+import echo from './heroes/cards/echo.png';
+import genji from './heroes/cards/genji.png';
+import hanzo from './heroes/cards/hanzo.png';
+import junkrat from './heroes/cards/junkrat.png';
+import lifeweaver from './heroes/cards/lifeweaver.jpg';
+import lucio from './heroes/cards/lucio.png';
+import mccree from './heroes/cards/mccree.png';
+import mei from './heroes/cards/mei.png';
+import mercy from './heroes/cards/mercy.png';
+import moira from './heroes/cards/moira.png';
+import orisa from './heroes/cards/orisa.png';
 import protectiveBarrier from './heroes/cards/protectivebarrier.png';
-import clearDead from './cleardead.png';
 import annihilation from './annihilation.png';
-import pharah from './heroes/cards/pharah.webp';
-import reaper from './heroes/cards/reaper.webp';
-import reinhardt from './heroes/cards/reinhardt.webp';
-import roadhog from './heroes/cards/roadhog.webp';
-import sigma from './heroes/cards/sigma.webp';
-import soldier from './heroes/cards/soldier.webp';
-import sombra from './heroes/cards/sombra.webp';
-import symmetra from './heroes/cards/symmetra.webp';
-import torbjorn from './heroes/cards/torbjorn.webp';
-import tracer from './heroes/cards/tracer.webp';
-import widowmaker from './heroes/cards/widowmaker.webp';
-import winston from './heroes/cards/winston.webp';
-import wreckingball from './heroes/cards/wreckingball.webp';
-import zarya from './heroes/cards/zarya.webp';
-import zenyatta from './heroes/cards/zenyatta.webp';
+import pharah from './heroes/cards/pharah.png';
+import reaper from './heroes/cards/reaper.png';
+import reinhardt from './heroes/cards/reinhardt.png';
+import roadhog from './heroes/cards/roadhog.png';
+import sigma from './heroes/cards/sigma.png';
+import soldier from './heroes/cards/soldier.png';
+import sombra from './heroes/cards/sombra.png';
+import symmetra from './heroes/cards/symmetra.png';
+import torbjorn from './heroes/cards/torbjorn.png';
+import tracer from './heroes/cards/tracer.png';
+import widowmaker from './heroes/cards/widowmaker.png';
+import winston from './heroes/cards/winston.png';
+import wreckingball from './heroes/cards/wreckingball.png';
+import zarya from './heroes/cards/zarya.png';
+import zenyatta from './heroes/cards/zenyatta.png';
 import hazard from './heroes/cards/hazard.jpg';
-import junkerqueen from './heroes/cards/junkerqueen.webp';
-import mauga from './heroes/cards/mauga.webp';
-import venture from './heroes/cards/venture.webp';
-import cardBack from './heroes/cards/card-back.webp';
-import ramattra from './heroes/cards/ramattra.webp';
-import nemesis from './heroes/cards/nemesis.webp';
-import turret from './heroes/cards/turret.webp';
+import junkerqueen from './heroes/cards/junkerqueen.png';
+import mauga from './heroes/cards/mauga.png';
+import venture from './heroes/cards/venture.png';
+import cardBack from './heroes/cards/card-back.jpg';
+import ramattra from './heroes/cards/ramattra.png';
+import nemesis from './heroes/cards/nemesis.png';
+import turret from './heroes/cards/turret.png';
+import bravox2 from './heroes/cards/bravox2.png';
+import cyclo from './heroes/cards/cyclo.png';
+import emre from './heroes/cards/emre.png';
+import fika from './heroes/cards/fika.png';
+import rajah from './heroes/cards/rajah.png';
+import warden from './heroes/cards/warden.png';
+import wuyang from './heroes/cards/wuyang.png';
+import sylvain from './heroes/cards/sylvain.png';
+import sylvainIcon from './heroes/cards/sylvain-icon.png';
+import axiom from './heroes/cards/axiom.png';
+import relic from './relic.png';
+import infrasight from './infrasight.png';
+import stoneguard from './heroes/cards/stoneguard.png';
+import lockjaw from './heroes/cards/lockjaw.png';
+import lockjawIcon from './heroes/cards/lockjaw-icon.png';
+import vega from './heroes/cards/vega.png';
+import mantis from './heroes/cards/mantis.png';
 
 // Hero icon images (only import existing ones)
 import anaIcon from './heroes/cards/ana-icon.webp';
@@ -59,53 +76,66 @@ import mercyIcon from './heroes/cards/mercy-icon.webp';
 import orisaIcon from './heroes/cards/orisa-icon.webp';
 import sigmaIcon from './heroes/cards/sigma-icon.webp';
 import torbjornIcon from './heroes/cards/torbjorn-icon.webp';
-import widowmakerIcon from './heroes/cards/widowmaker-icon.webp';
 import wreckingballIcon from './heroes/cards/wreckingball-icon.webp';
 import zaryaIcon from './heroes/cards/zarya-icon.webp';
 import zenyattaIcon from './heroes/cards/zenyatta-icon.jpg';
 // import junkerqueenIcon from './heroes/cards/junkerqueen-icon.webp'; // File doesn't exist yet
 
-// Hero card focus images
-import anaFocus from './heroes/cardfocus/ana.webp';
-import asheFocus from './heroes/cardfocus/ashe.webp';
-import baptisteFocus from './heroes/cardfocus/baptiste.webp';
-import bastionFocus from './heroes/cardfocus/bastion.webp';
-import bobFocus from './heroes/cardfocus/bob.webp';
-import brigitteFocus from './heroes/cardfocus/brigitte.webp';
-import doomfistFocus from './heroes/cardfocus/doomfist.webp';
-import dvaFocus from './heroes/cardfocus/dva.webp';
-import dvamekaFocus from './heroes/cardfocus/dvameka.webp';
-import echoFocus from './heroes/cardfocus/echo.webp';
-import genjiFocus from './heroes/cardfocus/genji.webp';
-import hanzoFocus from './heroes/cardfocus/hanzo.webp';
-import junkratFocus from './heroes/cardfocus/junkrat.webp';
-import lifeweaverFocus from './heroes/cardfocus/lifeweaver.webp';
-import lucioFocus from './heroes/cardfocus/lucio.webp';
-import mccreeFocus from './heroes/cardfocus/mccree.webp';
-import meiFocus from './heroes/cardfocus/mei.webp';
-import mercyFocus from './heroes/cardfocus/mercy.webp';
-import moiraFocus from './heroes/cardfocus/moira.webp';
-import orisaFocus from './heroes/cardfocus/orisa.webp';
-import pharahFocus from './heroes/cardfocus/pharah.webp';
-import ramattraFocus from './heroes/cardfocus/ramattra.webp';
-import nemesisFocus from './heroes/cardfocus/nemesis.webp';
-import reaperFocus from './heroes/cardfocus/reaper.webp';
-import reinhardtFocus from './heroes/cardfocus/reinhardt.webp';
-import roadhogFocus from './heroes/cardfocus/roadhog.webp';
-import sigmaFocus from './heroes/cardfocus/sigma.webp';
-import soldierFocus from './heroes/cardfocus/soldier.webp';
-import sombraFocus from './heroes/cardfocus/sombra.webp';
-import symmetraFocus from './heroes/cardfocus/symmetra.webp';
-import torbjornFocus from './heroes/cardfocus/torbjorn.webp';
-import tracerFocus from './heroes/cardfocus/tracer.webp';
-import widowmakerFocus from './heroes/cardfocus/widowmaker.webp';
-import winstonFocus from './heroes/cardfocus/winston.webp';
-import wreckingballFocus from './heroes/cardfocus/wreckingball.webp';
-import zaryaFocus from './heroes/cardfocus/zarya.webp';
-import zenyattaFocus from './heroes/cardfocus/zenyatta.webp';
-import hazardFocus from './heroes/cardfocus/hazard.webp';
-import junkerqueenFocus from './heroes/cardfocus/junkerqueen.webp';
-import maugaFocus from './heroes/cardfocus/mauga.webp';
+// Hero card focus images — prefer png/jpg over leftover webp
+import anaFocus from './heroes/cardfocus/ana.png';
+import asheFocus from './heroes/cardfocus/ashe.png';
+import baptisteFocus from './heroes/cardfocus/baptiste.png';
+import bastionFocus from './heroes/cardfocus/bastion.png';
+import bobFocus from './heroes/cardfocus/bob.png';
+import brigitteFocus from './heroes/cardfocus/brigitte.png';
+import doomfistFocus from './heroes/cardfocus/doomfist.png';
+import dvaFocus from './heroes/cardfocus/dva.png';
+import dvamekaFocus from './heroes/cardfocus/dvameka.png';
+import echoFocus from './heroes/cardfocus/echo.png';
+import genjiFocus from './heroes/cardfocus/genji.png';
+import hanzoFocus from './heroes/cardfocus/hanzo.png';
+import junkratFocus from './heroes/cardfocus/junkrat.png';
+import lifeweaverFocus from './heroes/cardfocus/lifeweaver.jpg';
+import lucioFocus from './heroes/cardfocus/lucio.png';
+import mccreeFocus from './heroes/cardfocus/mccree.png';
+import meiFocus from './heroes/cardfocus/mei.png';
+import mercyFocus from './heroes/cardfocus/mercy.png';
+import moiraFocus from './heroes/cardfocus/moira.png';
+import orisaFocus from './heroes/cardfocus/orisa.png';
+import pharahFocus from './heroes/cardfocus/pharah.png';
+import ramattraFocus from './heroes/cardfocus/ramattra.png';
+import nemesisFocus from './heroes/cardfocus/nemesis.png';
+import reaperFocus from './heroes/cardfocus/reaper.png';
+import reinhardtFocus from './heroes/cardfocus/reinhardt.png';
+import roadhogFocus from './heroes/cardfocus/roadhog.png';
+import sigmaFocus from './heroes/cardfocus/sigma.png';
+import soldierFocus from './heroes/cardfocus/soldier.png';
+import sombraFocus from './heroes/cardfocus/sombra.png';
+import symmetraFocus from './heroes/cardfocus/symmetra.png';
+import torbjornFocus from './heroes/cardfocus/torbjorn.png';
+import tracerFocus from './heroes/cardfocus/tracer.png';
+import widowmakerFocus from './heroes/cardfocus/widowmaker.png';
+import winstonFocus from './heroes/cardfocus/winston.png';
+import wreckingballFocus from './heroes/cardfocus/wreckingball.png';
+import zaryaFocus from './heroes/cardfocus/zarya.png';
+import zenyattaFocus from './heroes/cardfocus/zenyatta.png';
+import hazardFocus from './heroes/cardfocus/hazard.jpg';
+import junkerqueenFocus from './heroes/cardfocus/junkerqueen.png';
+import maugaFocus from './heroes/cardfocus/mauga.png';
+import ventureFocus from './heroes/cardfocus/venture.png';
+import turretFocus from './heroes/cardfocus/turret.png';
+import bravox2Focus from './heroes/cardfocus/bravox2.png';
+import cycloFocus from './heroes/cardfocus/cyclo.png';
+import emreFocus from './heroes/cardfocus/emre.png';
+import fikaFocus from './heroes/cardfocus/fika.png';
+import rajahFocus from './heroes/cardfocus/rajah.png';
+import wardenFocus from './heroes/cardfocus/warden.png';
+import wuyangFocus from './heroes/cardfocus/wuyang.png';
+import sylvainFocus from './heroes/cardfocus/sylvain.png';
+import axiomFocus from './heroes/cardfocus/axiom.png';
+import lockjawFocus from './heroes/cardfocus/lockjaw.png';
+import stoneguardFocus from './heroes/cardfocus/stoneguard.png';
+import mantisFocus from './heroes/cardfocus/mantis.png';
 
 // Other images
 import owlogo from './owlogo-small.webp';
@@ -119,12 +149,36 @@ import howToPlayPdf from './how-to-play.pdf';
 import overwatchTheme from './audio/overwatch-theme.mp3';
 import placement from './audio/placement.mp3';
 import endturn from './audio/endturn.mp3';
+import drawcard from './audio/drawcard.mp3';
+import cardshuffle from './audio/cardshuffle.mp3';
+import announcerInitiatingMatch from './audio/announcer-initiatingmatch.mp3';
+import announcerRound1 from './audio/announcer-round1.mp3';
+import announcerRound2 from './audio/announcer-round2.mp3';
+import announcerRound3 from './audio/announcer-round3.mp3';
+import announcerVictory from './audio/announcer-victory.mp3';
+import announcerDefeat from './audio/announcer-defeat.mp3';
+import announcerPrepareToAttack from './audio/announcer-preparetoattack.mp3';
+import announcerAntarctica from './audio/announcer-antarctica.mp3';
+import announcerBusan from './audio/announcer-busan.mp3';
+import announcerCircuitRoyale from './audio/announcer-circuitroyale.mp3';
+import announcerColosseo from './audio/announcer-colosseo.mp3';
+import announcerEichenwalde from './audio/announcer-eichenwalde.mp3';
+import announcerHanamura from './audio/announcer-hanamura.mp3';
+import announcerHavana from './audio/announcer-havana.mp3';
+import announcerKingsRow from './audio/announcer-kingsrow.mp3';
+import announcerNepal from './audio/announcer-nepal.mp3';
+import announcerNumbani from './audio/announcer-numbani.mp3';
+import announcerParaiso from './audio/announcer-paraiso.mp3';
+import announcerParis from './audio/announcer-paris.mp3';
+import announcerRialto from './audio/announcer-rialto.mp3';
+import announcerRoute66 from './audio/announcer-route66.mp3';
 import hazardIntro from './audio/hazard-intro.mp3';
 import maugaIntro from './audio/mauga-intro.mp3';
 import hazardEnter from './audio/hazard-enter.mp3';
 import maugaEnter from './audio/mauga-enter.mp3';
 import hazardUltimate from './audio/hazard-ultimate.mp3';
 import maugaUltimate from './audio/mauga-ultimate.mp3';
+import maugaCageFightHit from './audio/mauga-cagefight-hit.mp3';
 
 // (moved exports below all imports to satisfy import/first rule)
 
@@ -194,6 +248,7 @@ import junkratAbility1 from './audio/junkrat-ability1.mp3';
 import junkratUltimate from './audio/junkrat-ultimate.mp3';
 import junkratExplosion from './audio/junkrat-explosion.mp3';
 import lifeweaverEnter from './audio/lifeweaver-enter.mp3';
+import lifeweaverAbility1 from './audio/lifeweaver-ability1.mp3';
 import lifeweaverUltimate from './audio/lifeweaver-ultimate.mp3';
 import lifeweaverIntro from './audio/lifeweaver-intro.mp3';
 import lucioEnter from './audio/lucio-enter.mp3';
@@ -319,20 +374,70 @@ import ventureIntro from './audio/venture-intro.mp3';
 import ventureEnter from './audio/venture-enter.mp3';
 import ventureAbility1 from './audio/venture-ability1.mp3';
 import ventureUltimate from './audio/venture-ultimate.mp3';
+import bravox2Intro from './audio/bravo77-intro.mp3';
+import bravox2Enter from './audio/bravo77-enter.mp3';
+import bravox2Ability1Resolve from './audio/bravo77-ability1-resolve.mp3';
+import bravox2UltStart from './audio/bravo77-ultstart.mp3';
+import bravox2UltimateResolve from './audio/bravo77-ultimate-resolve.mp3';
+import cycloIntro from './audio/cyclo-intro.mp3';
+import cycloEnter from './audio/cyclo-enter.mp3';
+import cycloUltimate from './audio/cyclo-ultimate.mp3';
+import emreIntro from './audio/emre-intro.mp3';
+import emreAbility1 from './audio/emre-ability1.mp3';
+import emreUltimate from './audio/emre-ultimate.mp3';
+import fikaIntro from './audio/fika-intro.mp3';
+import fikaAbilityStart from './audio/fika-abilitystart.mp3';
+import fikaAbilityEnd from './audio/fika-abilityend.mp3';
+import fikaUltimateStart from './audio/fika-ultimatestart.mp3';
+import fikaUltimate from './audio/fika-ultimate.mp3';
+import fikaUltimateEnd from './audio/fika-ultimateend.mp3';
+import rajahIntro from './audio/rajah-intro.mp3';
+import rajahAbility1 from './audio/rajah-ability1.mp3';
+import rajahUltimate from './audio/rajah_ultimate.mp3';
+import wardenIntro from './audio/warden-intro.mp3';
+import wardenAbility1 from './audio/warden-ability1.mp3';
+import wardenUltimate from './audio/warden-ultimate.mp3';
+import wuyangIntro from './audio/wuyang-intro.mp3';
+import wuyangEnter from './audio/wuyang-enter.mp3';
+import wuyangAbility1 from './audio/wuyang-ability1.mp3';
+import wuyangAbility1Sfx from './audio/wuyang-ability1-sfx.mp3';
+import wuyangUltimate from './audio/wuyang-ultimate.mp3';
+import lockjawIntro from './audio/lockjaw-intro.mp3';
+import lockjawAbility1 from './audio/lockjaw-ability1-resolve.mp3';
+import lockjawUltStart from './audio/lockjaw-ult-start.mp3';
+import lockjawUltimateResolve from './audio/lockjaw-ultimate-resolve.mp3';
+import sylvainIntro from './audio/sylvain-intro.mp3';
+import sylvainEnter from './audio/sylvain-enter.mp3';
+import sylvainAbility1Resolve from './audio/sylvain-ability1-resolve.mp3';
+import sylvainUlt from './audio/sylvain-ult.mp3';
+import sylvainUltResolve from './audio/sylvain-ult-resolve.mp3';
+import axiomIntro from './audio/axiom-intro.mp3';
+import axiomEnter from './audio/axiom-enter.mp3';
+import axiomAbility1Resolve from './audio/axiom-ability1-resolve.mp3';
+import axiomUltimate from './audio/axiom-ult.mp3';
+import stoneguardEnter from './audio/stoneguard-enter.mp3';
+import stoneguardExplode from './audio/stoneguard-explode.mp3';
+import vegaIntro from './audio/vega-intro.mp3';
+import vegaTemporalRift from './audio/vega-temporalrift.mp3';
+import vegaUltStart from './audio/vega-ult-start.mp3';
+import vegaUltResolve from './audio/vega-ult-resolve.mp3';
+import mantisIntro from './audio/mantis-intro.mp3';
+import mantisAbility1 from './audio/mantis-ability1.mp3';
+import mantisAbility1Resolve from './audio/mantis-ability1-resolve.mp3';
+import mantisUlt from './audio/mantis-ult.mp3';
+import mantisUltResolve from './audio/mantis-ult-resolve.mp3';
 
 // Create mapping objects
 export const heroCardImages = {
-    ana, ashe, baptiste, bastion, bob, brigitte, doomfist, dva, dvameka, echo, genji, hanzo, junkrat, lifeweaver, lucio, mccree, mei, mercy, moira, orisa, pharah, reaper, reinhardt, roadhog, sigma, soldier, sombra, symmetra, torbjorn, tracer, widowmaker, winston, wreckingball, zarya, zenyatta, ramattra, nemesis, turret, hazard, mauga, junkerqueen, venture, 'card-back': cardBack
+    ana, ashe, baptiste, bastion, bob, brigitte, doomfist, dva, dvameka, echo, genji, hanzo, junkrat, lifeweaver, lucio, mccree, mei, mercy, moira, orisa, pharah, reaper, reinhardt, roadhog, sigma, soldier, sombra, symmetra, torbjorn, tracer, widowmaker, winston, wreckingball, zarya, zenyatta, ramattra, nemesis, turret, hazard, mauga, junkerqueen, venture, bravox2, cyclo, emre, fika, rajah, mirage: rajah, warden, wuyang, sylvain, axiom, lockjaw, stoneguard, vega, mantis, 'card-back': cardBack
 };
 
-export const clearDeadCursor = clearDead;
-
 export const heroIconImages = {
-    'ana-icon': anaIcon, 'baptiste-icon': baptisteIcon, 'bastion-icon': bastionIcon, 'bob-icon': bobIcon, 'hanzo-icon': hanzoIcon, 'lucio-icon': lucioIcon, 'mei-icon': meiIcon, 'mercy-icon': mercyIcon, 'orisa-icon': orisaIcon, 'protectivebarrier-icon': protectiveBarrier, 'sigma-icon': sigmaIcon, 'torbjorn-icon': torbjornIcon, 'widowmaker-icon': widowmakerIcon, 'wreckingball-icon': wreckingballIcon, 'zarya-icon': zaryaIcon, 'zenyatta-icon': zenyattaIcon
+    'ana-icon': anaIcon, 'baptiste-icon': baptisteIcon, 'bastion-icon': bastionIcon, 'bob-icon': bobIcon, 'hanzo-icon': hanzoIcon, 'lucio-icon': lucioIcon, 'mei-icon': meiIcon, 'mercy-icon': mercyIcon, 'orisa-icon': orisaIcon, 'protectivebarrier-icon': protectiveBarrier, 'sigma-icon': sigmaIcon, 'torbjorn-icon': torbjornIcon, 'widowmaker-icon': infrasight, 'infrasight-icon': infrasight, 'wreckingball-icon': wreckingballIcon, 'zarya-icon': zaryaIcon, 'zenyatta-icon': zenyattaIcon, 'lockjaw-icon': lockjawIcon, 'sylvain-icon': sylvainIcon, 'axiom-icon': relic, 'relic-icon': relic
 };
 
 export const heroCardFocusImages = {
-    ana: anaFocus, ashe: asheFocus, baptiste: baptisteFocus, bastion: bastionFocus, bob: bobFocus, brigitte: brigitteFocus, doomfist: doomfistFocus, dva: dvaFocus, dvameka: dvamekaFocus, echo: echoFocus, genji: genjiFocus, hanzo: hanzoFocus, junkrat: junkratFocus, lifeweaver: lifeweaverFocus, lucio: lucioFocus, mccree: mccreeFocus, mei: meiFocus, mercy: mercyFocus, moira: moiraFocus, orisa: orisaFocus, pharah: pharahFocus, ramattra: ramattraFocus, nemesis: nemesisFocus, reaper: reaperFocus, reinhardt: reinhardtFocus, roadhog: roadhogFocus, sigma: sigmaFocus, soldier: soldierFocus, sombra: sombraFocus, symmetra: symmetraFocus, torbjorn: torbjornFocus, tracer: tracerFocus, widowmaker: widowmakerFocus, winston: winstonFocus, wreckingball: wreckingballFocus, zarya: zaryaFocus, zenyatta: zenyattaFocus, hazard: hazardFocus, mauga: maugaFocus, junkerqueen: junkerqueenFocus
+    ana: anaFocus, ashe: asheFocus, baptiste: baptisteFocus, bastion: bastionFocus, bob: bobFocus, brigitte: brigitteFocus, doomfist: doomfistFocus, dva: dvaFocus, dvameka: dvamekaFocus, echo: echoFocus, genji: genjiFocus, hanzo: hanzoFocus, junkrat: junkratFocus, lifeweaver: lifeweaverFocus, lucio: lucioFocus, mccree: mccreeFocus, mei: meiFocus, mercy: mercyFocus, moira: moiraFocus, orisa: orisaFocus, pharah: pharahFocus, ramattra: ramattraFocus, nemesis: nemesisFocus, reaper: reaperFocus, reinhardt: reinhardtFocus, roadhog: roadhogFocus, sigma: sigmaFocus, soldier: soldierFocus, sombra: sombraFocus, symmetra: symmetraFocus, torbjorn: torbjornFocus, tracer: tracerFocus, widowmaker: widowmakerFocus, winston: winstonFocus, wreckingball: wreckingballFocus, zarya: zaryaFocus, zenyatta: zenyattaFocus, hazard: hazardFocus, mauga: maugaFocus, junkerqueen: junkerqueenFocus, venture: ventureFocus, turret: turretFocus, bravox2: bravox2Focus, cyclo: cycloFocus, emre: emreFocus, fika: fikaFocus, rajah: rajahFocus, mirage: rajahFocus, warden: wardenFocus, wuyang: wuyangFocus, sylvain: sylvainFocus, axiom: axiomFocus, lockjaw: lockjawFocus, stoneguard: stoneguardFocus, mantis: mantisFocus
 };
 
 export const otherImages = {
@@ -353,7 +458,30 @@ export const otherImages = {
 export const audioFiles = {
     'overwatch-theme': overwatchTheme,
     'placement': placement,
-    'endturn': endturn
+    'endturn': endturn,
+    'drawcard': drawcard,
+    'cardshuffle': cardshuffle,
+    'announcer-initiatingmatch': announcerInitiatingMatch,
+    'announcer-round1': announcerRound1,
+    'announcer-round2': announcerRound2,
+    'announcer-round3': announcerRound3,
+    'announcer-victory': announcerVictory,
+    'announcer-defeat': announcerDefeat,
+    'announcer-preparetoattack': announcerPrepareToAttack,
+    'announcer-antarctica': announcerAntarctica,
+    'announcer-busan': announcerBusan,
+    'announcer-circuitroyale': announcerCircuitRoyale,
+    'announcer-colosseo': announcerColosseo,
+    'announcer-eichenwalde': announcerEichenwalde,
+    'announcer-hanamura': announcerHanamura,
+    'announcer-havana': announcerHavana,
+    'announcer-kingsrow': announcerKingsRow,
+    'announcer-nepal': announcerNepal,
+    'announcer-numbani': announcerNumbani,
+    'announcer-paraiso': announcerParaiso,
+    'announcer-paris': announcerParis,
+    'announcer-rialto': announcerRialto,
+    'announcer-route66': announcerRoute66,
 };
 
 // Create audio mapping object
@@ -423,6 +551,7 @@ export const abilityAudioFiles = {
     'junkrat-ultimate': junkratUltimate,
     'junkrat-explosion': junkratExplosion,
     'lifeweaver-enter': lifeweaverEnter,
+    'lifeweaver-ability1': lifeweaverAbility1,
     'lifeweaver-ultimate': lifeweaverUltimate,
     'lifeweaver-intro': lifeweaverIntro,
     'lucio-enter': lucioEnter,
@@ -549,6 +678,7 @@ export const abilityAudioFiles = {
     'mauga-intro': maugaIntro,
     'mauga-enter': maugaEnter,
     'mauga-ultimate': maugaUltimate,
+    'mauga-cagefight-hit': maugaCageFightHit,
     'junkerqueen-intro': junkerqueenIntro,
     'junkerqueen-enter': junkerqueenEnter,
     'junkerqueen-ultimate': junkerqueenUltimate,
@@ -556,12 +686,82 @@ export const abilityAudioFiles = {
     'venture-enter': ventureEnter,
     'venture-ability1': ventureAbility1,
     'venture-ultimate': ventureUltimate,
+    'bravox2-intro': bravox2Intro,
+    'bravox2-enter': bravox2Enter,
+    'bravox2-ability1-resolve': bravox2Ability1Resolve,
+    'bravox2-ultimate': bravox2UltStart,
+    'bravox2-ultimate-resolve': bravox2UltimateResolve,
+    'cyclo-intro': cycloIntro,
+    'cyclo-enter': cycloEnter,
+    'cyclo-ultimate': cycloUltimate,
+    'emre-intro': emreIntro,
+    'emre-ability1': emreAbility1,
+    'emre-ultimate': emreUltimate,
+    'fika-intro': fikaIntro,
+    'fika-abilitystart': fikaAbilityStart,
+    'fika-abilityend': fikaAbilityEnd,
+    'fika-ultimatestart': fikaUltimateStart,
+    'fika-ultimate': fikaUltimate,
+    'fika-ultimateend': fikaUltimateEnd,
+    'rajah-intro': rajahIntro,
+    'rajah-ability1': rajahAbility1,
+    'rajah-ultimate': rajahUltimate,
+    'warden-intro': wardenIntro,
+    'warden-ability1': wardenAbility1,
+    'warden-ultimate': wardenUltimate,
+    'wuyang-intro': wuyangIntro,
+    'wuyang-enter': wuyangEnter,
+    'wuyang-ability1': wuyangAbility1,
+    'wuyang-ability1-sfx': wuyangAbility1Sfx,
+    'wuyang-ultimate': wuyangUltimate,
+    'lockjaw-intro': lockjawIntro,
+    'lockjaw-ability1': lockjawAbility1,
+    'lockjaw-ability1-resolve': lockjawAbility1,
+    'lockjaw-enter': lockjawAbility1,
+    'lockjaw-ult-start': lockjawUltStart,
+    'lockjaw-ultimate': lockjawUltStart,
+    'lockjaw-ultimate-resolve': lockjawUltimateResolve,
+    'sylvain-intro': sylvainIntro,
+    'sylvain-enter': sylvainEnter,
+    'sylvain-ability1-resolve': sylvainAbility1Resolve,
+    'sylvain-ult': sylvainUlt,
+    'sylvain-ult-resolve': sylvainUltResolve,
+    'sylvain-ultimate': sylvainUlt,
+    'axiom-intro': axiomIntro,
+    'axiom-enter': axiomEnter,
+    'axiom-ability1-resolve': axiomAbility1Resolve,
+    'axiom-ult': axiomUltimate,
+    'axiom-ultimate': axiomUltimate,
+    'vega-intro': vegaIntro,
+    'vega-temporalrift': vegaTemporalRift,
+    'vega-enter': vegaTemporalRift,
+    'vega-ult-start': vegaUltStart,
+    'vega-ultimate': vegaUltStart,
+    'vega-ult-resolve': vegaUltResolve,
+    'vega-ultimate-resolve': vegaUltResolve,
+    'mantis-intro': mantisIntro,
+    'mantis-ability1': mantisAbility1,
+    'mantis-ability1-resolve': mantisAbility1Resolve,
+    'mantis-enter': mantisAbility1,
+    'mantis-ult': mantisUlt,
+    'mantis-ultimate': mantisUlt,
+    'mantis-ult-resolve': mantisUltResolve,
+    'mantis-ultimate-resolve': mantisUltResolve,
+    'stoneguard-enter': stoneguardEnter,
+    'stoneguard-explode': stoneguardExplode,
 };
 
 // Simple per-key debounce for audio playback to avoid accidental double-plays
 const __audioLastPlayedAt = {};
+/**
+ * `startAtMs` skips into the file rather than playing from the top, for clips
+ * with a long run-up before the part that should land with the effect.
+ *
+ * Playback goes through the pool so a repeated key reuses its decoded element
+ * instead of paying for a fetch and decode every time it fires.
+ */
 export function playAudioByKey(audioKey, options = {}) {
-    const { debounceMs = 200 } = options;
+    const { debounceMs = 200, startAtMs = 0 } = options;
     try {
         const now = Date.now();
         const last = __audioLastPlayedAt[audioKey] || 0;
@@ -569,8 +769,7 @@ export function playAudioByKey(audioKey, options = {}) {
         __audioLastPlayedAt[audioKey] = now;
         const src = getAudioFile(audioKey);
         if (!src) return;
-        const a = new Audio(src);
-        a.play().catch(() => {});
+        playSrc(src, { startAtMs });
     } catch {}
 }
 

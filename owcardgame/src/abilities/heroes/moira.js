@@ -66,8 +66,9 @@ export async function onEnter({ playerHeroId, rowId }) {
         }
 
         // Deal 1 damage ignoring shields (Hanzo reduction may still apply via damageBus)
-        dealDamage(enemyTarget.cardId, enemyTarget.rowId, 1, true, playerHeroId);
+        dealDamage(enemyTarget.cardId, enemyTarget.rowId, 1, true, playerHeroId, false, { skipProjectileFx: true });
         effectsBus.publish(Effects.showDamage(enemyTarget.cardId, 1));
+        try { effectsBus.publish(Effects.siphon(enemyTarget.cardId, playerHeroId)); } catch {}
 
         // Step 2: pick ally to heal (turret cannot be healed)
         let allyTarget;
@@ -125,6 +126,7 @@ export async function onEnter({ playerHeroId, rowId }) {
             window.__ow_setCardHealth?.(allyTarget.cardId, newHp);
             effectsBus.publish(Effects.showHeal(allyTarget.cardId, healed));
         }
+        try { effectsBus.publish(Effects.bioticHeal(playerHeroId, allyTarget.cardId)); } catch {}
         // Play on resolve (after both steps)
         try { playAudioByKey('moira-ability1'); } catch {}
         clearToast();
@@ -155,6 +157,9 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
         const enemyPlayer = playerNum === 1 ? 2 : 1;
         const enemyRows = [`${enemyPlayer}f`, `${enemyPlayer}m`, `${enemyPlayer}b`];
 
+        const yellowIds = [];
+        const purpleIds = [];
+
         // Heal allies in column
         for (const r of allyRows) {
             const rowObj = window.__ow_getRow?.(r);
@@ -163,6 +168,7 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
             const card = window.__ow_getCard?.(cardId);
             if (!card || card.health <= 0) continue;
             if (card.id === 'turret') continue; // do not heal turret
+            yellowIds.push(cardId);
             const maxHp = card.maxHealth || window.__ow_getMaxHealth?.(cardId) || card.health;
             const newHp = Math.min(maxHp, (card.health || 0) + 2);
             const healed = newHp - (card.health || 0);
@@ -179,9 +185,12 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
             if (!cardId) continue;
             const card = window.__ow_getCard?.(cardId);
             if (!card || card.health <= 0) continue;
-            dealDamage(cardId, r, 2, true, playerHeroId);
+            purpleIds.push(cardId);
+            dealDamage(cardId, r, 2, true, playerHeroId, false, { skipProjectileFx: true });
             effectsBus.publish(Effects.showDamage(cardId, 2));
         }
+
+        try { effectsBus.publish(Effects.coalescence(yellowIds, purpleIds)); } catch {}
 
         try { playAudioByKey('moira-ultimate-resolve'); } catch {}
         clearToast();

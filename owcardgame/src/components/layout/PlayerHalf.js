@@ -23,6 +23,10 @@ export default function PlayerHalf(props) {
                     matchState={props.matchState}
                     gameLogic={props.gameLogic}
                     trackDrawnHero={props.trackDrawnHero}
+                    reshuffleGraveyardIntoDeck={props.reshuffleGraveyardIntoDeck}
+                    practiceMode={props.practiceMode}
+                    theaterLocked={props.theaterLocked}
+                    isShuffling={props.shufflingPlayer === props.playerNum}
                 />
                 <PlayerBoard
                     playerNum={props.playerNum}
@@ -48,6 +52,10 @@ export default function PlayerHalf(props) {
                     matchState={props.matchState}
                     gameLogic={props.gameLogic}
                     trackDrawnHero={props.trackDrawnHero}
+                    reshuffleGraveyardIntoDeck={props.reshuffleGraveyardIntoDeck}
+                    practiceMode={props.practiceMode}
+                    theaterLocked={props.theaterLocked}
+                    isShuffling={props.shufflingPlayer === props.playerNum}
                 />
             </div>
         );

@@ -1,0 +1,241 @@
+/* Graveyard pile (sits where the Clear button used to) and its modal. */
+
+.graveyard-pile {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    width: 100%;
+    padding: 6px 8px;
+    background: var(--ow-dark-blue, #2e3651);
+    border: 2px solid #1b2035;
+    border-radius: 4px;
+    color: #fff;
+    font-family: Big-Noodle-Titling, 'Arial Narrow', sans-serif;
+    font-size: 18px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+
+.graveyard-pile:hover:not(.is-empty) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+    filter: brightness(1.15);
+}
+
+.graveyard-pile.is-empty {
+    opacity: 0.55;
+    cursor: default;
+}
+
+.graveyard-stack {
+    position: relative;
+    width: 34px;
+    height: 46px;
+    flex: 0 0 auto;
+}
+
+/* Fanned cardbacks so a fuller graveyard visibly reads as deeper */
+.graveyard-stack-card {
+    position: absolute;
+    inset: 0;
+    border: 1px solid rgba(0, 0, 0, 0.6);
+    border-radius: 3px;
+    background-size: cover;
+    background-position: center;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.graveyard-stack-empty {
+    position: absolute;
+    inset: 0;
+    border: 2px dashed rgba(255, 255, 255, 0.35);
+    border-radius: 3px;
+}
+
+.graveyard-label {
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+    line-height: 1;
+}
+
+.graveyard-count {
+    font-size: 22px;
+    color: #ffcc6a;
+}
+
+/* ---------- Modal ---------- */
+
+.graveyard-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 10050;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(8, 10, 18, 0);
+    opacity: 0;
+    transition: opacity 0.22s ease, background-color 0.22s ease;
+}
+
+.graveyard-modal-backdrop.is-open {
+    background: rgba(8, 10, 18, 0.72);
+    opacity: 1;
+}
+
+.graveyard-modal {
+    display: flex;
+    flex-direction: column;
+    width: min(920px, 100%);
+    max-height: 82vh;
+    background: #f2efee;
+    border: 4px solid var(--ow-dark-blue, #2e3651);
+    border-radius: 6px;
+    box-shadow: 0 18px 60px rgba(0, 0, 0, 0.6);
+    transform: translateY(18px) scale(0.97);
+    opacity: 0;
+    transition: transform 0.24s cubic-bezier(0.2, 0.8, 0.3, 1), opacity 0.24s ease;
+}
+
+.graveyard-modal-backdrop.is-open .graveyard-modal {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+}
+
+.graveyard-modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 12px 18px;
+    background: var(--ow-dark-blue, #2e3651);
+    color: #fff;
+}
+
+.graveyard-modal-head h2 {
+    margin: 0;
+    font-family: Big-Noodle-Titling, 'Arial Narrow', sans-serif;
+    font-size: 30px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.graveyard-modal-head p {
+    margin: 2px 0 0;
+    font-family: system-ui, sans-serif;
+    font-size: 12px;
+    opacity: 0.75;
+}
+
+.graveyard-close {
+    width: 36px;
+    height: 36px;
+    flex: 0 0 auto;
+    background: transparent;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    border-radius: 4px;
+    color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.15s, border-color 0.15s;
+}
+
+.graveyard-close:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: #fff;
+}
+
+.graveyard-modal-body {
+    padding: 18px;
+    overflow-y: auto;
+}
+
+.graveyard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 12px;
+}
+
+.graveyard-entry {
+    position: relative;
+    padding: 0;
+    background: transparent;
+    border: 3px solid transparent;
+    border-radius: 4px;
+    cursor: default;
+    transition: transform 0.15s ease, border-color 0.15s ease;
+    /* Each card fades up in turn as the modal opens */
+    animation: graveyard-entry-in 0.28s ease both;
+}
+
+.graveyard-entry img {
+    display: block;
+    width: 100%;
+    border-radius: 3px;
+    /* Buried heroes read as drained until they are selectable */
+    filter: grayscale(0.75) brightness(0.85);
+    transition: filter 0.15s ease;
+}
+
+.graveyard-entry.is-selectable {
+    cursor: pointer;
+}
+
+.graveyard-entry.is-selectable:hover,
+.graveyard-entry.is-selectable:focus-visible {
+    transform: translateY(-4px);
+    border-color: #ffcc6a;
+    outline: none;
+}
+
+.graveyard-entry.is-selectable:hover img,
+.graveyard-entry.is-selectable:focus-visible img {
+    filter: grayscale(0) brightness(1);
+}
+
+.graveyard-entry-name {
+    margin: 5px 0 0;
+    font-family: Big-Noodle-Titling, 'Arial Narrow', sans-serif;
+    font-size: 16px;
+    line-height: 1;
+    text-align: center;
+    text-transform: uppercase;
+    color: var(--font-black, #333);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.graveyard-empty {
+    padding: 30px 10px;
+    text-align: center;
+    font-family: system-ui, sans-serif;
+    font-size: 14px;
+    color: #666;
+}
+
+@keyframes graveyard-entry-in {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .graveyard-modal-backdrop,
+    .graveyard-modal,
+    .graveyard-entry {
+        transition: none;
+        animation: none;
+    }
+}

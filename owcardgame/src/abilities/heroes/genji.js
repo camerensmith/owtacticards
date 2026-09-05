@@ -61,6 +61,7 @@ export async function onEnter({ playerHeroId, rowId }) {
             return;
         }
 
+        const struck = [];
         let targetsHit = 0;
         const maxTargets = 3;
 
@@ -75,7 +76,8 @@ export async function onEnter({ playerHeroId, rowId }) {
             const enemyCard = window.__ow_getCard?.(enemyCardId);
             
             if (enemyCard && enemyCard.health > 0) {
-                dealDamage(enemyCardId, enemyRowId, 1, false, playerHeroId);
+                struck.push(enemyCardId);
+                dealDamage(enemyCardId, enemyRowId, 1, false, playerHeroId, false, { skipProjectileFx: true });
                 effectsBus.publish(Effects.showDamage(enemyCardId, 1));
                 targetsHit++;
             }
@@ -86,6 +88,8 @@ export async function onEnter({ playerHeroId, rowId }) {
             playAudioByKey('genji-ability1');
         } catch {}
 
+        // One shuriken bounces from Genji through each target it struck.
+        try { effectsBus.publish(Effects.shuriken(playerHeroId, struck)); } catch {}
         showToast(`Genji AI: Shuriken hit ${targetsHit} enemies in column`);
         setTimeout(() => clearToast(), 2000);
         return;
@@ -94,7 +98,12 @@ export async function onEnter({ playerHeroId, rowId }) {
     showToast('Genji: Select target enemy for Shuriken column attack');
 
     try {
-        const target = await selectCardTarget();
+        const target = await selectCardTarget({
+            isDamage: true,
+            fromCardId: playerHeroId,
+            // Column shape: hovering shows every enemy the shuriken will strike.
+            previewShape: 'column',
+        });
         if (!target) {
             clearToast();
             return;
@@ -134,6 +143,7 @@ export async function onEnter({ playerHeroId, rowId }) {
         const enemyPlayer = playerNum === 1 ? 2 : 1;
         const enemyRows = [`${enemyPlayer}f`, `${enemyPlayer}m`, `${enemyPlayer}b`];
         
+        const struck = [];
         let targetsHit = 0;
         const maxTargets = 3;
 
@@ -148,7 +158,8 @@ export async function onEnter({ playerHeroId, rowId }) {
             const enemyCard = window.__ow_getCard?.(enemyCardId);
             
             if (enemyCard && enemyCard.health > 0) {
-                dealDamage(enemyCardId, enemyRowId, 1, false, playerHeroId);
+                struck.push(enemyCardId);
+                dealDamage(enemyCardId, enemyRowId, 1, false, playerHeroId, false, { skipProjectileFx: true });
                 effectsBus.publish(Effects.showDamage(enemyCardId, 1));
                 targetsHit++;
             }
@@ -159,6 +170,8 @@ export async function onEnter({ playerHeroId, rowId }) {
             playAudioByKey('genji-ability1');
         } catch {}
 
+        // One shuriken bounces from Genji through each target it struck.
+        try { effectsBus.publish(Effects.shuriken(playerHeroId, struck)); } catch {}
         showToast(`Genji: Shuriken hit ${targetsHit} enemies in column`);
         setTimeout(() => clearToast(), 2000);
     } catch (error) {
@@ -221,7 +234,8 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
         }
 
         // Defeat the target (set health to 0, ignores shields)
-        dealDamage(target.cardId, target.rowId, currentHealth, true, playerHeroId); // ignoreShields = true
+        try { effectsBus.publish(Effects.slice(target.cardId)); } catch {}
+        dealDamage(target.cardId, target.rowId, currentHealth, true, playerHeroId, false, { skipProjectileFx: true });
         try { effectsBus.publish(Effects.showDamage(target.cardId, currentHealth)); } catch {}
 
         // Play ultimate strike resolve sound after execution

@@ -3,6 +3,29 @@ import { showMessage as showToast, clearMessage as clearToast } from '../engine/
 import { playAudioByKey } from '../../assets/imageImports';
 import { dealDamage } from '../engine/damageBus';
 import effectsBus, { Effects } from '../engine/effectsBus';
+import { particleBlastMs } from '../../presentation/pixi/fxMath';
+
+function isAiOwned(cardId) {
+    if (window.__ow_practiceMode) return false;
+    return parseInt(String(cardId || '')[0], 10) === 2
+        || !!window.__ow_aiTriggering
+        || !!window.__ow_isAITurn;
+}
+
+function pickTokenAlly(playerHeroId, playerNum) {
+    const allies = [];
+    [`${playerNum}f`, `${playerNum}m`, `${playerNum}b`].forEach((rid) => {
+        const row = window.__ow_getRow?.(rid);
+        (row?.cardIds || []).forEach((cid) => {
+            const card = window.__ow_getCard?.(cid);
+            if (card && card.health > 0) allies.push({ cardId: cid, health: card.health });
+        });
+    });
+    const others = allies.filter((a) => a.cardId !== playerHeroId);
+    if (!others.length) return playerHeroId;
+    others.sort((a, b) => a.health - b.health);
+    return others[0].cardId;
+}
 
 export async function onEnter({ playerHeroId, rowId }) {
     const playerNum = parseInt(playerHeroId[0]);
@@ -10,7 +33,16 @@ export async function onEnter({ playerHeroId, rowId }) {
     try {
         playAudioByKey('zarya-enter');
     } catch {}
-    
+
+    if (isAiOwned(playerHeroId)) {
+        const targetId = pickTokenAlly(playerHeroId, playerNum);
+        placeZaryaTokens(targetId, 3);
+        try { playAudioByKey('zarya-ability1'); } catch {}
+        showToast('Zarya: Projected Barrier');
+        setTimeout(() => clearToast(), 2000);
+        return;
+    }
+
     showToast('Zarya: Select ally hero or right-click to place tokens on Zarya');
     
     try {
@@ -64,7 +96,7 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
     const maxTargets = 3;
     
     // AI AUTO-SELECT: If AI is triggering, automatically select up to 3 random enemy targets
-    const isAI = window.__ow_isAITurn || window.__ow_aiTriggering;
+    const isAI = isAiOwned(playerHeroId);
     if (isAI) {
         // Get all enemy heroes
         const enemyPlayerNum = playerNum === 1 ? 2 : 1;
@@ -136,13 +168,30 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
         
         // Calculate damage per target (4 - zarya tokens, minimum 1)
         const damagePerTarget = Math.max(1, 4 - zaryaTokens);
-        
-        // Deal damage to all selected targets
-        selectedTargets.forEach(target => {
-            dealDamage(target.cardId, target.rowId, damagePerTarget, false, playerHeroId);
-            effectsBus.publish(Effects.showDamage(target.cardId, damagePerTarget));
-        });
-        
+
+        // An orb settles on every target, then each is blasted in turn. Damage
+        // lands with its own blast rather than all at the moment of firing.
+        try {
+            effectsBus.publish(Effects.particleBeam(
+                playerHeroId,
+                selectedTargets.map((t) => t.cardId),
+            ));
+        } catch {}
+
+        await Promise.all(selectedTargets.map((target, index) => new Promise((resolve) => {
+            setTimeout(() => {
+                const card = window.__ow_getCard?.(target.cardId);
+                if (card && card.health > 0) {
+                    dealDamage(
+                        target.cardId, target.rowId, damagePerTarget,
+                        false, playerHeroId, false, { skipProjectileFx: true },
+                    );
+                    effectsBus.publish(Effects.showDamage(target.cardId, damagePerTarget));
+                }
+                resolve();
+            }, particleBlastMs(index));
+        })));
+
         // Play resolve sound
         try {
             playAudioByKey('zarya-ultimate-resolve');
@@ -158,6 +207,8 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
 
 // Helper function to place Zarya tokens on a hero
 function placeZaryaTokens(cardId, amount) {
+    // The barrier crackles around whoever is holding the tokens.
+    try { effectsBus.publish(Effects.zaryaOrb(cardId)); } catch {}
     console.log(`Placing ${amount} Zarya tokens on ${cardId}`);
     
     // Create a single token with the total amount

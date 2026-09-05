@@ -3,6 +3,7 @@ import effectsBus, { Effects } from '../engine/effectsBus';
 import { showMessage as showToast, clearMessage as clearToast } from '../engine/targetingBus';
 import { selectCardTarget } from '../engine/targeting';
 import { playAudioByKey } from '../../assets/imageImports';
+import { PALETTE } from '../../presentation/pixi/fxConfig';
 
 // Barrier Field - onEnter
 export async function onEnter({ playerHeroId, rowId }) {
@@ -78,6 +79,19 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
         const enemyPlayer = playerNum === 1 ? 2 : 1;
         const enemyRows = [`${enemyPlayer}f`, `${enemyPlayer}m`, `${enemyPlayer}b`];
         
+        // Tear the ground open down the whole struck column.
+        const struckColumn = enemyRows
+            .map((r) => window.__ow_getRow?.(r)?.cardIds?.[columnIndex])
+            .filter(Boolean);
+        if (struckColumn.length) {
+            try {
+                effectsBus.publish(Effects.crevice(
+                    struckColumn[0],
+                    struckColumn[struckColumn.length - 1],
+                ));
+            } catch {}
+        }
+
         // Deal 2 damage to all enemies in target column
         let enemiesHit = 0;
         for (const enemyRowId of enemyRows) {
@@ -87,7 +101,8 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
                 const enemyCard = window.__ow_getCard?.(enemyCardId);
                 
                 if (enemyCard && enemyCard.health > 0) {
-                    dealDamage(enemyCardId, enemyRowId, 2, false, playerHeroId);
+                    // The crevice is the effect; no beam should fire as well.
+                    dealDamage(enemyCardId, enemyRowId, 2, false, playerHeroId, false, { skipProjectileFx: true });
                     try { effectsBus.publish(Effects.showDamage(enemyCardId, 2)); } catch {}
                     enemiesHit++;
                 }
@@ -248,16 +263,10 @@ export function absorbDamage(reinhardtCardId, damageAmount) {
             });
         }, 10);
         
-        // Show floating text
-        if (window.effectsBus) {
-            window.effectsBus.publish({
-                type: 'fx:absorb',
-                cardId: reinhardtCardId,
-                amount: shieldsToUse,
-                text: `-${shieldsToUse} Shield`
-            });
-        }
-        
+        // `window.effectsBus` is never assigned, so this drew nothing. The
+        // absorb reads as a shield pulse on Reinhardt's own card.
+        try { effectsBus.publish(Effects.pulse(reinhardtCardId, PALETTE.ice)); } catch {}
+
         showToast(`Reinhardt: Absorbed ${shieldsToUse} damage for ally`);
         setTimeout(() => clearToast(), 1500);
     }

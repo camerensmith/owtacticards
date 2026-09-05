@@ -220,6 +220,9 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
     try {
         playAudioByKey('bastion-ultimate');
     } catch {}
+
+    // Bastion assembles into tank form for the duration of the ultimate.
+    try { effectsBus.publish(Effects.tankForm(playerHeroId, true)); } catch {}
     
     // AI: auto-select 3 random enemy targets (can repeat)
     if (window.__ow_aiTriggering || window.__ow_isAITurn) {
@@ -239,15 +242,22 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
                 setTimeout(() => clearToast(), 1500);
                 return;
             }
-            // Pick 3 targets with replacement
-            const picks = [];
-            for (let i = 0; i < 3; i++) {
-                const t = livingEnemies[Math.floor(Math.random() * livingEnemies.length)];
-                picks.push(t);
-            }
+            /*
+             * Three different enemies, or as many as are standing.
+             *
+             * These were drawn with replacement, so the AI routinely spent Tank
+             * Mode putting all three shots into one hero — six damage on a
+             * single card, and often overkill — when the ultimate reads "one
+             * enemy + up to 2 enemies".
+             */
+            const picks = [...livingEnemies]
+                .sort(() => Math.random() - 0.5)
+                .slice(0, 3);
             // Deal 2 damage to each pick
             picks.forEach(t => {
-                dealDamage(t.cardId, t.rowId, 2, false, playerHeroId);
+                try { effectsBus.publish(Effects.rocket(playerHeroId, t.cardId, 1)); } catch {}
+                // The rocket is the projectile; suppress the default beam.
+                dealDamage(t.cardId, t.rowId, 2, false, playerHeroId, false, { skipProjectileFx: true });
                 try { effectsBus.publish(Effects.showDamage(t.cardId, 2)); } catch {}
             });
             showToast(`Bastion AI: Tank Mode fired at ${picks.length} target(s)`);
@@ -256,6 +266,8 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
         } catch (e) {
             console.error('Bastion AI ultimate error:', e);
             return;
+        } finally {
+            try { effectsBus.publish(Effects.tankForm(playerHeroId, false)); } catch {}
         }
     }
     
@@ -271,7 +283,12 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
         }
         
         // Deal 2 damage to primary target
-        dealDamage(primaryTarget.cardId, primaryTarget.rowId, 2, false, playerHeroId);
+        try { effectsBus.publish(Effects.rocket(playerHeroId, primaryTarget.cardId, 1)); } catch {}
+        // One report per shot. debounceMs: 0 because the key's 200ms default
+        // would swallow a second shot fired quickly after the first.
+        try { playAudioByKey('bastion-ultend', { debounceMs: 0 }); } catch {}
+        // The rocket is the projectile; suppress the default beam.
+        dealDamage(primaryTarget.cardId, primaryTarget.rowId, 2, false, playerHeroId, false, { skipProjectileFx: true });
         try { effectsBus.publish(Effects.showDamage(primaryTarget.cardId, 2)); } catch {}
         
         showToast('Bastion: Select up to 2 additional targets');
@@ -283,7 +300,10 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
                 const target = await selectCardTarget();
                 if (target) {
                     additionalTargets.push(target);
-                    dealDamage(target.cardId, target.rowId, 2, false, playerHeroId);
+                    try { effectsBus.publish(Effects.rocket(playerHeroId, target.cardId, 1)); } catch {}
+                    try { playAudioByKey('bastion-ultend', { debounceMs: 0 }); } catch {}
+                    // The rocket is the projectile; suppress the default beam.
+                    dealDamage(target.cardId, target.rowId, 2, false, playerHeroId, false, { skipProjectileFx: true });
                     try { effectsBus.publish(Effects.showDamage(target.cardId, 2)); } catch {}
                 } else {
                     break; // User cancelled, stop selecting
@@ -293,11 +313,6 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
             }
         }
         
-        // Play ultimate end sound
-        try {
-            playAudioByKey('bastion-ultend');
-        } catch {}
-        
         const totalTargets = 1 + additionalTargets.length;
         showToast(`Bastion: Tank Mode complete - ${totalTargets} targets hit`);
         setTimeout(() => clearToast(), 2000);
@@ -306,6 +321,10 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
         console.error('Bastion Ultimate error:', error);
         showToast('Bastion ultimate cancelled');
         setTimeout(() => clearToast(), 1500);
+    } finally {
+        // Must stand down on every path — cancel and throw included — or Bastion
+        // stays in tank form for the rest of the match.
+        try { effectsBus.publish(Effects.tankForm(playerHeroId, false)); } catch {}
     }
 }
 
@@ -333,4 +352,20 @@ export function cleanupBastionTokens(playerHeroId) {
     onDeath({ playerHeroId, rowId: null });
 }
 
-export default { onDraw, onEnter, onUltimate, onDeath, cleanupBastionTokens };
+export function applyTokenEnter(cardId, rowId) {
+    if (!cardId || !rowId || rowId[0] === 'p') return;
+    const row = window.__ow_getRow?.(rowId);
+    const token = [...(row?.enemyEffects || []), ...(row?.allyEffects || [])]
+        .find((effect) => effect?.id === 'bastion-token' && effect?.hero === 'bastion');
+    if (!token) return;
+
+    const target = window.__ow_getCard?.(cardId);
+    if (!target || target.health <= 0) return;
+
+    try { effectsBus.publish(Effects.sentryShot(rowId, cardId)); } catch {}
+    try { playAudioByKey('bastion-ability1'); } catch {}
+    dealDamage(cardId, rowId, 1, false, token.sourceCardId, false, { skipProjectileFx: true });
+    try { effectsBus.publish(Effects.showDamage(cardId, 1)); } catch {}
+}
+
+export default { onDraw, onEnter, onUltimate, onDeath, cleanupBastionTokens, applyTokenEnter };

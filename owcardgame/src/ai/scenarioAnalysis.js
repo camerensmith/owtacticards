@@ -3,6 +3,12 @@
  * Analyzes game state to determine optimal scenarios for hero abilities and positioning
  */
 
+import { getCardForAi } from '../game/rosterRules';
+
+function aiCard(cardId) {
+    return getCardForAi(cardId, (id) => window.__ow_getCard?.(id), { viewerPlayerNum: 2 });
+}
+
 /**
  * Analyze scenarios for hero positioning and ability usage
  */
@@ -171,7 +177,7 @@ function analyzeUnshieldedEnemies(gameState) {
         const row = gameState.rows?.[rowId];
         if (row?.cardIds) {
             row.cardIds.forEach(cardId => {
-                const card = window.__ow_getCard?.(cardId);
+                const card = aiCard(cardId);
                 if (card && card.health > 0) {
                     const shieldCount = card.shield || 0;
                     if (shieldCount === 0) {
@@ -209,7 +215,7 @@ function analyzeEnemyHP(gameState) {
         
         if (row?.cardIds) {
             row.cardIds.forEach(cardId => {
-                const card = window.__ow_getCard?.(cardId);
+                const card = aiCard(cardId);
                 if (card && card.health > 0) {
                     totalHP += card.health;
                     cardCount++;

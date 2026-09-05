@@ -3,7 +3,8 @@
  * Handles the integration between AI Controller and the actual game mechanics
  */
 
-import AIController, { AI_DIFFICULTY, AI_PERSONALITY } from './AIController';
+import AIController, { AI_PERSONALITY } from './AIController';
+import { defaultAiProfile, isPatient, pickFromRanked } from './aiProfile';
 import { dealDamage } from '../abilities/engine/damageBus';
 import effectsBus, { Effects } from '../abilities/engine/effectsBus';
 import * as targeting from '../abilities/engine/targeting';
@@ -11,7 +12,13 @@ import { showMessage as showToast, clearMessage as clearToast } from '../abiliti
 import { setAIAutoSelect, clearAIAutoSelect } from '../abilities/engine/modalController';
 import { getAbilityMetadata, abilityMetadata } from './abilityMetadata';
 import { assessThreats, getKillPriority, assessAllyProtection, recommendDefensiveAction } from './threatAssessment';
+import { getCardForAi } from '../game/rosterRules';
+import { isDisoriented } from '../game/disorient';
 import data from '../data';
+
+function aiCard(cardId) {
+    return getCardForAi(cardId, (id) => window.__ow_getCard?.(id), { viewerPlayerNum: 2 });
+}
 
 class AIGameIntegration {
     constructor() {
@@ -22,6 +29,27 @@ class AIGameIntegration {
         this.endTurnCallback = null;
         this.cardsPlayedThisTurn = 0;
         this.MAX_CARDS_PER_TURN = 6; // Maximum possible, but AI will decide situationally
+    }
+
+    /**
+     * Play a card from the AI's hand onto a row.
+     *
+     * `rowKey` is a row name — 'front', 'middle' or 'back'; the adapter maps it
+     * and falls back to the emptiest row if the requested one is full.
+     *
+     * This delegates rather than reimplementing: the adapter owns the hand
+     * check, the capacity fallback and the play queue. It exists because
+     * several callers — the mandatory special-card play, and Torbjörn, D.Va,
+     * Ashe and Ramattra reaching in through `window.__ow_aiIntegration` — all
+     * expected `playCard` here and silently did nothing without it.
+     */
+    async playCard(cardId, rowKey = 'middle') {
+        const adapter = this.aiController?.adapter;
+        if (!adapter?.playCard) {
+            console.error('AI playCard: no adapter available', cardId);
+            return false;
+        }
+        return adapter.playCard(cardId, rowKey);
     }
 
     // Initialize AI integration
@@ -55,14 +83,21 @@ class AIGameIntegration {
         }
     }
 
-    // Set AI difficulty and personality
-    setAISettings(difficulty, personality) {
-        this.aiController.setDifficulty(difficulty);
+    /** This turn's rolled sharpness. See ai/aiProfile.js. */
+    profile() {
+        return this.aiController?.profile || defaultAiProfile();
+    }
+
+    // Set AI personality. Difficulty is no longer a setting: the opponent
+    // rolls its own sharpness each turn (see ai/aiProfile.js).
+    setAISettings(personality) {
         this.aiController.setPersonality(personality);
     }
 
     // Check if it's AI's turn
-    isPlayer2Turn() { return true; }
+    isPlayer2Turn() {
+        return window.__ow_getPlayerTurn?.() === 2;
+    }
 
     // Handle AI turn
     async handleAITurn() {
@@ -73,7 +108,9 @@ class AIGameIntegration {
             return null;
         }
         this.isAITurn = true;
-        window.__ow_isAITurn = true; // Set global flag for targeting system
+        // __ow_isAITurn is derived from whose turn it is (see game/aiControl.js).
+        // It is deliberately not set here: this method returns 1.5s before the
+        // turn actually ends, and abilities are still resolving in that window.
         console.log('AI taking turn...');
 
         try {
@@ -112,8 +149,7 @@ class AIGameIntegration {
             await this.tryUseAbilitiesThisTurn();
 
             // Try to use one or more ultimates this turn if conditions are favorable
-            const difficulty = this.aiController?.difficulty || 'hard';
-            const maxUltimates = difficulty === 'easy' ? 1 : (difficulty === 'medium' ? 2 : 3);
+            const maxUltimates = this.profile().ultimatesPerTurn;
             let ultimatesUsed = 0;
             while (ultimatesUsed < maxUltimates) {
                 const fired = await this.tryUseUltimateThisTurn();
@@ -163,7 +199,6 @@ class AIGameIntegration {
             return null;
         } finally {
             this.isAITurn = false;
-            window.__ow_isAITurn = false; // Clear global flag
             this.currentDecision = null;
         }
     }
@@ -225,7 +260,7 @@ class AIGameIntegration {
             console.log(`AI placing ${card.name} in ${row} row`);
             console.log('Card object:', card);
 
-            // Use the adapter to place the card (includes 6-hero limit check)
+            // Use the adapter to place the card
             const playerHeroId = card.cardId;
             await this.aiController.adapter.playCard(playerHeroId, row);
 
@@ -289,12 +324,7 @@ class AIGameIntegration {
             console.error('Error stack:', error.stack);
             
             // Handle specific error cases
-            if (error.message === 'Side capacity reached') {
-                console.log('AI hit 6-hero limit, stopping card plays this turn');
-                this.cardsPlayedThisTurn = this.MAX_CARDS_PER_TURN; // Stop trying to play more cards
-                showToast('AI reached maximum heroes (6/6)');
-                setTimeout(() => clearToast(), 2000);
-            } else if (error.message === 'All rows full') {
+            if (error.message === 'All rows full') {
                 console.log('AI cannot place card - all rows are full');
                 showToast('AI cannot place card - all rows full');
                 setTimeout(() => clearToast(), 2000);
@@ -487,6 +517,11 @@ class AIGameIntegration {
                 return this.selectBriShieldBashTarget(targets);
             }
 
+            // VEGA Chronoshift: Prefer allies with the strongest Enter to replay
+            if (heroIdContext === 'vega' && abilityPhase === 'onUltimate') {
+                return this.selectVegaChronoshiftTarget(targets);
+            }
+
             // HAZARD: Look for pickoff opportunities (low HP high value)
             if (heroIdContext === 'hazard') {
                 return this.selectHazardPickoffTarget(targets);
@@ -609,7 +644,7 @@ class AIGameIntegration {
             const row = window.__ow_getRow?.(rowId);
             if (row && row.cardIds) {
                 row.cardIds.forEach(cardId => {
-                    const card = window.__ow_getCard?.(cardId);
+                    const card = aiCard(cardId);
                     if (card && card.health > 0) {
                         // If excludeOwnCards is true, filter out AI's own cards (player 2)
                         if (excludeOwnCards && rowId.startsWith('2')) {
@@ -633,20 +668,13 @@ class AIGameIntegration {
     selectBestDamageTargetWithThreatAssessment(targets) {
         try {
             // Easy AI: 50% chance to skip threat assessment and just pick random/highest health
-            const difficulty = this.aiController?.difficulty || 'hard';
-            if (difficulty === 'easy' && this.aiController.rng.next() < 0.5) {
-                console.log('Easy AI: Skipping threat assessment - picking suboptimal target');
-                // 50% random, 50% highest health
+            // Some turns it does not bother reading the board before shooting.
+            if (this.aiController.rng.next() < this.profile().threatSkipChance) {
+                console.log('AI: Skipping threat assessment - taking a lazier target');
                 if (this.aiController.rng.next() < 0.5) {
                     const randomIndex = Math.floor(this.aiController.rng.next() * targets.length);
                     return targets[randomIndex];
                 }
-                return this.selectBestDamageTarget(targets);
-            }
-
-            // Medium AI: 25% chance to skip threat assessment
-            if (difficulty === 'medium' && this.aiController.rng.next() < 0.25) {
-                console.log('Medium AI: Skipping threat assessment - picking highest health');
                 return this.selectBestDamageTarget(targets);
             }
 
@@ -655,7 +683,7 @@ class AIGameIntegration {
             const aiBoard = { front: [], middle: [], back: [] };
 
             targets.forEach(target => {
-                const card = window.__ow_getCard?.(target.cardId);
+                const card = aiCard(target.cardId);
                 if (!card) return;
 
                 const rowId = target.rowId;
@@ -671,7 +699,7 @@ class AIGameIntegration {
                 if (!row?.cardIds) return;
 
                 row.cardIds.forEach(cardId => {
-                    const card = window.__ow_getCard?.(cardId);
+                    const card = aiCard(cardId);
                     if (!card || card.health <= 0) return;
 
                     if (rowId.endsWith('f')) aiBoard.front.push({ ...card, cardId });
@@ -685,7 +713,7 @@ class AIGameIntegration {
             const killPriority = getKillPriority(threats);
 
             if (killPriority) {
-                console.log(`AI Kill Priority (${difficulty}): ${killPriority.card.name} - ${killPriority.reason}`);
+                console.log(`AI Kill Priority: ${killPriority.card.name} - ${killPriority.reason}`);
 
                 // Find matching target
                 const match = targets.find(t => t.cardId === killPriority.cardId);
@@ -706,7 +734,7 @@ class AIGameIntegration {
         let highestHealth = 0;
 
         targets.forEach(target => {
-            const card = window.__ow_getCard?.(target.cardId);
+            const card = aiCard(target.cardId);
             if (card && card.health > highestHealth) {
                 highestHealth = card.health;
                 bestTarget = target;
@@ -724,7 +752,7 @@ class AIGameIntegration {
             const enemyBoard = { front: [], middle: [], back: [] };
 
             targets.forEach(target => {
-                const card = window.__ow_getCard?.(target.cardId);
+                const card = aiCard(target.cardId);
                 if (!card) return;
 
                 const rowId = target.rowId;
@@ -759,7 +787,7 @@ class AIGameIntegration {
         let lowestHealth = Infinity;
 
         targets.forEach(target => {
-            const card = window.__ow_getCard?.(target.cardId);
+            const card = aiCard(target.cardId);
             if (card && card.health > 0 && card.health < lowestHealth) {
                 lowestHealth = card.health;
                 bestTarget = target;
@@ -775,7 +803,7 @@ class AIGameIntegration {
         let highestPower = 0;
 
         targets.forEach(target => {
-            const card = window.__ow_getCard?.(target.cardId);
+            const card = aiCard(target.cardId);
             if (card) {
                 const power = (card.front_power || 0) + (card.middle_power || 0) + (card.back_power || 0);
                 if (power > highestPower) {
@@ -788,13 +816,29 @@ class AIGameIntegration {
         return bestTarget || targets[0];
     }
 
+    // Chronoshift: replay the ally whose Enter is most valuable (metadata priority).
+    selectVegaChronoshiftTarget(targets) {
+        let best = null;
+        let bestScore = -1;
+        for (const target of targets || []) {
+            const heroId = String(target.cardId || '').slice(1);
+            const meta = getAbilityMetadata(heroId, 'onEnter');
+            const score = Number(meta?.priority) || 0;
+            if (score > bestScore) {
+                bestScore = score;
+                best = target;
+            }
+        }
+        return best || targets?.[0] || null;
+    }
+
     // Select highest value target
     selectHighestValueTarget(targets) {
         let bestTarget = null;
         let highestValue = 0;
 
         targets.forEach(target => {
-            const card = window.__ow_getCard?.(target.cardId);
+            const card = aiCard(target.cardId);
             if (card) {
                 const value = (card.health || 0) + (card.front_power || 0) + (card.middle_power || 0) + (card.back_power || 0);
                 if (value > highestValue) {
@@ -863,7 +907,7 @@ class AIGameIntegration {
 
                 // Calculate health deficit for all cards in row
                 row.cardIds?.forEach(cardId => {
-                    const card = window.__ow_getCard?.(cardId);
+                    const card = aiCard(cardId);
                     if (card && card.health > 0) {
                         const maxHealth = window.__ow_getMaxHealth?.(cardId) || card.health;
                         healthDeficit += (maxHealth - card.health);
@@ -900,7 +944,7 @@ class AIGameIntegration {
             const row = window.__ow_getRow?.(rowId);
             if (row) {
                 const livingEnemies = (row.cardIds || []).filter(cardId => {
-                    const card = window.__ow_getCard?.(cardId);
+                    const card = aiCard(cardId);
                     return card && card.health > 0;
                 });
 
@@ -918,7 +962,7 @@ class AIGameIntegration {
                 // Prefer rows where we can kill enemies (enemies with <=3 HP get killed by 3+ damage)
                 let killPotential = 0;
                 livingEnemies.forEach(enemyId => {
-                    const enemy = window.__ow_getCard?.(enemyId);
+                    const enemy = aiCard(enemyId);
                     if (enemy && enemy.health <= avgDamagePerEnemy) {
                         killPotential += 10; // Bonus for potential kills
                     }
@@ -1235,37 +1279,14 @@ class AIGameIntegration {
 
         console.log('Sorted choices:', scoredChoices.map(c => `[${c.index}] ${c.choice.title}: ${c.score}`));
 
-        const difficulty = this.aiController.difficulty;
-
-        let chosenIndex;
-        if (difficulty === 'easy') {
-            // Easy: 40% best choice, 60% random
-            if (this.aiController.rng.next() < 0.4) {
-                chosenIndex = scoredChoices[0].index;
-            } else {
-                chosenIndex = Math.floor(this.aiController.rng.next() * choices.length);
-            }
-        } else if (difficulty === 'medium') {
-            // Medium: 70% best, 20% second best, 10% random
-            const rand = this.aiController.rng.next();
-            if (rand < 0.7) {
-                chosenIndex = scoredChoices[0].index;
-            } else if (rand < 0.9 && scoredChoices.length > 1) {
-                chosenIndex = scoredChoices[1].index;
-            } else {
-                chosenIndex = Math.floor(this.aiController.rng.next() * choices.length);
-            }
-        } else {
-            // Hard: 90% best, 8% second best, 2% random
-            const rand = this.aiController.rng.next();
-            if (rand < 0.9) {
-                chosenIndex = scoredChoices[0].index;
-            } else if (rand < 0.98 && scoredChoices.length > 1) {
-                chosenIndex = scoredChoices[1].index;
-            } else {
-                chosenIndex = Math.floor(this.aiController.rng.next() * choices.length);
-            }
-        }
+        // Same ladder the card picker uses, so a loose turn is loose about its
+        // ability choices too rather than only about which card it plays.
+        const ranked = pickFromRanked(
+            scoredChoices.length,
+            this.profile(),
+            () => this.aiController.rng.next(),
+        );
+        const chosenIndex = scoredChoices[ranked]?.index ?? scoredChoices[0].index;
 
         console.log(`AI chose option ${chosenIndex}: "${choices[chosenIndex]?.title}"`);
         return chosenIndex;
@@ -1299,7 +1320,7 @@ class AIGameIntegration {
             const row = window.__ow_getRow?.(rowId);
             if (row?.cardIds) {
                 row.cardIds.forEach(cardId => {
-                    const card = window.__ow_getCard?.(cardId);
+                    const card = aiCard(cardId);
                     if (card && card.health > 0) {
                         context.allyBoardCount++;
                         allyTotalHealth += card.health;
@@ -1314,7 +1335,7 @@ class AIGameIntegration {
             const row = window.__ow_getRow?.(rowId);
             if (row?.cardIds) {
                 row.cardIds.forEach(cardId => {
-                    const card = window.__ow_getCard?.(cardId);
+                    const card = aiCard(cardId);
                     if (card && card.health > 0) {
                         context.enemyBoardCount++;
                         enemyTotalHealth += card.health;
@@ -1396,7 +1417,7 @@ class AIGameIntegration {
                 if (!row?.cardIds) continue;
                 totalBoardSlots += row.cardIds.length;
                 for (const pid of row.cardIds) {
-                    const card = window.__ow_getCard?.(pid);
+                    const card = aiCard(pid);
                     if (card) {
                         if (card.health <= 0) {
                             deadCards.push({ cardId: pid, rowId: r, card });
@@ -1438,8 +1459,8 @@ class AIGameIntegration {
                 const sortedDead = deadCards.sort((a, b) => this.scoreDeadCard(a.card) - this.scoreDeadCard(b.card));
                 const toRemove = sortedDead[0];
                 
-                window.__ow_dispatch?.({ type: 'remove-dead-card', payload: { cardId: toRemove.cardId } });
-                console.log(`AI smart cleanup: removed ${toRemove.cardId} (score: ${this.scoreDeadCard(toRemove.card)})`);
+                window.__ow_dispatch?.({ type: 'move-card-to-graveyard', payload: { cardId: toRemove.cardId } });
+                console.log(`AI smart cleanup: buried ${toRemove.cardId} (score: ${this.scoreDeadCard(toRemove.card)})`);
             } else {
                 console.log('AI preserving dead cards for potential Mercy rez');
             }
@@ -1537,11 +1558,11 @@ class AIGameIntegration {
                 const row = window.__ow_getRow?.(r);
                 if (!row?.cardIds) continue;
                 for (const pid of row.cardIds) {
-                    const card = window.__ow_getCard?.(pid);
+                    const card = aiCard(pid);
                     if (card && card.health <= 0) {
-                        // Use existing dispatcher to remove dead
-                        window.__ow_dispatch?.({ type: 'remove-dead-card', payload: { cardId: pid } });
-                        console.log('AI removed dead ally card:', pid);
+                        // Send to the graveyard, never delete: deleted heroes leak out of the deck
+                        window.__ow_dispatch?.({ type: 'move-card-to-graveyard', payload: { cardId: pid } });
+                        console.log('AI buried dead ally card:', pid);
                         return; // remove one per turn to keep tempo
                     }
                 }
@@ -1562,7 +1583,7 @@ class AIGameIntegration {
             }
 
             // Check if D.Va was just returned (has the special return flag or we just lost MEKA)
-            const card = window.__ow_getCard?.(dvaCardId);
+            const card = aiCard(dvaCardId);
             if (!card) return null;
 
             // Check if MEKA is no longer on board (indicating it died/was replaced)
@@ -1670,7 +1691,7 @@ class AIGameIntegration {
                 const row = window.__ow_getRow?.(r);
                 if (!row?.cardIds) continue;
                 for (const pid of row.cardIds) {
-                    const c = window.__ow_getCard?.(pid);
+                    const c = aiCard(pid);
                     if (!c) continue;
                     const role = (c.role || c.class || '').toLowerCase();
                     if ((role === 'support' && r.endsWith('f')) || (role === 'damage' && r.endsWith('b'))) {
@@ -1719,7 +1740,7 @@ class AIGameIntegration {
 
             // Manage Reinhardt's Barrier Field
             if (reinhardt) {
-                const reinhardtCard = window.__ow_getCard?.(reinhardt.cardId);
+                const reinhardtCard = aiCard(reinhardt.cardId);
                 const hasBarrier = Array.isArray(reinhardtCard?.effects) &&
                     reinhardtCard.effects.some(e => e?.id === 'barrier-field' && e?.type === 'barrier');
 
@@ -1738,7 +1759,7 @@ class AIGameIntegration {
 
             // Manage Winston's Barrier Protector
             if (winston) {
-                const winstonCard = window.__ow_getCard?.(winston.cardId);
+                const winstonCard = aiCard(winston.cardId);
                 const hasBarrier = Array.isArray(winstonCard?.effects) &&
                     winstonCard.effects.some(e => e?.id === 'barrier-protector' && e?.type === 'barrier');
 
@@ -1774,57 +1795,28 @@ class AIGameIntegration {
             const isReady = typeof window.__ow_isUltimateReady === 'function' ? window.__ow_isUltimateReady(mercy.cardId) : false;
             if (!isReady) return false;
 
-            // Find all dead allies on the board
-            const deadAllies = [];
-            for (const r of allyRows) {
-                const row = window.__ow_getRow?.(r);
-                if (!row?.cardIds) continue;
-                for (const cardId of row.cardIds) {
-                    const card = window.__ow_getCard?.(cardId);
-                    if (card && card.health <= 0) {
-                        deadAllies.push({ cardId, rowId: r, card });
-                    }
-                }
-            }
-
-            if (deadAllies.length === 0) {
-                console.log('Mercy: No dead allies to resurrect');
+            // Resurrection pulls from the graveyard now, not from board corpses.
+            const graveyard = window.__ow_getGraveyard?.(2) || [];
+            if (graveyard.length === 0) {
+                console.log('Mercy: Graveyard is empty, nothing to resurrect');
                 return false;
             }
 
-            console.log(`Mercy: Found ${deadAllies.length} dead allies to consider for resurrection`);
+            // Mercy needs somewhere to put them.
+            const hasSpace = allyRows.some(r => (window.__ow_getRow?.(r)?.cardIds || []).length < 4);
+            if (!hasSpace) {
+                console.log('Mercy: No free slot to resurrect into');
+                return false;
+            }
 
-            // Score each dead ally for resurrection priority
-            const scored = deadAllies.map(ally => {
-                const card = ally.card;
-                let score = 0;
-
-                // Role-based priority: Offense > Support > Defense > Tank
-                if (card.role === 'Offense' || card.role === 'Damage') score += 50; // Offense highest priority
-                if (card.role === 'Support') score += 35; // Support second
-                if (card.role === 'Defense') score += 25; // Defense third
-                if (card.role === 'Tank') score += 15; // Tank last priority
-
-                // Power-based priority
-                const power = (card.front_power || 0) + (card.middle_power || 0) + (card.back_power || 0);
-                score += power * 5; // Multiply power for emphasis
-
-                // Health-based priority (higher max health = more valuable)
-                score += (card.maxHealth || card.health || 4) * 3;
-
-                // Ultimate value (heroes with strong ultimates)
-                if (['pharah', 'hanzo', 'reinhardt', 'zarya', 'dva', 'ashe'].includes(card.id)) {
-                    score += 30; // Bonus for heroes with powerful ultimates
-                }
-
-                return { ...ally, score };
-            });
-
-            // Sort by score (highest first)
-            scored.sort((a, b) => b.score - a.score);
-
-            const bestTarget = scored[0];
-            console.log(`Mercy: Best resurrection target is ${bestTarget.cardId} (score: ${bestTarget.score})`);
+            // Shared ranking, so the AI and the pure helpers agree on priority.
+            const best = window.__ow_pickBestGraveyardTarget?.(2);
+            if (!best) {
+                console.log('Mercy: Could not rank a graveyard target');
+                return false;
+            }
+            const bestTarget = { heroId: best.heroId, cardId: `2${best.heroId}` };
+            console.log(`Mercy: Best resurrection target is ${bestTarget.heroId} (from graveyard of ${graveyard.length})`);
 
             // Use Mercy's ultimate
             window.__ow_aiTriggering = true;
@@ -1835,7 +1827,7 @@ class AIGameIntegration {
             try {
                 const success = await window.__ow_useUltimate(mercy.cardId, bestTarget);
                 if (success) {
-                    console.log(`Mercy: Successfully resurrected ${bestTarget.cardId}`);
+                    console.log(`Mercy: Successfully resurrected ${bestTarget.heroId}`);
                     try { window.__ow_aiActionsThisTurn = (window.__ow_aiActionsThisTurn || 0) + 1; } catch {}
                     return true;
                 }
@@ -1861,7 +1853,8 @@ class AIGameIntegration {
                 'ashe': 'bob',
                 'dva': 'dvameka',
                 'torbjorn': 'turret',
-                'ramattra': 'nemesis'
+                'ramattra': 'nemesis',
+                'axiom': 'stoneguard',
             };
 
             const expectedSpecialCard = specialCardMap[heroId];
@@ -1900,6 +1893,10 @@ class AIGameIntegration {
             // Turret: Back row for safety
             else if (expectedSpecialCard === 'turret') {
                 bestRow = 'back';
+            }
+            // Stoneguard: Front row for tanking
+            else if (expectedSpecialCard === 'stoneguard') {
+                bestRow = 'front';
             }
 
             // Check row capacity and adjust if needed
@@ -1960,7 +1957,7 @@ class AIGameIntegration {
             // Check each ally for available abilities
             const abilityUsers = [];
             for (const ally of allies) {
-                const card = window.__ow_getCard?.(ally.cardId);
+                const card = aiCard(ally.cardId);
                 if (card) {
                     // Check for ability1
                     if (card.ability1 && !card.ability1Used) {
@@ -1991,7 +1988,6 @@ class AIGameIntegration {
 
             // Analyze game state for context-aware ability usage
             const gameContext = this.analyzeGameContext();
-            const difficulty = this.aiController?.difficulty || 'hard';
 
             // Score each ability based on game state
             const scoredAbilities = abilityUsers.map(abilityUser => {
@@ -2171,7 +2167,7 @@ class AIGameIntegration {
             const bestAbility = scoredAbilities[0];
 
             // Only use ability if score is above threshold
-            const threshold = difficulty === 'easy' ? 30 : difficulty === 'medium' ? 40 : 50;
+            const threshold = this.profile().abilityThreshold;
             if (bestAbility.score < threshold) {
                 console.log(`AI: Best ability score ${bestAbility.score} below threshold ${threshold}, skipping`);
                 return false;
@@ -2245,6 +2241,10 @@ class AIGameIntegration {
             console.log(`window.__ow_isUltimateReady exists: ${typeof window.__ow_isUltimateReady === 'function'}`);
 
             const ready = allies.filter(a => {
+                if (isDisoriented(window.__ow_getCard?.(a.cardId))) {
+                    console.log(`✗ Ultimate locked (Disoriented) for ${a.cardId}`);
+                    return false;
+                }
                 const isReady = typeof window.__ow_isUltimateReady === 'function' ? window.__ow_isUltimateReady(a.cardId) : false;
                 if (isReady) {
                     console.log(`✓ Ultimate READY for ${a.cardId}`);
@@ -2312,14 +2312,13 @@ class AIGameIntegration {
             // Enhanced ultimate timing based on difficulty and game state
             let shouldFire = false;
             const heroId = chosen.cardId.slice(1);
-            const difficulty = this.aiController?.difficulty || 'hard';
 
             // Get current synergy levels (synergy is a number, not an object!)
             const currentSynergy = (window.__ow_getRow?.('2f')?.synergy || 0) +
                                  (window.__ow_getRow?.('2m')?.synergy || 0) +
                                  (window.__ow_getRow?.('2b')?.synergy || 0);
 
-            console.log(`Ultimate timing check: hero=${heroId}, synergy=${currentSynergy}, difficulty=${difficulty}`);
+            console.log(`Ultimate timing check: hero=${heroId}, synergy=${currentSynergy}`);
 
             // Add randomness factor - AI will sometimes use ultimates even when not optimal (±30% variance)
             const randomFactor = 0.7 + (this.aiController.rng.next() * 0.6); // 0.7 to 1.3
@@ -2355,7 +2354,7 @@ class AIGameIntegration {
                         if (turretId) {
                             console.log('Torbjorn: Turret found in hand - force playing to back row');
                             // Prefer back row; fallback handled by adapter
-                            await this.adapter.playCard(turretId, 'back');
+                            await this.playCard(turretId, 'back');
                             // Re-check for turret on board after placement
                             hasTurret = allyRows.some(r => {
                                 const row = window.__ow_getRow?.(r);
@@ -2384,7 +2383,7 @@ class AIGameIntegration {
                 if (lucioRow) {
                     const rowCards = window.__ow_getRow?.(lucioRow)?.cardIds || [];
                     const heroCount = rowCards.filter(id => {
-                        const card = window.__ow_getCard?.(id);
+                        const card = aiCard(id);
                         return card && card.health > 0;
                     }).length;
 
@@ -2404,7 +2403,7 @@ class AIGameIntegration {
                 if (orisaRow) {
                     const rowCards = window.__ow_getRow?.(orisaRow)?.cardIds || [];
                     const livingCount = rowCards.filter(id => {
-                        const c = window.__ow_getCard?.(id);
+                        const c = aiCard(id);
                         return c && c.health > 0;
                     }).length;
                     if (livingCount >= 3) {
@@ -2422,7 +2421,7 @@ class AIGameIntegration {
                 ['2f', '2m', '2b'].forEach(rowId => {
                     const rowData = window.__ow_getRow?.(rowId);
                     rowData?.cardIds?.forEach(cardId => {
-                        const card = window.__ow_getCard?.(cardId);
+                        const card = aiCard(cardId);
                         if (card && card.health > 0) allyCards.push(card);
                     });
                 });
@@ -2456,7 +2455,7 @@ class AIGameIntegration {
                 ['2f', '2m', '2b'].forEach(rowId => {
                     const rowData = window.__ow_getRow?.(rowId);
                     rowData?.cardIds?.forEach(cardId => {
-                        const card = window.__ow_getCard?.(cardId);
+                        const card = aiCard(cardId);
                         if (card) allyCards.push(card);
                     });
                 });
@@ -2476,7 +2475,7 @@ class AIGameIntegration {
                 ['2f', '2m', '2b'].forEach(rowId => {
                     const rowData = window.__ow_getRow?.(rowId);
                     rowData?.cardIds?.forEach(cardId => {
-                        const card = window.__ow_getCard?.(cardId);
+                        const card = aiCard(cardId);
                         if (card && card.health < card.maxHealth) woundedAllies.push(card);
                     });
                 });
@@ -2494,7 +2493,7 @@ class AIGameIntegration {
                 ['2f', '2m', '2b'].forEach(rowId => {
                     const rowData = window.__ow_getRow?.(rowId);
                     rowData?.cardIds?.forEach(cardId => {
-                        const card = window.__ow_getCard?.(cardId);
+                        const card = aiCard(cardId);
                         if (card && card.health > 0) allyCards.push(card);
                     });
                 });
@@ -2512,7 +2511,7 @@ class AIGameIntegration {
                 ['1f', '1m', '1b'].forEach(rowId => {
                     const rowData = window.__ow_getRow?.(rowId);
                     rowData?.cardIds?.forEach(cardId => {
-                        const card = window.__ow_getCard?.(cardId);
+                        const card = aiCard(cardId);
                         if (card && card.health <= 3) weakenedEnemies.push(card);
                     });
                 });
@@ -2549,9 +2548,9 @@ class AIGameIntegration {
 
             // WINSTON Primal Rage: Disrupt enemy positioning
             else if (heroId === 'winston') {
-                if (enemyDenseRow.count >= 2) {
+                if (enemyDenseRow.count >= 1) {
                     shouldFire = true;
-                    console.log(`Winston Primal Rage: ${enemyDenseRow.count} enemies to disrupt`);
+                    console.log(`Winston Primal Rage: ${enemyDenseRow.count} enemies to shuffle`);
                 }
             }
 
@@ -2585,7 +2584,7 @@ class AIGameIntegration {
                 ['1f', '1m', '1b'].forEach(rowId => {
                     const rowData = window.__ow_getRow?.(rowId);
                     rowData?.cardIds?.forEach(cardId => {
-                        const card = window.__ow_getCard?.(cardId);
+                        const card = aiCard(cardId);
                         if (card && card.health <= 2) weakenedEnemies.push(card);
                     });
                 });
@@ -2602,7 +2601,7 @@ class AIGameIntegration {
                 ['1f', '1m', '1b'].forEach(rowId => {
                     const rowData = window.__ow_getRow?.(rowId);
                     rowData?.cardIds?.forEach(cardId => {
-                        const card = window.__ow_getCard?.(cardId);
+                        const card = aiCard(cardId);
                         if (card && card.health <= 2) lowHPEnemies.push(card);
                     });
                 });
@@ -2671,7 +2670,7 @@ class AIGameIntegration {
                     const opposingRowId = `1${mekaRow[1]}`; // Same row position, enemy side
                     const opposingRow = window.__ow_getRow?.(opposingRowId);
                     const enemyCount = opposingRow?.cardIds?.filter(id => {
-                        const card = window.__ow_getCard?.(id);
+                        const card = aiCard(id);
                         return card && card.health > 0;
                     }).length || 0;
                     
@@ -2681,7 +2680,7 @@ class AIGameIntegration {
                     } else {
                         // Also fire if our row has multiple enemies (damage both sides)
                         const mekaRowCount = (window.__ow_getRow?.(mekaRow)?.cardIds?.filter(id => {
-                            const card = window.__ow_getCard?.(id);
+                            const card = aiCard(id);
                             return card && card.health > 0;
                         }).length || 0);
                         if (mekaRowCount >= 2 || enemyCount >= 1) {
@@ -2713,6 +2712,32 @@ class AIGameIntegration {
                 console.log('Echo Duplicate: Copy last ultimate');
             }
 
+            // VEGA Chronoshift: Replay an ally Enter when one is on the board
+            else if (heroId === 'vega') {
+                const allyRows = ['2f', '2m', '2b'];
+                let enterAllies = 0;
+                for (const rowId of allyRows) {
+                    const ids = window.__ow_getRow?.(rowId)?.cardIds || [];
+                    for (const cardId of ids) {
+                        if (!cardId || cardId === chosen.cardId) continue;
+                        const card = aiCard(cardId);
+                        if (!card || (card.health || 0) <= 0 || card.special || card.structure) continue;
+                        const allyHeroId = cardId.slice(1);
+                        const mod = window.__ow_getAbilityModule?.(allyHeroId);
+                        if (mod && (typeof mod.onEnter === 'function' || typeof mod.onEnterAbility1 === 'function')) {
+                            enterAllies += 1;
+                        }
+                    }
+                }
+                if (enterAllies > 0) {
+                    shouldFire = true;
+                    console.log(`Vega Chronoshift: ${enterAllies} ally Enter(s) available to replay`);
+                } else {
+                    shouldFire = false;
+                    console.log('Vega Chronoshift: no ally Enter on board — holding');
+                }
+            }
+
             // GENERAL FALLBACK: If hero-specific conditions not met, consider firing anyway
             if (!shouldFire) {
                 // Apply randomness - sometimes fire even without perfect conditions
@@ -2727,14 +2752,14 @@ class AIGameIntegration {
             if (!shouldFire && chosenIntent.isDamage) {
                 // High-value AOE ultimates (Pharah, Hanzo, Junkrat) - wait for better synergy
                 if (['pharah', 'hanzo', 'junkrat'].includes(heroId)) {
-                    if (difficulty === 'hard') {
+                    if (isPatient(this.profile())) {
                         // Hard AI: Apply randomness to thresholds
                         const synergyThreshold = Math.max(1, Math.floor(3 * randomFactor));
                         if (currentSynergy >= synergyThreshold || (enemyDenseRow.count >= 2 && enemyDenseRow.power >= 8)) {
                             shouldFire = true;
                             console.log(`High-value AOE ultimate ready with synergy ${currentSynergy} >= ${synergyThreshold}`);
                         }
-                    } else if (difficulty === 'medium') {
+                    } else if (this.profile().patience >= 0.33) {
                         // Medium AI: Lower threshold with randomness
                         const synergyThreshold = Math.max(1, Math.floor(2 * randomFactor));
                         if (currentSynergy >= synergyThreshold || enemyDenseRow.count >= 2) {
@@ -2765,7 +2790,7 @@ class AIGameIntegration {
                 ['2f', '2m', '2b'].forEach(rowId => {
                     const rowData = window.__ow_getRow?.(rowId);
                     rowData?.cardIds?.forEach(cardId => {
-                        const card = window.__ow_getCard?.(cardId);
+                        const card = aiCard(cardId);
                         if (card) allyCards.push(card);
                     });
                 });
@@ -2773,7 +2798,7 @@ class AIGameIntegration {
                 const woundedAllies = allyCards.filter(c => c.currentHealth < c.maxHealth);
                 const criticalAllies = allyCards.filter(c => c.currentHealth <= Math.floor(c.maxHealth * 0.4));
 
-                if (difficulty === 'hard') {
+                if (isPatient(this.profile())) {
                     // Hard AI: Wait for 2+ wounded OR 1+ critical
                     if (criticalAllies.length >= 1 || woundedAllies.length >= 2) {
                         shouldFire = true;
@@ -2793,7 +2818,7 @@ class AIGameIntegration {
                 const allyCounts = allyRows.map(r => window.__ow_getRow?.(r)?.cardIds?.length || 0);
                 const maxAllyRow = Math.max(...allyCounts);
 
-                if (difficulty === 'hard') {
+                if (isPatient(this.profile())) {
                     // Hard AI: Apply randomness to ally threshold
                     const allyThreshold = Math.max(1, Math.floor(2 * randomFactor));
                     if (maxAllyRow >= allyThreshold || (enemyDenseRow.power >= 12 && maxAllyRow >= 1)) {
@@ -2812,10 +2837,9 @@ class AIGameIntegration {
 
             // Difficulty-based random fire chance - INCREASED AGGRESSIVENESS
             if (!shouldFire) {
-                const randomThreshold = difficulty === 'easy' ? 0.7 : difficulty === 'medium' ? 0.5 : 0.3;
-                if (this.aiController.rng.next() < randomThreshold) {
+                if (this.aiController.rng.next() < this.profile().impulseFireChance) {
                     shouldFire = true;
-                    console.log(`${difficulty} AI: Random ultimate fire (increased aggressiveness)`);
+                    console.log('AI: Impulse ultimate fire');
                 }
             }
 
@@ -2845,7 +2869,7 @@ class AIGameIntegration {
             if (!shouldFire) {
                 console.log(`❌ Ultimate NOT fired for ${heroId}: insufficient value/setup`);
                 console.log(`   Type: ${chosenIntent.isDamage ? 'Damage' : chosenIntent.isBuff ? 'Buff' : chosenIntent.isHeal ? 'Heal' : 'Unknown'}`);
-                console.log(`   Synergy: ${currentSynergy}, Enemies: ${enemyDenseRow?.count}, Difficulty: ${difficulty}\n`);
+                console.log(`   Synergy: ${currentSynergy}, Enemies: ${enemyDenseRow?.count}\n`);
                 return false;
             }
 
@@ -2917,7 +2941,7 @@ class AIGameIntegration {
         console.log('Genji targeting: Looking for damaged high-power OR non-ulted enemies...');
 
         const scored = targets.map(t => {
-            const card = window.__ow_getCard?.(t.cardId);
+            const card = aiCard(t.cardId);
             if (!card) return { target: t, score: 0 };
 
             const heroId = t.cardId.slice(1);
@@ -2943,7 +2967,7 @@ class AIGameIntegration {
         console.log('Soldier 76 targeting: Looking for killable/weakened targets...');
 
         const scored = targets.map(t => {
-            const card = window.__ow_getCard?.(t.cardId);
+            const card = aiCard(t.cardId);
             if (!card) return { target: t, score: 0 };
 
             const canKill = card.health <= 3; // Soldier deals 3 damage
@@ -2967,7 +2991,7 @@ class AIGameIntegration {
         console.log('Mei Cryo-Freeze targeting: Looking for non-ulted high-value enemies...');
 
         const scored = targets.map(t => {
-            const card = window.__ow_getCard?.(t.cardId);
+            const card = aiCard(t.cardId);
             if (!card) return { target: t, score: 0 };
 
             const heroId = t.cardId.slice(1);
@@ -2991,7 +3015,7 @@ class AIGameIntegration {
         console.log('Brigitte Shield Bash: Looking for high-threat non-ulted enemies...');
 
         const scored = targets.map(t => {
-            const card = window.__ow_getCard?.(t.cardId);
+            const card = aiCard(t.cardId);
             if (!card) return { target: t, score: 0 };
 
             const heroId = t.cardId.slice(1);
@@ -3017,7 +3041,7 @@ class AIGameIntegration {
         console.log('Hazard targeting: Looking for pickoff opportunities...');
 
         const scored = targets.map(t => {
-            const card = window.__ow_getCard?.(t.cardId);
+            const card = aiCard(t.cardId);
             if (!card) return { target: t, score: 0 };
 
             const heroId = t.cardId.slice(1);
@@ -3050,11 +3074,11 @@ class AIGameIntegration {
     selectReaperTradeoffTarget(targets) {
         console.log('Reaper targeting: Assessing power tradeoff for self-sacrifice...');
 
-        const reaperCard = window.__ow_getCard?.('2reaper');
+        const reaperCard = aiCard('2reaper');
         const reaperPower = reaperCard ? (data.heroes?.reaper?.[`${reaperCard.rowId?.[1] || 'm'}_power`] || 0) : 0;
 
         const scored = targets.map(t => {
-            const card = window.__ow_getCard?.(t.cardId);
+            const card = aiCard(t.cardId);
             if (!card) return { target: t, score: 0 };
 
             const heroId = t.cardId.slice(1);
@@ -3105,7 +3129,7 @@ class AIGameIntegration {
             let woundedAllies = 0;
             if (isEnemyRow && opposingRow) {
                 (opposingRow.cardIds || []).forEach(cardId => {
-                    const card = window.__ow_getCard?.(cardId);
+                    const card = aiCard(cardId);
                     if (card && card.health < card.maxHealth) woundedAllies++;
                 });
             }

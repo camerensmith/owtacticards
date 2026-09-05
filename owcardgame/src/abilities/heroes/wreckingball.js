@@ -3,6 +3,15 @@ import { showMessage as showToast, clearMessage as clearToast } from '../engine/
 import { playAudioByKey } from '../../assets/imageImports';
 import { dealDamage } from '../engine/damageBus';
 import effectsBus, { Effects } from '../engine/effectsBus';
+import { isMinefieldToken, minefieldCharges, minefieldToken } from '../../game/minefield';
+
+function placeMinefield(rowId, playerHeroId, sourceRowId, charges) {
+    window.__ow_appendRowEffect?.(rowId, 'enemyEffects', minefieldToken({
+        charges,
+        sourceCardId: playerHeroId,
+        sourceRowId,
+    }));
+}
 
 export function onEnter({ playerHeroId, rowId }) {
     const playerNum = parseInt(playerHeroId[0]);
@@ -69,28 +78,11 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
             }
         }
         
-        console.log(`Wrecking Ball AI: Selected row ${bestRow} with ${minEnemies} enemies`);
-        
-        // Deploy minefield on the selected row
-        const minefieldEffect = {
-            id: 'minefield',
-            hero: 'wreckingball',
-            type: 'damage-field',
-            sourceCardId: playerHeroId,
-            sourceRowId: rowId,
-            damage: currentSynergy,
-            tooltip: `Minefield: Deals ${currentSynergy} damage to enemies entering this row`,
-            visual: 'minefield'
-        };
-        
-        window.__ow_appendRowEffect?.(bestRow, 'enemyEffects', minefieldEffect);
-        
-        // Play ultimate sound
+        placeMinefield(bestRow, playerHeroId, rowId, currentSynergy);
         try {
             playAudioByKey('wreckingball-ultimate');
         } catch {}
-        
-        showToast(`Wrecking Ball AI: Minefield deployed on ${bestRow} (${currentSynergy} damage)`);
+        showToast(`Wrecking Ball AI: Minefield deployed on ${bestRow} (${currentSynergy} mines)`);
         setTimeout(() => clearToast(), 2000);
         return;
     }
@@ -107,33 +99,10 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
             return;
         }
         
-        // Play ultimate sound after placement
         try {
             playAudioByKey('wreckingball-ultimate');
         } catch {}
-        
-        // Create a single minefield token with multiple charges
-        const minefieldToken = {
-            id: `wreckingball-minefield-${Date.now()}`,
-            hero: 'wreckingball',
-            type: 'minefield',
-            charges: currentSynergy, // Total number of charges
-            sourceCardId: playerHeroId,
-            sourceRowId: rowId,
-            tooltip: `Minefield: Deals 2 damage when enemies move into or out of this row (${currentSynergy} charges)`,
-            visual: 'wreckingball-icon'
-        };
-        
-        // Get current enemy effects and add the single token
-        const currentRow = window.__ow_getRow?.(targetRow.rowId);
-        const currentEnemyEffects = currentRow?.enemyEffects || [];
-        const updatedEnemyEffects = [...currentEnemyEffects, minefieldToken];
-        
-        // Use setRowArray to replace the entire array
-        window.__ow_setRowArray?.(targetRow.rowId, 'enemyEffects', updatedEnemyEffects);
-        
-        // Reduce Wrecking Ball's row synergy to 0
-        window.__ow_updateSynergy?.(rowId, -currentSynergy);
+        placeMinefield(targetRow.rowId, playerHeroId, rowId, currentSynergy);
         showToast(`Wrecking Ball: Minefield deployed with ${currentSynergy} charges`);
         setTimeout(() => clearToast(), 2000);
     } else {
@@ -149,12 +118,9 @@ export function checkMinefieldTrigger(cardId, rowId) {
         return;
     }
 
-    // Find Wrecking Ball minefield token in this row
-    const minefieldToken = row.enemyEffects.find(effect =>
-        effect?.hero === 'wreckingball' && effect?.type === 'minefield'
-    );
+    const token = row.enemyEffects.find(isMinefieldToken);
 
-    if (minefieldToken && minefieldToken.charges > 0) {
+    if (token && minefieldCharges(token) > 0) {
         // Check for immortality field before dealing damage
         const targetCard = window.__ow_getCard?.(cardId);
         if (targetCard && Array.isArray(targetCard.effects)) {
@@ -166,33 +132,29 @@ export function checkMinefieldTrigger(cardId, rowId) {
             }
         }
 
-        // Deal 2 damage (respects damage mitigation)
-        dealDamage(cardId, rowId, 2, false, minefieldToken.sourceCardId);
+        // The mine underfoot goes off. The field itself is drawn from this
+        // token's charges, so removing one takes a mine off the board.
+        effectsBus.publish(Effects.mineBlast(cardId));
+        try { playAudioByKey('junkrat-explosion'); } catch {}
+
+        dealDamage(cardId, rowId, 2, false, token.sourceCardId, false, { skipProjectileFx: true });
         effectsBus.publish(Effects.showDamage(cardId, 2));
 
-        // Reduce charges by 1
-        const newCharges = minefieldToken.charges - 1;
+        const newCharges = minefieldCharges(token) - 1;
         
         if (newCharges <= 0) {
-            // Remove the token if no charges left
-            window.__ow_removeRowEffect?.(rowId, 'enemyEffects', minefieldToken.id);
+            window.__ow_removeRowEffect?.(rowId, 'enemyEffects', token.id);
         } else {
-            // Update the token with reduced charges
             const updatedToken = {
-                ...minefieldToken,
+                ...token,
+                type: 'minefield',
                 charges: newCharges,
                 tooltip: `Minefield: Deals 2 damage when enemies move into or out of this row (${newCharges} charges)`
             };
-            
-            // Get current enemy effects, remove old token, and add updated one
-            const currentRow = window.__ow_getRow?.(rowId);
-            const currentEnemyEffects = currentRow?.enemyEffects || [];
-            const updatedEnemyEffects = currentEnemyEffects.map(effect => 
-                effect.id === minefieldToken.id ? updatedToken : effect
-            );
-            
-            // Use setRowArray to replace the entire array
-            window.__ow_setRowArray?.(rowId, 'enemyEffects', updatedEnemyEffects);
+            const currentEnemyEffects = window.__ow_getRow?.(rowId)?.enemyEffects || [];
+            window.__ow_setRowArray?.(rowId, 'enemyEffects', currentEnemyEffects.map((effect) =>
+                effect.id === token.id ? updatedToken : effect
+            ));
         }
     }
 }

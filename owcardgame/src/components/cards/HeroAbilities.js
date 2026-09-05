@@ -298,27 +298,7 @@ export default function HeroAbilities(props) {
         return remainingHealing;
     }
 
-    // Subscribe to central damage bus to apply damage uniformly
-    // (Local subscription kept simple; ensure unsubscribe on unmount)
-    const damageBusRef = useRef(null);
-    useEffect(() => {
-        try {
-            const { subscribe } = require('../../abilities/engine/damageBus');
-            damageBusRef.current = subscribe((event) => {
-                console.log('HeroAbilities - Received damage event:', event);
-                if (event?.type === 'damage') {
-                    const { targetCardId, targetRow, amount, ignoreShields } = event;
-                    console.log('HeroAbilities - Processing damage:', { targetCardId, targetRow, amount, ignoreShields });
-                    applyDamage(amount, targetCardId, targetRow, !!ignoreShields);
-                }
-            });
-        } catch (e) {}
-        return () => {
-            if (typeof damageBusRef.current === 'function') {
-                damageBusRef.current();
-            }
-        };
-    }, []);
+    // Damage application lives in App.js (single writer).
 
     // Abilities data
     const abilities = {

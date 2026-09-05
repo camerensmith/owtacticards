@@ -2,6 +2,7 @@ import { playAudioByKey } from '../../assets/imageImports';
 import { showMessage as showToast, clearMessage as clearToast } from '../engine/targetingBus';
 import { dealDamage } from '../engine/damageBus';
 import effectsBus, { Effects } from '../engine/effectsBus';
+import { TURRET_BURST } from '../../presentation/pixi/fxConfig';
 
 // Deployment - Immobile and cannot receive Shields or Healing effects
 export async function onEnter({ playerHeroId, rowId }) {
@@ -44,7 +45,7 @@ export async function onEnter({ playerHeroId, rowId }) {
                             type: 'persistent',
                             sourceCardId: cardId,
                             sourceRowId: friendlyRowId,
-                            tooltip: 'Forge Hammer: This turret deals 2 damage to 2 enemies at start of turn',
+                            tooltip: 'Forge Hammer: This turret deals 2 damage instead of 1 at start of turn',
                             visual: 'torbjorn-icon'
                         });
                         console.log(`Turret: Applied Forge Hammer from Torbjörn ${cardId}`);
@@ -102,35 +103,22 @@ export function processTurretDamage(gameState, currentPlayerTurn) {
             const hasForgeHammer = Array.isArray(card.effects) && 
                 card.effects.some(effect => effect?.id === 'forge-hammer');
             
-            if (hasForgeHammer) {
-                // Forge Hammer: 2 damage to 2 different enemies
-                const targets = livingEnemies.slice(0, 2); // Take up to 2 enemies
-                
-                for (const targetCardId of targets) {
-                    dealDamage(targetCardId, oppositeRowId, 2, false, cardId, false);
-                    effectsBus.publish(Effects.showDamage(targetCardId, 2));
-                    console.log(`Turret (Forge Hammer): Dealt 2 damage to ${targetCardId}`);
-                }
-                
-                // Play turret fire sound
-                try {
-                    playAudioByKey('turret-fire');
-                } catch {}
-                
-            } else {
-                // Normal turret: 1 damage to 1 random enemy
-                const randomIndex = Math.floor(Math.random() * livingEnemies.length);
-                const targetCardId = livingEnemies[randomIndex];
-                
-                dealDamage(targetCardId, oppositeRowId, 1, false, cardId, false);
-                effectsBus.publish(Effects.showDamage(targetCardId, 1));
-                console.log(`Turret: Dealt 1 damage to ${targetCardId}`);
-                
-                // Play turret fire sound
-                try {
-                    playAudioByKey('turret-fire');
-                } catch {}
-            }
+            // One target either way: the turret holds its aim and empties a
+            // burst into it. Forge Hammer makes the burst hit harder, not wider.
+            const targetCardId = livingEnemies[Math.floor(Math.random() * livingEnemies.length)];
+            const amount = hasForgeHammer ? 2 : 1;
+
+            // A burst of four rounds, not a beam.
+            try {
+                effectsBus.publish(Effects.bullet(cardId, targetCardId, TURRET_BURST.rounds, TURRET_BURST));
+            } catch {}
+            dealDamage(targetCardId, oppositeRowId, amount, false, cardId, false, { skipProjectileFx: true });
+            effectsBus.publish(Effects.showDamage(targetCardId, amount));
+            console.log(`Turret${hasForgeHammer ? ' (Forge Hammer)' : ''}: Dealt ${amount} damage to ${targetCardId}`);
+
+            try {
+                playAudioByKey('turret-fire');
+            } catch {}
         }
     }
 }

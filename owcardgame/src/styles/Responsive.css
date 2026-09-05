@@ -12,7 +12,7 @@
         align-items: center;
     }
     .boardrow {
-        min-height: 150px;
+        min-height: 175px;
         overflow: hidden;
     }
 
@@ -25,15 +25,17 @@
     }
     .rowcountercontainer {
         flex-direction: row;
-        min-width: 80px;
-        align-items: center;
+        min-width: 0;
+        width: 100%;
+        align-items: flex-start;
         justify-content: center;
     }
     .rowcountercontainer2 {
-        flex-direction: column;
+        flex-direction: row;
     }
-    .counterarea {
-        flex-direction: column;
+    .counterarea,
+    .row-counterarea {
+        flex-direction: row;
     }
     .handlist {
         max-width: calc(100vw - 40px);
@@ -53,12 +55,9 @@
     #player2board .effectscontainer.allyeffects {
         bottom: 10px;
     }
-    #player1board .rowarea {
-        flex-direction: column;
-        margin: 4px 0px;
-    }
+    #player1board .rowarea,
     #player2board .rowarea {
-        flex-direction: column-reverse;
+        flex-direction: column;
         margin: 4px 0px;
     }
     #center-section {
@@ -84,7 +83,7 @@
 
 @media (min-width: 1301px) {
     #landscape-wrapper {
-        max-height: 80vh;
+        max-height: 92vh;
     }
 
     #page-wrapper {
@@ -105,11 +104,11 @@
         justify-content: center;
     }
     .boardrow {
-        max-height: calc(100% - 100px);
+        min-height: 240px;
     }
 
     .rowlist {
-        min-height: 50vh;
+        min-height: 54vh;
     }
 
     .rowarea {
@@ -117,12 +116,14 @@
     }
 
     .rowcountercontainer {
-        flex-direction: column;
-        min-height: 100px;
-        align-items: center;
+        flex-direction: row;
+        min-height: 88px;
+        height: 88px;
+        align-items: flex-start;
         justify-content: center;
     }
-    .counterarea {
+    .counterarea,
+    .row-counterarea {
         flex-direction: row;
     }
 
@@ -144,7 +145,8 @@
 
     .rowcountercontainer {
         flex-direction: row;
-        min-width: 0px;
+        min-width: 0;
+        width: 100%;
     }
 
     .rowlist {

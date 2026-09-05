@@ -1,6 +1,7 @@
-import { dealDamage } from '../engine/damageBus';
 import { showMessage as showToast, clearMessage as clearToast } from '../engine/targetingBus';
 import { playAudioByKey } from '../../assets/imageImports';
+import { getTreeOfLifeTargetIds } from '../../game/abilityRules';
+import effectsBus, { Effects } from '../engine/effectsBus';
 
 // Life Grip - Pull most damaged friendly unit into Lifeweaver's row
 export function onEnter({ playerHeroId, rowId }) {
@@ -9,6 +10,7 @@ export function onEnter({ playerHeroId, rowId }) {
     // Play enter sound
     try {
         playAudioByKey('lifeweaver-enter');
+        playAudioByKey('lifeweaver-ability1');
     } catch {}
     
     // For AI, automatically pull the most damaged friendly unit
@@ -32,6 +34,10 @@ export function onEnter({ playerHeroId, rowId }) {
         }
         
         // Move the unit to Lifeweaver's row
+        try {
+            effectsBus.publish(Effects.lifeGrip(mostDamagedUnit.cardId, playerHeroId));
+            effectsBus.publish(Effects.push(mostDamagedUnit.cardId, mostDamagedUnit.rowId, rowId));
+        } catch {}
         window.__ow_moveCardToRow?.(mostDamagedUnit.cardId, rowId);
         
         // Give the unit 1 shield
@@ -62,6 +68,10 @@ export function onEnter({ playerHeroId, rowId }) {
     }
     
     // Move the unit to Lifeweaver's row
+    try {
+        effectsBus.publish(Effects.lifeGrip(mostDamagedUnit.cardId, playerHeroId));
+        effectsBus.publish(Effects.push(mostDamagedUnit.cardId, mostDamagedUnit.rowId, rowId));
+    } catch {}
     window.__ow_moveCardToRow?.(mostDamagedUnit.cardId, rowId);
     
     // Give the unit 1 shield
@@ -77,83 +87,25 @@ export function onEnter({ playerHeroId, rowId }) {
 export function onUltimate({ playerHeroId, rowId, cost }) {
     const playerNum = parseInt(playerHeroId[0]);
     
-    // Play ultimate sound
     try {
         playAudioByKey('lifeweaver-ultimate');
     } catch {}
-    
-    // For AI, automatically apply Tree of Life to all friendly heroes
-    if (window.__ow_aiTriggering || window.__ow_isAITurn) {
-        const friendlyRows = [`${playerNum}f`, `${playerNum}m`, `${playerNum}b`];
-        let targetsHealed = 0;
-        
-        for (const friendlyRowId of friendlyRows) {
-            const row = window.__ow_getRow?.(friendlyRowId);
-            if (row && row.cardIds) {
-                for (const cardId of row.cardIds) {
-                    const card = window.__ow_getCard?.(cardId);
-                    if (card && card.health > 0) {
-                        // Give 2 temporary HP
-                        const currentTempHP = card.temporaryHP || 0;
-                        window.__ow_setCardProperty?.(cardId, 'temporaryHP', currentTempHP + 2);
-                        targetsHealed++;
-                    }
-                }
-            }
-        }
-        
-        console.log(`Lifeweaver AI: Tree of Life healed ${targetsHealed} allies`);
-        showToast(`Lifeweaver AI: Tree of Life gave 2 temporary HP to ${targetsHealed} allies`);
-        setTimeout(() => clearToast(), 2000);
-        return;
-    }
-    
-    // Get Lifeweaver's column index
-    const lifeweaverRow = window.__ow_getRow?.(rowId);
-    const lifeweaverIndex = lifeweaverRow.cardIds.indexOf(playerHeroId);
-    
-    // Find all friendly heroes in adjacent positions
-    const targets = [];
-    
-    // Add Lifeweaver himself
-    targets.push({ cardId: playerHeroId, rowId: rowId });
-    
-    // Add heroes in same row (left and right)
-    if (lifeweaverIndex > 0) {
-        const leftCardId = lifeweaverRow.cardIds[lifeweaverIndex - 1];
-        if (leftCardId) {
-            targets.push({ cardId: leftCardId, rowId: rowId });
-        }
-    }
-    if (lifeweaverIndex < lifeweaverRow.cardIds.length - 1) {
-        const rightCardId = lifeweaverRow.cardIds[lifeweaverIndex + 1];
-        if (rightCardId) {
-            targets.push({ cardId: rightCardId, rowId: rowId });
-        }
-    }
-    
-    // Add heroes in front and back rows (same column)
-    const frontRowId = `${playerNum}f`;
-    const backRowId = `${playerNum}b`;
-    
-    // Front row
-    const frontRow = window.__ow_getRow?.(frontRowId);
-    if (frontRow && frontRow.cardIds[lifeweaverIndex]) {
-        targets.push({ cardId: frontRow.cardIds[lifeweaverIndex], rowId: frontRowId });
-    }
-    
-    // Back row
-    const backRow = window.__ow_getRow?.(backRowId);
-    if (backRow && backRow.cardIds[lifeweaverIndex]) {
-        targets.push({ cardId: backRow.cardIds[lifeweaverIndex], rowId: backRowId });
-    }
-    
-    // Apply temporary HP to all targets
-    targets.forEach(target => {
-        applyTemporaryHP(target.cardId, target.rowId, playerNum);
+
+    const targetIds = getTreeOfLifeTargetIds({
+        playerHeroId,
+        rowId,
+        getRowCardIds: (id) => window.__ow_getRow?.(id)?.cardIds || [],
     });
-    
-    showToast(`Lifeweaver: Tree of Life activated - ${targets.length} heroes gained temporary HP`);
+
+    try { effectsBus.publish(Effects.treeOfLife(targetIds)); } catch {}
+
+    targetIds.forEach((cardId) => {
+        applyTemporaryHP(cardId, rowId, playerNum);
+    });
+
+    const livingCount = targetIds.filter((cardId) => (window.__ow_getCard?.(cardId)?.health || 0) > 0).length;
+    const prefix = (window.__ow_aiTriggering || window.__ow_isAITurn) ? 'Lifeweaver AI' : 'Lifeweaver';
+    showToast(`${prefix}: Tree of Life — ${livingCount} heroes gained +1 temporary HP`);
     setTimeout(() => clearToast(), 2000);
 }
 

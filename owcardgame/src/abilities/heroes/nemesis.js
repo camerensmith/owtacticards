@@ -175,7 +175,7 @@ export function processAnnihilation(playerHeroId, rowId) {
         oppositeRow.cardIds.forEach(cardId => {
             const card = window.__ow_getCard?.(cardId);
             if (card && card.health > 0) {
-                dealDamage(cardId, oppositeRowId, 1, false, playerHeroId);
+                dealDamage(cardId, oppositeRowId, 1, false, playerHeroId, false, { skipProjectileFx: true });
                 try { effectsBus.publish(Effects.showDamage(cardId, 1)); } catch {}
             }
         });
@@ -183,13 +183,29 @@ export function processAnnihilation(playerHeroId, rowId) {
     
     // Target opposite column
     const enemyRows = [`${enemyPlayer}f`, `${enemyPlayer}m`, `${enemyPlayer}b`];
+
+    // A black beam burns along the row and down the column it strikes. Each
+    // line is drawn between its outermost occupied slots.
+    try {
+        const lines = [];
+        const rowIds = oppositeRow?.cardIds || [];
+        if (rowIds.length) lines.push([rowIds[0], rowIds[rowIds.length - 1]]);
+
+        const columnIds = enemyRows
+            .map((r) => window.__ow_getRow?.(r)?.cardIds?.[nemesisIndex])
+            .filter(Boolean);
+        if (columnIds.length) lines.push([columnIds[0], columnIds[columnIds.length - 1]]);
+
+        if (lines.length) effectsBus.publish(Effects.annihilation(lines));
+    } catch {}
+
     enemyRows.forEach(enemyRowId => {
         const enemyRow = window.__ow_getRow?.(enemyRowId);
         if (enemyRow && enemyRow.cardIds[nemesisIndex]) {
             const targetCardId = enemyRow.cardIds[nemesisIndex];
             const card = window.__ow_getCard?.(targetCardId);
             if (card && card.health > 0) {
-                dealDamage(targetCardId, enemyRowId, 1, false, playerHeroId);
+                dealDamage(targetCardId, enemyRowId, 1, false, playerHeroId, false, { skipProjectileFx: true });
                 try { effectsBus.publish(Effects.showDamage(targetCardId, 1)); } catch {}
             }
         }

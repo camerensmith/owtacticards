@@ -1,28 +1,78 @@
-import { selectCardTarget, selectRowTarget } from '../engine/targeting';
+import { selectRowTarget } from '../engine/targeting';
 import { showMessage as showToast, clearMessage as clearToast } from '../engine/targetingBus';
-import { dealDamage } from '../engine/damageBus';
+import effectsBus, { Effects } from '../engine/effectsBus';
 import { playAudioByKey } from '../../assets/imageImports';
+import {
+    blizzardToken,
+    castsBlizzardWithFreeze,
+    findBlizzardRow,
+    isRowFrozen,
+} from '../../game/blizzard';
 
-export function onEnter({ playerHeroId, rowId }) {
+export async function onEnter({ playerHeroId, rowId }) {
     const playerNum = parseInt(playerHeroId[0]);
-    
+
     try {
         playAudioByKey('mei-enter');
     } catch {}
-    
-    handleBlizzard(playerHeroId, rowId, playerNum);
+
+    // Returned, not dropped: the caller awaits onEnter, and letting it resolve
+    // early ends the AI's turn while the ability is still resolving.
+    return handleBlizzard(playerHeroId, rowId, playerNum);
+}
+
+/** The enemy row Blizzard hurts most: the one with the most heroes on it. */
+function bestBlizzardRow(playerNum) {
+    const enemyPlayer = playerNum === 1 ? 2 : 1;
+    let bestRow = `${enemyPlayer}f`;
+    let mostLiving = -1;
+    for (const rowId of [`${enemyPlayer}f`, `${enemyPlayer}m`, `${enemyPlayer}b`]) {
+        const living = (window.__ow_getRow?.(rowId)?.cardIds || [])
+            .filter((cid) => (window.__ow_getCard?.(cid)?.health || 0) > 0).length;
+        if (living > mostLiving) { mostLiving = living; bestRow = rowId; }
+    }
+    return bestRow;
+}
+
+/**
+ * The enemy row a borrowed Cryo Freeze lands on.
+ *
+ * Only reached when the caster is not Mei, so there is no existing Blizzard to
+ * infer the row from and one has to be chosen. Returns null if the pick is
+ * cancelled, which refuses the ultimate without spending synergy.
+ */
+async function pickFreezeRow(playerNum, enemyRows) {
+    if (window.__ow_aiTriggering || window.__ow_isAITurn) {
+        return bestBlizzardRow(playerNum);
+    }
+    showToast('Cryo Freeze: Select an enemy row to freeze');
+    const target = await selectRowTarget();
+    if (!target?.rowId) return null;
+    if (!enemyRows.includes(target.rowId)) {
+        showToast('Cryo Freeze can only target enemy rows');
+        setTimeout(() => clearToast(), 1500);
+        return null;
+    }
+    return target.rowId;
 }
 
 async function handleBlizzard(playerHeroId, rowId, playerNum) {
     try {
-        showToast('Mei: Select an enemy row for Blizzard');
-        
-        const targetRow = await selectRowTarget();
+        // The AI picks its own row. Without this it fell through to the human
+        // click-capture and asked the player to aim it.
+        let targetRow;
+        if (window.__ow_aiTriggering || window.__ow_isAITurn) {
+            targetRow = { rowId: bestBlizzardRow(playerNum) };
+        } else {
+            showToast('Mei: Select an enemy row for Blizzard');
+            targetRow = await selectRowTarget();
+        }
+
         if (!targetRow) {
             clearToast();
             return;
         }
-        
+
         const targetPlayerNum = parseInt(targetRow.rowId[0]);
         const isEnemyRow = targetPlayerNum !== playerNum;
         
@@ -37,19 +87,13 @@ async function handleBlizzard(playerHeroId, rowId, playerNum) {
             playAudioByKey('mei-ability1');
         } catch {}
         
-        // Place Mei token on enemy row
-        window.__ow_appendRowEffect?.(targetRow.rowId, 'enemyEffects', {
-            id: 'mei-token',
-            hero: 'mei',
-            type: 'ultimateCostModifier',
-            value: 2, // Double the cost
+        // One token holds both states; Cryo Freeze upgrades this same one.
+        window.__ow_appendRowEffect?.(targetRow.rowId, 'enemyEffects', blizzardToken({
             sourceCardId: playerHeroId,
             sourceRowId: rowId,
-            tooltip: 'Blizzard: Ultimate abilities cost double synergy from this row',
-            visual: 'mei-icon'
-        });
-        
-        showToast(`Mei: Blizzard! Ultimate costs doubled in ${targetRow.rowId}`);
+        }));
+
+        showToast(`Mei: Blizzard! Ultimates from ${targetRow.rowId} cost +1 synergy`);
         setTimeout(() => clearToast(), 2000);
         
     } catch (error) {
@@ -59,153 +103,65 @@ async function handleBlizzard(playerHeroId, rowId, playerNum) {
     }
 }
 
-export async function onUltimate({ playerHeroId, rowId, cost }) {
+/**
+ * Cryo Freeze (2): the row Blizzard already marked freezes over, and its
+ * ultimates cost double instead of +1.
+ *
+ * There is no target to pick: it lands on Mei's own Blizzard row, so it reads
+ * as the second half of one plan rather than a separate shot. That also means
+ * the AI needs no targeting branch here.
+ */
+export async function onUltimate({ playerHeroId, rowId }) {
     try {
         const playerNum = parseInt(playerHeroId[0]);
-        
-        // For AI, prioritize enemies with lowest power-in-row and that have NOT used their ultimate
-        if (window.__ow_aiTriggering || window.__ow_isAITurn) {
-            const enemyPlayer = playerNum === 1 ? 2 : 1;
-            const enemyRows = [`${enemyPlayer}f`, `${enemyPlayer}m`, `${enemyPlayer}b`];
-            
-            let bestTarget = null;
-            let bestScore = Number.NEGATIVE_INFINITY;
-            
-            for (const enemyRowId of enemyRows) {
-                const row = window.__ow_getRow?.(enemyRowId);
-                if (row && row.cardIds) {
-                    for (const cardId of row.cardIds) {
-                        const card = window.__ow_getCard?.(cardId);
-                        if (!card || card.health <= 0) continue;
-                        const rowKey = enemyRowId[1];
-                        const powerInRow = card[`${rowKey}_power`] || 0;
-                        const hasUsedUlt = (typeof window.__ow_hasUltimateUsed === 'function' && window.__ow_hasUltimateUsed(cardId)) ||
-                            (Array.isArray(card.effects) && card.effects.some(e => (e?.id || '').includes('ultimate-used')));
-                        let score = 0;
-                        score += (10 - powerInRow) * 10; // lower power preferred
-                        if (!hasUsedUlt) score += 100; else score -= 50;
-                        if (score > bestScore) { bestScore = score; bestTarget = { cardId, rowId: enemyRowId }; }
-                    }
-                }
-            }
-            
-            if (bestTarget) {
-                console.log(`Mei AI: Selected target ${bestTarget.cardId} with score ${bestScore}`);
-                
-                // Apply Cryo Freeze effect to the target card
-                window.__ow_appendCardEffect?.(bestTarget.cardId, {
-                    id: 'cryo-freeze',
-                    hero: 'mei',
-                    type: 'immunity',
-                    sourceCardId: playerHeroId,
-                    sourceRowId: rowId,
-                    tooltip: 'Cryo Freeze: Immune to damage and abilities for remainder of round',
-                    visual: 'frozen'
-                });
-                
-                // Clean up death-triggered tokens associated with this hero
-                cleanupDeathTriggeredTokens(bestTarget.cardId);
-                
-                // Play ultimate resolve sound
-                try {
-                    playAudioByKey('mei-ultimate');
-                } catch {}
-                
-                showToast(`Mei AI: Cryo Freeze applied to enemy`);
-                setTimeout(() => clearToast(), 2000);
-                return;
-            } else {
-                showToast('Mei AI: No valid targets for Cryo Freeze');
-                setTimeout(() => clearToast(), 2000);
-                return;
-            }
+        const enemyPlayer = playerNum === 1 ? 2 : 1;
+        const enemyRows = [`${enemyPlayer}f`, `${enemyPlayer}m`, `${enemyPlayer}b`];
+
+        // Echo copying this has no Blizzard of her own to freeze, so she lays
+        // one and freezes it in a single cast, choosing the row herself.
+        const blizzardRow = castsBlizzardWithFreeze(playerHeroId)
+            ? await pickFreezeRow(playerNum, enemyRows)
+            : findBlizzardRow(window.__ow_getRow, enemyRows);
+
+        if (!blizzardRow) {
+            showToast(castsBlizzardWithFreeze(playerHeroId)
+                ? 'Cryo Freeze cancelled'
+                : 'Mei: Cryo Freeze needs a Blizzard row to freeze');
+            setTimeout(() => clearToast(), 2000);
+            return false;
         }
-        
-        showToast('Mei: Cryo Freeze - Select any hero to freeze');
-        
-        const target = await selectCardTarget();
-        if (!target) {
-            clearToast();
-            return;
+
+        if (isRowFrozen(window.__ow_getRow, blizzardRow)) {
+            showToast(`Mei: ${blizzardRow} is already frozen solid`);
+            setTimeout(() => clearToast(), 2000);
+            return false;
         }
-        
-        // Check if target is alive
-        const targetCard = window.__ow_getCard?.(target.cardId);
-        if (!targetCard || targetCard.health <= 0) {
-            showToast('Mei: Cannot freeze dead heroes');
-            setTimeout(() => clearToast(), 1500);
-            return;
-        }
-        
-        // Play ultimate resolve sound
-        try {
-            playAudioByKey('mei-ultimate');
-        } catch {}
-        
-        // Apply Cryo Freeze effect to the target card
-        window.__ow_appendCardEffect?.(target.cardId, {
-            id: 'cryo-freeze',
-            hero: 'mei',
-            type: 'immunity',
+
+        try { playAudioByKey('mei-ultimate'); } catch {}
+
+        // Swap the token for its frozen form: same mark, harder terms.
+        window.__ow_removeRowEffect?.(blizzardRow, 'enemyEffects', 'mei-token');
+        window.__ow_appendRowEffect?.(blizzardRow, 'enemyEffects', blizzardToken({
             sourceCardId: playerHeroId,
             sourceRowId: rowId,
-            tooltip: 'Cryo Freeze: Immune to damage and abilities for remainder of round',
-            visual: 'frozen'
-        });
-        
-        // Clean up death-triggered tokens associated with this hero
-        cleanupDeathTriggeredTokens(target.cardId);
-        
-        showToast(`Mei: ${targetCard.name} is frozen solid!`);
+            frozen: true,
+        }));
+
+        // The same spiral as before, closing over the row rather than a card.
+        try { effectsBus.publish(Effects.freezeSpiral(blizzardRow)); } catch {}
+
+        showToast(`Mei: Cryo Freeze! Ultimates from ${blizzardRow} now cost double`);
         setTimeout(() => clearToast(), 2000);
-        
+        return true;
+
     } catch (error) {
         console.error('Mei Cryo Freeze error:', error);
         showToast('Mei: Cryo Freeze failed');
         setTimeout(() => clearToast(), 1500);
+        return false;
     }
 }
 
-function cleanupDeathTriggeredTokens(targetCardId) {
-    try {
-        // Get all rows to check for tokens
-        const allRows = ['1f', '1m', '1b', '2f', '2m', '2b'];
-        
-        allRows.forEach(rowId => {
-            const row = window.__ow_getRow?.(rowId);
-            if (!row) return;
-            
-            // Check ally effects
-            if (row.allyEffects) {
-                const filteredAllyEffects = row.allyEffects.filter(effect => {
-                    // Keep effects that don't clean up on death of this specific hero
-                    return !(effect.sourceCardId === targetCardId && effect.cleanupOnDeath);
-                });
-                
-                if (filteredAllyEffects.length !== row.allyEffects.length) {
-                    window.__ow_setRowArray?.(rowId, 'allyEffects', filteredAllyEffects);
-                }
-            }
-            
-            // Check enemy effects
-            if (row.enemyEffects) {
-                const filteredEnemyEffects = row.enemyEffects.filter(effect => {
-                    // Keep effects that don't clean up on death of this specific hero
-                    return !(effect.sourceCardId === targetCardId && effect.cleanupOnDeath);
-                });
-                
-                if (filteredEnemyEffects.length !== row.enemyEffects.length) {
-                    window.__ow_setRowArray?.(rowId, 'enemyEffects', filteredEnemyEffects);
-                }
-            }
-        });
-        
-        console.log(`Mei: Cleaned up death-triggered tokens for ${targetCardId}`);
-        
-    } catch (error) {
-        console.error('Mei token cleanup error:', error);
-    }
-}
 
 export function onDeath({ playerHeroId, rowId }) {
     try {

@@ -25,6 +25,59 @@
     filter: grayscale(1);
 }
 
+.card.redeploy-locked {
+    cursor: not-allowed;
+}
+
+.card.redeploy-locked .cardimg {
+    filter: grayscale(1) brightness(0.65);
+}
+
+/*
+ * Turbojack shares the held-card banner's shape but not its colour: this hero
+ * is playable, just dazed, so it should not read as locked.
+ */
+.redeploy-locked-banner.turbojacked-banner {
+    background: rgba(90, 40, 24, 0.9);
+    color: #ffd9c2;
+}
+
+.redeploy-locked-banner {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 130;
+    pointer-events: none;
+    background: rgba(46, 54, 81, 0.88);
+    color: #dddbe0;
+    font-family: Big-Noodle-Titling, sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-align: center;
+    line-height: 1.4;
+    padding: 2px 0 3px;
+    border-radius: 0 0 10% 10%;
+}
+
+body.enemy-target-cursor * {
+    cursor: inherit !important;
+}
+
+/*
+ * Rajah's decoy, marked only on its owner's side. The opponent's mirage never
+ * gets this class, so from across the board it is just another Rajah.
+ */
+.card.mirage-illusion::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(70, 74, 82, 0.38);
+    border-radius: 10%;
+    pointer-events: none;
+    z-index: 24;
+}
+
 .cardimg {
     max-height: 100%;
     max-width: 100%;
@@ -130,7 +183,92 @@ ul.cardlist.overflown {
 .handlist.dragging-over {
 }
 
+/*
+ * A drawn card eases into the hand instead of appearing there.
+ *
+ * Cards are keyed by id, so this runs exactly once, when the card first enters
+ * the hand — a reorder or a re-render does not replay it.
+ *
+ * `backwards`, never `forwards`: a fill mode that held the final transform
+ * would leave a permanent containing block on the container, and the drag
+ * library positions the card it is carrying with `position: fixed`. Holding
+ * the end state would anchor a dragged card to its own slot.
+ */
 .handlist .cardcontainer {
+    animation: card-deal-in 260ms cubic-bezier(0.16, 0.9, 0.3, 1.04) backwards;
+}
+
+@keyframes card-deal-in {
+    from {
+        opacity: 0;
+        transform: translate3d(-16px, 12px, 0) scale(0.84) rotate(-5deg);
+    }
+    to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+    }
+}
+
+.hand-shuffle {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 20;
+    animation: hand-shuffle-in 180ms ease-out backwards;
+}
+
+@keyframes hand-shuffle-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.hand-shuffle-card {
+    position: absolute;
+    width: 72px;
+    height: auto;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+    /*
+     * Linear, not ease-in-out. The easing used to be re-applied between every
+     * pair of keyframes, so the swing braked and restarted four times a loop —
+     * the stutter that made the shuffle look mechanical. The stops below trace
+     * a sine themselves, so linear interpolation between them is the smooth
+     * curve, and the motion never stops at the ends of its travel.
+     */
+    animation: hand-riffle 0.9s linear infinite;
+    will-change: transform;
+    backface-visibility: hidden;
+}
+
+/*
+ * Negative delays start each card partway through the loop, so the fan is
+ * already spread on the first frame rather than winding up from a dead stack.
+ */
+.hand-shuffle-card:nth-child(1) {
+    animation-delay: -0.3s;
+}
+
+.hand-shuffle-card:nth-child(2) {
+    animation-delay: -0.15s;
+}
+
+.hand-shuffle-card:nth-child(3) {
+    animation-delay: 0s;
+}
+
+@keyframes hand-riffle {
+    0%    { transform: translate3d(0, 0, 0) rotate(0deg) scale(1); }
+    12.5% { transform: translate3d(-12.7px, -3.5px, 0) rotate(-8.5deg) scale(1.02); }
+    25%   { transform: translate3d(-18px, -5px, 0) rotate(-12deg) scale(1.03); }
+    37.5% { transform: translate3d(-12.7px, -3.5px, 0) rotate(-8.5deg) scale(1.02); }
+    50%   { transform: translate3d(0, 0, 0) rotate(0deg) scale(1); }
+    62.5% { transform: translate3d(12.7px, -3.5px, 0) rotate(8.5deg) scale(1.02); }
+    75%   { transform: translate3d(18px, -5px, 0) rotate(12deg) scale(1.03); }
+    87.5% { transform: translate3d(12.7px, -3.5px, 0) rotate(8.5deg) scale(1.02); }
+    100%  { transform: translate3d(0, 0, 0) rotate(0deg) scale(1); }
 }
 
 /* Frozen card styling (Mei Cryo Freeze) */
@@ -139,4 +277,14 @@ ul.cardlist.overflown {
     opacity: 0.8;
     pointer-events: none;
     cursor: not-allowed;
+}
+
+@keyframes disorient-sway {
+    0%, 100% { transform: rotate(177deg); }
+    50% { transform: rotate(183deg); }
+}
+
+.card.disoriented {
+    animation: disorient-sway 1.6s ease-in-out infinite;
+    transform-origin: center center;
 }

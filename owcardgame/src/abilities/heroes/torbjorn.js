@@ -1,5 +1,6 @@
 import { playAudioByKey } from '../../assets/imageImports';
 import { showMessage as showToast, clearMessage as clearToast } from '../engine/targetingBus';
+import { turretRowKey } from '../../game/rosterRules';
 
 // Build Turret - Place the Torbjorn Turret into your hand
 export async function onEnter({ playerHeroId, rowId }) {
@@ -18,47 +19,53 @@ export async function onEnter({ playerHeroId, rowId }) {
     
     console.log(`Torbjörn: Added turret to player ${playerNum} hand`);
     
-    // FOR AI: Force play turret immediately after adding to hand
+    // FOR AI: the turret is not optional, so play it before handing the turn on.
+    // onEnter is awaited by the caller, so this can be awaited too rather than
+    // fired off and hoped for.
     if (playerNum === 2 && (window.__ow_aiTriggering || window.__ow_isAITurn)) {
-        console.log('Torbjörn AI: Turret added - forcing immediate play');
-        // Wait a moment for the card to be added to hand
-        setTimeout(async () => {
-            const handRow = window.__ow_getRow?.('player2hand');
-            const handIds = handRow?.cardIds || [];
-            const turretCardId = '2turret';
-            
-            if (handIds.includes(turretCardId)) {
-                console.log('Torbjörn AI: Turret found in hand - MANDATORY play to back row');
-                try {
-                    // Find best row for turret (prefer back)
-                    const rowCounts = {
-                        back: window.__ow_getRow?.('2b')?.cardIds?.length || 0,
-                        middle: window.__ow_getRow?.('2m')?.cardIds?.length || 0,
-                        front: window.__ow_getRow?.('2f')?.cardIds?.length || 0
-                    };
-                    
-                    let targetRow = 'back';
-                    if (rowCounts.back >= 4) {
-                        if (rowCounts.middle < 4) targetRow = 'middle';
-                        else if (rowCounts.front < 4) targetRow = 'front';
-                        else {
-                            console.warn('Torbjörn AI: All rows full, cannot play turret');
-                            return;
-                        }
-                    }
-                    
-                    // Force play turret
-                    if (window.__ow_aiIntegration?.playCard) {
-                        await window.__ow_aiIntegration.playCard(turretCardId, targetRow);
-                        console.log(`Torbjörn AI: Successfully force-played turret to ${targetRow} row`);
-                    }
-                } catch (error) {
-                    console.error('Torbjörn AI: Failed to force-play turret:', error);
-                }
-            } else {
-                console.warn('Torbjörn AI: Turret not found in hand after timeout');
-            }
-        }, 300);
+        await forcePlayTurret(playerNum);
+    }
+}
+
+/** Polls rather than guessing a delay: the card lands when the state flushes. */
+async function waitForCardInHand(cardId, handRowId, attempts = 12, everyMs = 60) {
+    for (let attempt = 0; attempt < attempts; attempt += 1) {
+        if ((window.__ow_getRow?.(handRowId)?.cardIds || []).includes(cardId)) return true;
+        await new Promise((resolve) => setTimeout(resolve, everyMs));
+    }
+    return false;
+}
+
+/**
+ * Put the turret on the board.
+ *
+ * The old version waited a flat 300ms and gave up if the card had not appeared
+ * yet, so a slow flush left the turret stuck in hand for the rest of the game.
+ */
+export async function forcePlayTurret(playerNum = 2) {
+    const turretCardId = `${playerNum}turret`;
+    if (!await waitForCardInHand(turretCardId, `player${playerNum}hand`)) {
+        console.warn('Torbjörn AI: turret never arrived in hand');
+        return false;
+    }
+
+    const rowKey = turretRowKey(window.__ow_getRow, playerNum);
+    if (!rowKey) {
+        console.warn('Torbjörn AI: every row is full, turret stays in hand');
+        return false;
+    }
+
+    try {
+        const played = await window.__ow_aiIntegration?.playCard(turretCardId, rowKey);
+        if (played === false) {
+            console.warn(`Torbjörn AI: turret play to ${rowKey} was refused`);
+            return false;
+        }
+        console.log(`Torbjörn AI: turret deployed to ${rowKey} row`);
+        return true;
+    } catch (error) {
+        console.error('Torbjörn AI: failed to play turret:', error);
+        return false;
     }
 }
 
@@ -92,7 +99,7 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
         type: 'persistent',
         sourceCardId: playerHeroId,
         sourceRowId: rowId,
-        tooltip: 'Forge Hammer: Friendly turrets deal 2 damage to 2 enemies at start of turn',
+        tooltip: 'Forge Hammer: Friendly turrets deal 2 damage instead of 1 at start of turn',
         visual: 'torbjorn-icon'
     });
     
@@ -111,7 +118,7 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
                         type: 'persistent',
                         sourceCardId: playerHeroId,
                         sourceRowId: rowId,
-                        tooltip: 'Forge Hammer: This turret deals 2 damage to 2 enemies at start of turn',
+                        tooltip: 'Forge Hammer: This turret deals 2 damage instead of 1 at start of turn',
                         visual: 'torbjorn-icon'
                     });
                     console.log(`Torbjörn: Applied Forge Hammer to turret ${cardId}`);
@@ -149,4 +156,4 @@ export function onDeath({ playerHeroId, rowId }) {
     console.log(`Torbjörn: Forge Hammer effect removed from all friendly turrets`);
 }
 
-export default { onEnter, onUltimate, onDeath };
+export default { onEnter, onUltimate, onDeath, forcePlayTurret };

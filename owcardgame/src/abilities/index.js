@@ -44,6 +44,20 @@ import hazard from './heroes/hazard';
 import mauga from './heroes/mauga';
 import junkerqueen from './heroes/junkerqueen';
 import venture from './heroes/venture';
+import bravox2 from './heroes/bravox2';
+import cyclo from './heroes/cyclo';
+import emre from './heroes/emre';
+import fika from './heroes/fika';
+import rajah from './heroes/rajah';
+import mirage from './heroes/mirage';
+import warden from './heroes/warden';
+import wuyang from './heroes/wuyang';
+import sylvain from './heroes/sylvain';
+import axiom from './heroes/axiom';
+import lockjaw from './heroes/lockjaw';
+import stoneguard from './heroes/stoneguard';
+import vega from './heroes/vega';
+import mantis from './heroes/mantis';
 
 export const abilities = {
     ashe,
@@ -88,6 +102,20 @@ export const abilities = {
     mauga,
     junkerqueen,
     venture,
+    bravox2,
+    cyclo,
+    emre,
+    fika,
+    rajah,
+    mirage,
+    warden,
+    wuyang,
+    sylvain,
+    axiom,
+    lockjaw,
+    stoneguard,
+    vega,
+    mantis,
 };
 
 export default abilities;

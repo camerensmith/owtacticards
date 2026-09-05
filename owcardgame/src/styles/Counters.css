@@ -79,6 +79,24 @@
     left: 75%;
 }
 
+.armorcounter {
+    background-image: url('../assets/armorcounter.png');
+    background-position: center;
+    background-size: contain;
+    background-repeat: no-repeat;
+    border-radius: 100%;
+}
+
+.armorcounter.cardcounter {
+    top: 38%;
+    left: 75%;
+}
+
+.armorcounter.cardfocuscounter {
+    top: 36%;
+    left: 78%;
+}
+
 .rowcounter {
     width: 40px;
     height: 40px;
@@ -149,6 +167,13 @@
     justify-content: center;
 }
 
+.row-synergy {
+    display: flex;
+    justify-content: center;
+    flex: 0 0 auto;
+    padding: 4px 0 2px;
+}
+
 .synergycounter {
     border: 5px solid steelblue;
     background-color: #3f547a;
@@ -161,15 +186,39 @@
     flex-wrap: wrap;
 }
 
+.row-counterarea {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-content: flex-start;
+    width: 100%;
+    max-height: 88px;
+    overflow-y: auto;
+}
+
 .card-counterarea {
 }
 
+/* Two 40px affliction icons + wrap gap. Fixed so tokens never steal trough height. */
 .rowcountercontainer {
     display: flex;
     flex-direction: row;
     font-size: 1.5rem;
+    line-height: 1;
+    flex: 0 0 88px;
+    width: 100%;
+    min-height: 88px;
+    height: 88px;
+    align-items: flex-start;
+    justify-content: center;
+    overflow: hidden;
 }
 
 .rowcountercontainer2 {
     display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-content: flex-start;
+    width: 100%;
+    max-height: 88px;
 }

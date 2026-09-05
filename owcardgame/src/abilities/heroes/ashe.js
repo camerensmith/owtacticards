@@ -3,8 +3,8 @@ import { showOnEnterChoice } from '../engine/modalController';
 import { dealDamage } from '../engine/damageBus';
 import effectsBus, { Effects } from '../engine/effectsBus';
 import crosshair from '../../assets/crosshair.svg';
-import { showMessage, clearMessage, showMessage as showToast, clearMessage as clearToast } from '../engine/targetingBus';
-import { selectCardTarget } from '../engine/targeting';
+import { clearMessage, showMessage as showToast, clearMessage as clearToast } from '../engine/targetingBus';
+import { selectCardTargets } from '../engine/targeting';
 import { getAudioFile, playAudioByKey } from '../../assets/imageImports';
 import { withAIContext } from '../engine/aiContextHelper';
 
@@ -110,32 +110,25 @@ export async function onEnter1({ playerHeroId, rowId, playerNum }) {
     
     // Human player logic
     setTargetingCursor(true);
-    showMessage("Ashe: Select One Target!");
-    
+
     try {
-        const target = await selectCardTarget();
-        if (!target || !target.cardId) {
-            console.log('Ashe: No valid target selected');
+        const [target] = await selectCardTargets({
+            label: 'Ashe: The Viper — choose an enemy',
+            isDamage: true,
+            sourceCardId: playerHeroId,
+            rules: { side: 'enemy', casterPlayerNum: playerNum },
+        });
+        if (!target) {
             setTargetingCursor(false);
             clearMessage();
             return;
         }
-        
-        // Validate target is enemy
-        const targetPlayerNum = parseInt(target.cardId[0]);
-        if (targetPlayerNum === playerNum) {
-            showMessage('Ashe: Must target enemy!');
-            setTimeout(() => clearMessage(), 2000);
-            setTargetingCursor(false);
-            return;
-        }
 
-        console.log('Ashe Ability 1 - Applying damage:', { targetCardId: target.cardId, targetRow: target.rowId, amount: 2, ignoreShields: true });
         dealDamage(target.cardId, target.rowId, 2, true, playerHeroId);
         try { effectsBus.publish(Effects.showDamage(target.cardId, 2)); } catch {}
         playAbilitySound(1);
         playAudioByKey('ashe-shoot1');
-        
+
     } catch (error) {
         console.error('Ashe ability 1 error:', error);
     }
@@ -203,48 +196,34 @@ export async function onEnter2({ playerHeroId, rowId, playerNum }) {
     
     // Human player logic
     setTargetingCursor(true);
-    showMessage('Ashe: Select Two Targets!');
 
     try {
-        const target1 = await selectCardTarget();
-        if (!target1) {
+        /*
+         * Two enemies in one row, but one is enough to shoot.
+         *
+         * Split Fire used to demand both picks and abandon the ability if the
+         * second was in another row — which meant it could never be cast at all
+         * against a row holding a single defender. Right-clicking after the
+         * first pick now fires at just that target.
+         */
+        const targets = await selectCardTargets({
+            count: 2,
+            label: 'Ashe: Split Fire — choose enemies in one row',
+            isDamage: true,
+            sourceCardId: playerHeroId,
+            rules: { side: 'enemy', sameRow: true, casterPlayerNum: playerNum },
+        });
+
+        if (targets.length === 0) {
             setTargetingCursor(false);
             clearMessage();
             return;
         }
 
-        // Validate first target is enemy
-        const target1PlayerNum = parseInt(target1.cardId[0]);
-        if (target1PlayerNum === playerNum) {
-            showMessage('Ashe: Must target enemies!');
-            setTimeout(() => clearMessage(), 2000);
-            setTargetingCursor(false);
-            return;
+        for (const target of targets) {
+            dealDamage(target.cardId, target.rowId, 1, true, playerHeroId);
+            try { effectsBus.publish(Effects.showDamage(target.cardId, 1)); } catch {}
         }
-
-        showMessage('Ashe: Select Final Target!');
-        const target2 = await selectCardTarget();
-
-        if (!target2) {
-            setTargetingCursor(false);
-            clearMessage();
-            return;
-        }
-
-        // Validate second target is enemy and same row
-        const target2PlayerNum = parseInt(target2.cardId[0]);
-        if (target2PlayerNum === playerNum || target1.rowId !== target2.rowId) {
-            showMessage('Ashe: Targets must be enemies in the same row!');
-            setTimeout(() => clearMessage(), 2000);
-            setTargetingCursor(false);
-            return;
-        }
-
-        // Apply damage to both targets
-        dealDamage(target1.cardId, target1.rowId, 1, true, playerHeroId);
-        dealDamage(target2.cardId, target2.rowId, 1, true, playerHeroId);
-        try { effectsBus.publish(Effects.showDamage(target1.cardId, 1)); } catch {}
-        try { effectsBus.publish(Effects.showDamage(target2.cardId, 1)); } catch {}
         playAbilitySound(2);
         playAudioByKey('ashe-shoot2');
     } catch (error) {

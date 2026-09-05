@@ -1,17 +1,21 @@
 import { dealDamage, subscribe as subscribeToDamage } from '../engine/damageBus';
+import { isDisoriented } from '../../game/disorient';
 import { selectRowTarget } from '../engine/targeting';
 import { showMessage as showToast, clearMessage as clearToast } from '../engine/targetingBus';
 import { playAudioByKey } from '../../assets/imageImports';
 import effectsBus, { Effects } from '../engine/effectsBus';
+import { RIPTIRE_IMPACT_MS } from '../../presentation/pixi/fxConfig';
 
 // Junkrat intro sound on draw
 export function onDraw({ playerHeroId }) {
     try { playAudioByKey('junkrat-intro'); } catch {}
 }
 
-// onEnter: Nothing happens (empty function)
+// onEnter: no ability — Total Mayhem is a death trigger — but he still speaks
 export function onEnter({ playerHeroId, rowId }) {
-    // Junkrat's onEnter does nothing - Total Mayhem is a death ability
+    // The line on deployment was lost when the empty handler was written; every
+    // other hero announces itself as it lands.
+    try { playAudioByKey('junkrat-enter'); } catch {}
     console.log('Junkrat deployed - no onEnter ability');
 }
 
@@ -47,6 +51,12 @@ subscribeToDamage(trackDamageSource);
 // onDeath: Total Mayhem - deal 2 damage to killer, then 1 damage to adjacent enemies
 export function onDeath({ playerHeroId, rowId }) {
     try {
+        const dying = window.__ow_getCard?.(playerHeroId);
+        if (isDisoriented(dying)) {
+            console.log(`${playerHeroId} died Disoriented - Total Mayhem suppressed`);
+            return;
+        }
+
         console.log(`${playerHeroId} died - Total Mayhem triggered`);
         
         // Play death sound
@@ -65,9 +75,17 @@ export function onDeath({ playerHeroId, rowId }) {
         
         console.log(`Junkrat: Targeting killer ${killerCardId} in row ${killerRowId}`);
         
-        // Deal 2 damage to the killer
-        dealDamage(killerCardId, killerRowId, 2, false, playerHeroId);
-        
+        // Total Mayhem goes off where Junkrat was standing, and he has already
+        // left the board — a beam drawn from his card has nowhere to start. The
+        // hit lands on each victim instead, with the numbers this was missing.
+        const blast = (cardId, rowId, amount) => {
+            dealDamage(cardId, rowId, amount, false, playerHeroId, false, { skipProjectileFx: true });
+            try { effectsBus.publish(Effects.showDamage(cardId, amount)); } catch {}
+            try { effectsBus.publish(Effects.impact(cardId)); } catch {}
+        };
+
+        blast(killerCardId, killerRowId, 2);
+
         // Get the killer's row to find adjacent enemies
         const killerRow = window.__ow_getRow?.(killerRowId);
         if (!killerRow) return;
@@ -78,13 +96,13 @@ export function onDeath({ playerHeroId, rowId }) {
         // Target left neighbor
         if (killerIndex > 0) {
             const leftCardId = killerRow.cardIds[killerIndex - 1];
-            dealDamage(leftCardId, killerRowId, 1, false, playerHeroId);
+            blast(leftCardId, killerRowId, 1);
         }
         
         // Target right neighbor
         if (killerIndex < killerRow.cardIds.length - 1) {
             const rightCardId = killerRow.cardIds[killerIndex + 1];
-            dealDamage(rightCardId, killerRowId, 1, false, playerHeroId);
+            blast(rightCardId, killerRowId, 1);
         }
         
         showToast('Junkrat: Total Mayhem!');
@@ -96,6 +114,30 @@ export function onDeath({ playerHeroId, rowId }) {
     } catch (error) {
         console.error('Error in Junkrat onDeath:', error);
     }
+}
+
+function waitMs(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function rollAndDetonate(playerHeroId, enemyRowId, synergyS) {
+    try { effectsBus.publish(Effects.riptire(playerHeroId, enemyRowId)); } catch {}
+    try { playAudioByKey('junkrat-explosion'); } catch {}
+    await waitMs(RIPTIRE_IMPACT_MS);
+    const row = window.__ow_getRow?.(enemyRowId);
+    let targetsHit = 0;
+    if (row?.cardIds) {
+        for (const cardId of row.cardIds) {
+            const card = window.__ow_getCard?.(cardId);
+            if (!card || card.health <= 0) continue;
+            if (synergyS > 0) {
+                dealDamage(cardId, enemyRowId, synergyS, false, playerHeroId, false, { skipProjectileFx: true });
+                try { effectsBus.publish(Effects.showDamage(cardId, synergyS)); } catch {}
+            }
+            targetsHit += 1;
+        }
+    }
+    return targetsHit;
 }
 
 // onUltimate: RIP-Tire (4) - select an enemy row, move to corresponding friendly row, deal [S] damage
@@ -148,22 +190,7 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
 
             // Use post-move synergy for damage (consistent with human path)
             const postMoveSynergy = window.__ow_getRow?.(candidate.friendlyRowId)?.synergy || 0;
-
-            // Deal [S] synergy damage to all enemies in the opposing row
-            const opposingRow = window.__ow_getRow?.(candidate.opposingRowId);
-            let targetsHit = 0;
-            if (opposingRow && opposingRow.cardIds) {
-                for (const cardId of opposingRow.cardIds) {
-                    const card = window.__ow_getCard?.(cardId);
-                    if (card && card.health > 0) {
-                        if (postMoveSynergy > 0) {
-                            dealDamage(cardId, candidate.opposingRowId, postMoveSynergy, false, playerHeroId);
-                            try { effectsBus.publish(Effects.showDamage(cardId, postMoveSynergy)); } catch {}
-                        }
-                        targetsHit++;
-                    }
-                }
-            }
+            const targetsHit = await rollAndDetonate(playerHeroId, candidate.opposingRowId, postMoveSynergy);
 
             showToast(`Junkrat AI: RIP-Tire → dealt ${postMoveSynergy} to ${targetsHit} enemies in ${candidate.opposingRowId}`);
             setTimeout(() => clearToast(), 2000);
@@ -191,24 +218,9 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
         // Compute S as the synergy of Junkrat's row after movement (or original if blocked)
         const friendlyRowObj = window.__ow_getRow?.(finalFriendlyRowForSynergy);
         const synergyS = friendlyRowObj?.synergy || 0;
+        await rollAndDetonate(playerHeroId, enemyRowId, synergyS);
 
-        // Deal [S] damage to all enemies in the selected enemy row
-        const enemyRowObj = window.__ow_getRow?.(enemyRowId);
-        if (!enemyRowObj) { clearToast(); return; }
-
-        enemyRowObj.cardIds.forEach(cardId => {
-            if (synergyS > 0) {
-                dealDamage(cardId, enemyRowId, synergyS, false, playerHeroId);
-                try { effectsBus.publish(Effects.showDamage(cardId, synergyS)); } catch {}
-            }
-        });
-        
         console.log(`Junkrat: Moved to ${finalFriendlyRowForSynergy} (if possible) and dealt ${synergyS} to ${enemyRowId}`);
-        
-        // Play explosion sound
-        try {
-            playAudioByKey('junkrat-explosion');
-        } catch {}
         
         showToast(`Junkrat: RIP-Tire deals ${synergyS} damage!`);
         setTimeout(() => clearToast(), 2000);

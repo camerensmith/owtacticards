@@ -3,6 +3,7 @@ import HeroAbilities from 'components/cards/HeroAbilities';
 import gameContext from 'context/gameContext';
 import HealthCounter from 'components/counters/HealthCounter';
 import ShieldCounter from 'components/counters/ShieldCounter';
+import ArmorCounter from 'components/counters/ArmorCounter';
 import { heroCardFocusImages } from '../../assets/imageImports';
 
 export default function CardFocus(props) {
@@ -66,6 +67,7 @@ export default function CardFocus(props) {
             name,
             health,
             shield,
+            armor,
             effect,
             enemyEffects,
             allyEffects,
@@ -89,6 +91,12 @@ export default function CardFocus(props) {
                         <ShieldCounter
                             type='cardfocuscounter'
                             shield={shield}
+                        />
+                    )}
+                    {armor > 0 && (
+                        <ArmorCounter
+                            type='cardfocuscounter'
+                            armor={armor}
                         />
                     )}
                     <img

@@ -1,7 +1,31 @@
 import { dealDamage } from '../engine/damageBus';
 import { showMessage as showToast, clearMessage as clearToast } from '../engine/targetingBus';
 import { selectCardTarget } from '../engine/targeting';
+import { barrageImpactMs } from '../../presentation/pixi/fxMath';
 import { playAudioByKey } from '../../assets/imageImports';
+import effectsBus, { Effects } from '../engine/effectsBus';
+
+/**
+ * Fires the salvo and resolves each rocket's damage as it lands, so the numbers
+ * appear with the impacts rather than the moment the volley is ordered.
+ */
+async function fireBarrage(playerHeroId, targets, damagePerTarget) {
+    try { effectsBus.publish(Effects.barrage(playerHeroId, targets.map((t) => t.cardId))); } catch {}
+
+    await Promise.all(targets.map((target, index) => new Promise((resolve) => {
+        setTimeout(() => {
+            const card = window.__ow_getCard?.(target.cardId);
+            if (card && card.health > 0) {
+                dealDamage(
+                    target.cardId, target.rowId, damagePerTarget,
+                    false, playerHeroId, false, { skipProjectileFx: true },
+                );
+                try { effectsBus.publish(Effects.showDamage(target.cardId, damagePerTarget)); } catch {}
+            }
+            resolve();
+        }, barrageImpactMs(index));
+    })));
+}
 
 // Concussive Blast - onEnter
 export async function onEnter({ playerHeroId, rowId }) {
@@ -42,6 +66,8 @@ export async function onEnter({ playerHeroId, rowId }) {
         const originalRowId = randomEnemy.rowId;
         const originalRow = window.__ow_getRow?.(originalRowId);
         
+        // The blast ring lands in front of the target and shoves it back.
+        try { effectsBus.publish(Effects.concussive(playerHeroId, randomEnemy.cardId)); } catch {}
         // Remove 2 synergy from target's starting row (before movement)
         if (originalRow && originalRow.synergy > 0) {
             const synergyToRemove = Math.min(2, originalRow.synergy);
@@ -94,6 +120,8 @@ export async function onEnter({ playerHeroId, rowId }) {
         const originalRowId = target.rowId;
         const originalRow = window.__ow_getRow?.(originalRowId);
         
+        // The blast ring lands in front of the target and shoves it back.
+        try { effectsBus.publish(Effects.concussive(playerHeroId, target.cardId)); } catch {}
         // Remove 2 synergy from target's starting row (before movement)
         if (originalRow && originalRow.synergy > 0) {
             const synergyToRemove = Math.min(2, originalRow.synergy);
@@ -175,9 +203,7 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
         candidates.sort((a,b)=>b.score-a.score);
         const targets = candidates.slice(0, 3);
         try { playAudioByKey('pharah-ultimate-resolve'); } catch {}
-        for (const t of targets) {
-            dealDamage(t.cardId, t.rowId, damagePerTarget, false, playerHeroId);
-        }
+        await fireBarrage(playerHeroId, targets, damagePerTarget);
         showToast(`Pharah AI: Barrage hit ${targets.length} enemy(ies) for ${damagePerTarget}`);
         setTimeout(() => clearToast(), 2000);
         return;
@@ -232,10 +258,8 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
         // Play ultimate resolve sound
         try { playAudioByKey('pharah-ultimate-resolve'); } catch {}
         
-        // Deal damage to all selected targets
-        for (const target of targets) {
-            dealDamage(target.cardId, target.rowId, damagePerTarget, false, playerHeroId);
-        }
+        // Damage lands with each rocket, not when the volley is ordered.
+        await fireBarrage(playerHeroId, targets, damagePerTarget);
         
         clearToast();
         showToast(`Pharah: Barrage dealt ${damagePerTarget} damage to ${targets.length} enemies!`);

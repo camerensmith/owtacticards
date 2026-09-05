@@ -3,6 +3,11 @@ import { dealDamage } from '../engine/damageBus';
 import { showMessage as showToast, clearMessage as clearToast } from '../engine/targetingBus';
 import { playAudioByKey } from '../../assets/imageImports';
 import effectsBus, { Effects } from '../engine/effectsBus';
+import { fluxSlamAtMs } from '../../presentation/pixi/fxMath';
+
+function wait(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 // Experimental Barrier - Place Sigma Token on friendly row with 3 shield tokens
 export async function onEnter({ playerHeroId, rowId }) {
@@ -139,15 +144,26 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
                 return card && card.health > 0;
             });
             
-            // Deal 1 damage to all living enemies (respects shields)
-            for (const cardId of livingEnemies) {
-                dealDamage(cardId, target.rowId, 1, false, playerHeroId);
-                effectsBus.publish(Effects.showDamage(cardId, 1));
+            // Lift the row; tethers + ripples hold through hang, then slam.
+            try {
+                effectsBus.publish(Effects.graviticFlux(target.rowId, livingEnemies, playerHeroId));
+            } catch {}
+
+            await wait(fluxSlamAtMs());
+
+            // Damage + synergy strip land with the slam (no default beams).
+            const rowNow = window.__ow_getRow?.(target.rowId);
+            const stillLiving = (rowNow?.cardIds || []).filter((cardId) => {
+                const card = window.__ow_getCard?.(cardId);
+                return card && card.health > 0;
+            });
+            for (const cardId of stillLiving) {
+                dealDamage(cardId, target.rowId, 1, false, playerHeroId, false, { skipProjectileFx: true });
+                try { effectsBus.publish(Effects.showDamage(cardId, 1)); } catch {}
             }
         }
         
-        // Remove all synergy from the target row (set to 0)
-        window.__ow_updateSynergy?.(target.rowId, -999); // Large negative number to ensure it goes to 0
+        window.__ow_updateSynergy?.(target.rowId, -999);
         
         showToast('Sigma: Gravitic Flux - All enemies damaged and synergy removed');
         setTimeout(() => clearToast(), 2000);

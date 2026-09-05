@@ -32,14 +32,15 @@
 }
 
 /* Forge Hammer Animation */
+/* Forge Hammer is a persistent status badge, so it breathes rather than throbs. */
 @keyframes forgeHammerPulse {
     0%, 100% {
+        opacity: 0.72;
         transform: scale(1);
-        box-shadow: 0 0 20px rgba(255, 107, 53, 0.8), inset 0 0 20px rgba(255, 255, 255, 0.3);
     }
     50% {
-        transform: scale(1.1);
-        box-shadow: 0 0 30px rgba(255, 107, 53, 1), inset 0 0 30px rgba(255, 255, 255, 0.5);
+        opacity: 1;
+        transform: scale(1.06);
     }
 }
 
@@ -200,24 +201,6 @@ body {
     }
 }
 
-@keyframes chainHookAnimation {
-    0% {
-        stroke-dashoffset: 0;
-        opacity: 0.8;
-    }
-    50% {
-        opacity: 1;
-    }
-    100% {
-        stroke-dashoffset: -30;
-        opacity: 0.6;
-    }
-}
-
-.chain-hook-line {
-    animation: chainHookAnimation 1s ease-in-out;
-}
-
 /* Mauga Cage Fight Row Lock Styling */
 .row.row-locked {
     position: relative;
@@ -225,6 +208,11 @@ body {
 .row.row-locked .boardrow {
     border: 3px solid #6e6e6e;
     box-shadow: inset 0 0 10px rgba(50,50,50,0.7);
+}
+
+.row.row-clamped .boardrow {
+    border: 3px solid #3ec6ff;
+    box-shadow: inset 0 0 10px rgba(62, 198, 255, 0.55);
 }
 
 /* AI Controls Styling */

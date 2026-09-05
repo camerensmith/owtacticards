@@ -35,6 +35,9 @@ export async function onEnter({ playerHeroId, rowId }) {
         return;
     }
     
+    // Yellow fizz over the row being healed.
+    try { effectsBus.publish(Effects.bioticField(rowId)); } catch {}
+
     // Heal each damaged ally by 1 health
     for (const cardId of alliesInRow) {
         const card = window.__ow_getCard?.(cardId);
@@ -161,7 +164,8 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
             }
             
             targets.push(target);
-            
+            try { effectsBus.publish(Effects.crosshair(target.cardId, true)); } catch {}
+
             if (i < 2) { // Not the last target
                 showToast(`Soldier: Select target ${i + 2} for Tactical Visor (${damageAmounts[i + 1]} damage)`);
             }
@@ -198,6 +202,10 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
     } catch (error) {
         console.log('Soldier Tactical Visor error:', error);
         clearToast();
+    } finally {
+        // The volley has fired (or been abandoned) — drop every sight. Without
+        // this a cancelled ultimate leaves crosshairs stuck on the board.
+        try { effectsBus.publish(Effects.crosshairClear()); } catch {}
     }
 }
 

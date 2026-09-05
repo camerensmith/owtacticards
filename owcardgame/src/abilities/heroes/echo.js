@@ -3,6 +3,7 @@ import { showMessage as showToast, clearMessage as clearToast } from '../engine/
 import { selectCardTarget } from '../engine/targeting';
 import { dealDamage } from '../engine/damageBus';
 import effectsBus, { Effects } from '../engine/effectsBus';
+import { canDuplicateUltimate, normalizeHeroId } from '../../game/abilityRules';
 
 // Echo has no onDraw ability
 export function onDraw({ playerHeroId }) {
@@ -58,7 +59,8 @@ export async function onEnter({ playerHeroId, rowId }) {
         }
 
         // Deal damage (respects shields, does not pierce)
-        dealDamage(randomEnemy.cardId, randomEnemy.rowId, damageAmount, false, playerHeroId);
+        dealDamage(randomEnemy.cardId, randomEnemy.rowId, damageAmount, false, playerHeroId, false, { skipProjectileFx: true });
+        try { effectsBus.publish(Effects.focusingBeam(playerHeroId, randomEnemy.cardId)); } catch {}
         effectsBus.publish(Effects.showDamage(randomEnemy.cardId, damageAmount));
 
         // Play ability sound after damage
@@ -103,7 +105,8 @@ export async function onEnter({ playerHeroId, rowId }) {
             }
 
             // Deal damage (respects shields, does not pierce)
-            dealDamage(target.cardId, target.rowId, damageAmount, false, playerHeroId);
+            dealDamage(target.cardId, target.rowId, damageAmount, false, playerHeroId, false, { skipProjectileFx: true });
+            try { effectsBus.publish(Effects.focusingBeam(playerHeroId, target.cardId)); } catch {}
             effectsBus.publish(Effects.showDamage(target.cardId, damageAmount));
 
             // Play ability sound after damage
@@ -124,59 +127,54 @@ export async function onEnter({ playerHeroId, rowId }) {
     }
 }
 
-// Duplicate (2): Copy the last ultimate ability that was used
+// Duplicate (4): Copy the last ultimate ability that was used
 export async function onUltimate({ playerHeroId, rowId, cost }) {
-    const playerNum = parseInt(playerHeroId[0]);
-
     try {
         playAudioByKey('echo-ultimate');
     } catch {}
 
-    // Get the last ultimate used from game state
     const lastUltimate = window.__ow_getLastUltimateUsed?.();
-    
-    if (!lastUltimate) {
-        showToast('Echo: Duplication Failed! No ultimate has been used this round');
-        setTimeout(() => clearToast(), 2000);
-        return;
+    const duplicateCheck = canDuplicateUltimate(lastUltimate);
+
+    // Returning false is what makes this a free refusal: the ultimate handler
+    // charges synergy and marks the ultimate spent only once the ability
+    // reports success, so a denial costs Echo nothing and can be tried again.
+    if (!duplicateCheck.ok) {
+        const heroName = lastUltimate?.heroName || 'that hero';
+        const message = {
+            none: 'Echo: No ultimate has been used this round — nothing to duplicate',
+            summon: `Echo: Cannot duplicate ${heroName} — Echo cannot summon or transform`,
+        }[duplicateCheck.reason]
+            || `Echo: Cannot duplicate ${heroName}'s ultimate`;
+        showToast(message);
+        setTimeout(() => clearToast(), 2500);
+        return false;
     }
 
-    // Check if the last ultimate is from a special card (D.Va+MEKA, BOB, Nemesis, Turret)
-    const specialCards = ['dvameka', 'bob', 'nemesis', 'turret'];
-    const lastHeroId = lastUltimate.heroId;
-    const isSpecialCard = specialCards.some(special => lastHeroId.includes(special));
-    
-    if (isSpecialCard) {
-        showToast('Echo: Duplication Failed! Cannot copy special card ultimates');
-        setTimeout(() => clearToast(), 2000);
-        return;
-    }
-
-    // Check if it's Tracer's Recall (we'll need to identify this)
-    if (lastHeroId.includes('tracer') && lastUltimate.abilityName === 'Recall') {
-        showToast('Echo: Duplication Failed! Cannot copy Recall');
-        setTimeout(() => clearToast(), 2000);
-        return;
-    }
-
+    const copiedHeroId = normalizeHeroId(lastUltimate.heroId);
+    try { effectsBus.publish(Effects.duplicate(playerHeroId)); } catch {}
     showToast(`Echo: Duplicating ${lastUltimate.heroName}'s ${lastUltimate.abilityName}`);
 
     try {
-        // Execute the duplicated ultimate
-        // We'll need to implement this through the actions bus or direct execution
-        const success = await window.__ow_executeDuplicatedUltimate?.(lastUltimate, playerHeroId, rowId);
-        
+        const success = await window.__ow_executeDuplicatedUltimate?.(
+            { ...lastUltimate, heroId: copiedHeroId },
+            playerHeroId,
+            rowId
+        );
+
         if (success) {
             showToast(`Echo: Successfully duplicated ${lastUltimate.abilityName}`);
             setTimeout(() => clearToast(), 2000);
-        } else {
-            showToast('Echo: Duplication failed to execute');
-            setTimeout(() => clearToast(), 2000);
+            return true;
         }
+        showToast('Echo: Duplication failed to execute');
+        setTimeout(() => clearToast(), 2000);
+        return false;
     } catch (error) {
         console.error('Echo Duplicate error:', error);
         showToast('Echo: Duplication failed');
         setTimeout(() => clearToast(), 1500);
+        return false;
     }
 }
 

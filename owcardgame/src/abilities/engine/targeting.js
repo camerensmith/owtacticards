@@ -4,6 +4,17 @@
 
 import $ from 'jquery';
 import { playWithOverlay } from './soundController';
+import effectsBus, { Effects } from './effectsBus';
+import crosshair from '../../assets/crosshair.svg';
+import { usesEnemyTargetCursor, enemyTargetCursorCss } from './targetingCursor';
+import {
+    previewEventForHover,
+    previewKey,
+} from '../../game/targetPreview';
+import { popMirageIfEnemyPicked } from '../heroes/mirage';
+import { aiOwnsCurrentDecision } from '../../game/aiControl';
+import { showMessage, clearMessage, getMessage } from './targetingBus';
+import { REJECT, rejectPick, selectionPrompt } from '../../game/targetSelection';
 
 // Simple cancellation flag and API so other parts of the app (e.g. End Turn)
 // can abort in-progress targeting flows gracefully
@@ -16,8 +27,80 @@ export function cancelTargeting() {
 // Expose on window for legacy callers
 try { window.__ow_cancelTargeting = cancelTargeting; } catch {}
 
+function applyEnemyTargetCursor(options) {
+    try {
+        if (!usesEnemyTargetCursor(options)) return;
+        document.body.style.cursor = enemyTargetCursorCss(crosshair);
+        document.body.classList.add('enemy-target-cursor');
+    } catch {}
+}
+
+function clearEnemyTargetCursor() {
+    try {
+        document.body.classList.remove('enemy-target-cursor');
+        document.body.style.cursor = '';
+    } catch {}
+}
+
+function sandstormBlocks() {
+    return !!window.__ow_isSandstormActive?.();
+}
+
+/**
+ * Whether the AI owns the flow that is asking for a target.
+ *
+ * Asked of the turn rather than of the flags an ability happens to be running
+ * under: those expire on timers while the AI's own work is still in flight.
+ * See game/aiControl.js.
+ */
+const aiOwnsTargeting = aiOwnsCurrentDecision;
+
+function bindPreviewHover(options, currentPlayerNum) {
+    let lastKey = '';
+    const onMove = (e) => {
+        const $t = $(e.target);
+        const hover = {
+            cardId: $t.closest('.card').attr('id'),
+            rowId: $t.closest('.row').attr('id'),
+            liIndex: $t.closest('li').index(),
+        };
+        const event = previewEventForHover(
+            hover,
+            options,
+            currentPlayerNum,
+            window.__ow_getRow,
+            window.__ow_getCard,
+        );
+        if (event.type === 'clear') {
+            if (lastKey === '') return;
+            lastKey = '';
+            try { effectsBus.publish(Effects.previewClear()); } catch {}
+            return;
+        }
+        const key = previewKey(event.payload);
+        if (key === lastKey) return;
+        lastKey = key;
+        try { effectsBus.publish(Effects.preview(event.payload)); } catch {}
+    };
+    const unbind = () => {
+        document.removeEventListener('mousemove', onMove);
+        if (lastKey === '') return;
+        lastKey = '';
+        try { effectsBus.publish(Effects.previewClear()); } catch {}
+    };
+    document.addEventListener('mousemove', onMove);
+    return { unbind };
+}
+
+function killMirageIfEnemyPicked(cardId, sourceCardId) {
+    popMirageIfEnemyPicked(cardId, sourceCardId);
+}
+
 // Resolves with an object: { cardId, rowId, liIndex }
 export function selectCardTarget(options = {}) {
+    if (sandstormBlocks()) {
+        return Promise.resolve(null);
+    }
     // If AI has already provided a target (e.g., for ultimates), only use it on AI turn
     if (window.__ow_aiUltimateTarget) {
         const getTurn = typeof window.__ow_getPlayerTurn === 'function' ? window.__ow_getPlayerTurn : null;
@@ -26,6 +109,7 @@ export function selectCardTarget(options = {}) {
             const pre = window.__ow_aiUltimateTarget;
             console.log('Using AI pre-selected target:', pre);
             try { window.__ow_aiUltimateTarget = null; } catch {}
+            if (pre?.cardId) killMirageIfEnemyPicked(pre.cardId, options.sourceCardId);
             return Promise.resolve(pre);
         } else {
             // Human turn – ignore and clear any stale AI preselection
@@ -33,15 +117,18 @@ export function selectCardTarget(options = {}) {
         }
     }
 
-    // Check if AI should handle targeting
-    const isAITurn = !!window.__ow_isAITurn;
-    const aiTriggering = !!window.__ow_aiTriggering;
-    const getTurn = typeof window.__ow_getPlayerTurn === 'function' ? window.__ow_getPlayerTurn : null;
-    const currentPlayer = getTurn ? getTurn() : null;
-    // Delegate ONLY when AI explicitly triggered this flow and it's AI's turn
-    if (window.__ow_selectCardTarget && aiTriggering && currentPlayer === 2) {
-        console.log('Delegating to AI card targeting with options:', options);
-        return window.__ow_selectCardTarget(options);
+    // The AI aims its own abilities; never hand its choices to the player.
+    if (aiOwnsTargeting()) {
+        if (window.__ow_selectCardTarget) {
+            console.log('Delegating to AI card targeting with options:', options);
+            return Promise.resolve(window.__ow_selectCardTarget(options)).then((result) => {
+                if (result?.cardId) killMirageIfEnemyPicked(result.cardId, options.sourceCardId);
+                return result;
+            });
+        }
+        // No delegate installed: skip the ability rather than prompt the human.
+        console.warn('AI card targeting requested with no delegate installed');
+        return Promise.resolve(null);
     }
 
     return new Promise((resolve) => {
@@ -49,11 +136,17 @@ export function selectCardTarget(options = {}) {
         let dragStartPos = null;
         let isDragging = false;
         const DRAG_THRESHOLD = 15; // pixels - minimum movement to consider it a drag (increased for better detection)
+        const currentPlayerNum = typeof window.__ow_getPlayerTurn === 'function' ? window.__ow_getPlayerTurn() : 1;
+        const previewHover = bindPreviewHover(
+            { ...options, previewShape: options.previewShape || 'card' },
+            currentPlayerNum,
+        );
         
         // Add visual feedback for targeting mode
         const addTargetingVisuals = () => {
             try {
                 document.body.classList.add('targeting-mode');
+                applyEnemyTargetCursor(options);
                 // Add a subtle overlay to indicate targeting is active
                 if (!document.getElementById('targeting-overlay')) {
                     const overlay = document.createElement('div');
@@ -78,7 +171,9 @@ export function selectCardTarget(options = {}) {
         
         const removeTargetingVisuals = () => {
             try {
+                previewHover.unbind();
                 document.body.classList.remove('targeting-mode');
+                clearEnemyTargetCursor();
                 const overlay = document.getElementById('targeting-overlay');
                 if (overlay) {
                     overlay.remove();
@@ -87,13 +182,38 @@ export function selectCardTarget(options = {}) {
                 console.log('Could not remove targeting visuals:', e);
             }
         };
-        
+
+        /*
+         * A refused click says why, then puts the prompt back.
+         *
+         * Every rejection branch below used to `return` in silence, so clicking
+         * a card the game had quietly refused produced no response at all and
+         * no way to tell a refusal from a dead click.
+         */
+        const promptBeforeTargeting = getMessage();
+        let refuseTimer = null;
+        const refuse = (reason) => {
+            if (!reason) return;
+            if (refuseTimer) clearTimeout(refuseTimer);
+            showMessage(reason);
+            refuseTimer = setTimeout(() => {
+                refuseTimer = null;
+                if (promptBeforeTargeting) showMessage(promptBeforeTargeting);
+            }, 1600);
+        };
+        // Cleared whenever targeting ends: a pending restore would otherwise
+        // put a stale prompt back up after the ability had finished.
+        const stopRefusing = () => {
+            if (refuseTimer) clearTimeout(refuseTimer);
+            refuseTimer = null;
+        };
+
         // Track mouse down to detect drag start
         const mouseDownHandler = (e) => {
             dragStartPos = { x: e.clientX, y: e.clientY };
             isDragging = false;
         };
-        
+
         // Track mouse movement to detect drag
         const mouseMoveHandler = (e) => {
             if (dragStartPos) {
@@ -105,7 +225,7 @@ export function selectCardTarget(options = {}) {
                 }
             }
         };
-        
+
         // Track mouse up to reset drag state
         const mouseUpHandler = (e) => {
             dragStartPos = null;
@@ -113,7 +233,7 @@ export function selectCardTarget(options = {}) {
             // Increased delay to prevent accidental cancellation
             setTimeout(() => { isDragging = false; }, 100);
         };
-        
+
         const handler = (e) => {
             // Ignore clicks that were actually drags
             if (isDragging) {
@@ -151,7 +271,11 @@ export function selectCardTarget(options = {}) {
                 );
                 if (isImmune) {
                     console.log(`Targeting: Cannot target immune card ${cardId}`);
-                    return; // Don't resolve, keep listening for valid targets
+                    // Say why and keep listening. Silently swallowing the click
+                    // left the player clicking a legal-looking card over and
+                    // over with no idea the game had refused it.
+                    refuse('That hero cannot be targeted right now');
+                    return;
                 }
             }
 
@@ -166,11 +290,11 @@ export function selectCardTarget(options = {}) {
                 // Skip validation if allowAnyTarget is true
                 if (!allowAnyTarget) {
                     if (requireAlly && playerOfTarget !== currentPlayerNum) {
-                        // Wrong team for ally targeting
+                        refuse(REJECT.enemy);
                         return;
                     }
                     if (requireEnemy && playerOfTarget === currentPlayerNum) {
-                        // Wrong team for enemy targeting
+                        refuse(REJECT.ally);
                         return;
                     }
                 }
@@ -196,9 +320,11 @@ export function selectCardTarget(options = {}) {
                 return; // Keep listening
             }
             $('.card').off('click', handler);
+            stopRefusing();
             removeTargetingVisuals();
 
             resolve({ cardId, rowId: finalRowId, liIndex });
+            killMirageIfEnemyPicked(cardId, options.sourceCardId);
         };
         const cancelHandler = () => {
             $('.card').off('click', handler);
@@ -207,6 +333,7 @@ export function selectCardTarget(options = {}) {
             document.removeEventListener('mousemove', mouseMoveHandler);
             document.removeEventListener('ow:targeting:cancel', cancelHandler);
             document.removeEventListener('contextmenu', contextCancel, true);
+            stopRefusing();
             removeTargetingVisuals();
             resolve(null);
         };
@@ -226,8 +353,68 @@ export function selectCardTarget(options = {}) {
     });
 }
 
+/** A runaway guard, not a budget: refusals are free to the player. */
+const MAX_SELECTION_ATTEMPTS = 60;
+
+/**
+ * Collects up to `count` distinct targets, one click at a time.
+ *
+ * Replaces the pattern every multi-target ability hand-rolled, which treated a
+ * bad pick and a cancel as the same thing and abandoned the ability for either:
+ *
+ *  - An invalid pick now says why and asks again, so a misclick costs a click
+ *    rather than the whole on-enter.
+ *  - Right-click commits what has been picked so far. That is the only way to
+ *    fire a two-target ability when one enemy is left standing — Ashe wanting
+ *    two enemies in one row could otherwise never finish against a lone
+ *    defender, and simply lost the ability.
+ *  - The same card can no longer be picked twice.
+ *
+ * Resolves to an array of targets, empty only if nothing was picked before the
+ * player backed out. `rules` is passed to `rejectPick`; `casterPlayerNum` and
+ * `getCard` are filled in from the bridge when not given.
+ *
+ * @returns {Promise<Array<{cardId: string, rowId: string}>>}
+ */
+export async function selectCardTargets({
+    count = 1,
+    label = 'Choose a target',
+    rules = {},
+    ...options
+} = {}) {
+    const resolved = {
+        casterPlayerNum: typeof window.__ow_getPlayerTurn === 'function'
+            ? window.__ow_getPlayerTurn()
+            : undefined,
+        getCard: (id) => window.__ow_getCard?.(id),
+        ...rules,
+    };
+
+    const picked = [];
+    let reason = null;
+    let attempts = 0;
+    while (picked.length < count && attempts < MAX_SELECTION_ATTEMPTS) {
+        attempts += 1;
+        showMessage(selectionPrompt(label, picked.length, count, reason));
+
+        const target = await selectCardTarget(options);
+        // Backing out keeps what is already in hand rather than discarding it.
+        if (!target) break;
+
+        reason = rejectPick(target, picked, resolved);
+        if (reason) continue;
+        picked.push(target);
+    }
+
+    clearMessage();
+    return picked;
+}
+
 // Resolves with an object: { rowId, rowPosition }
 export function selectRowTarget(options = {}) {
+    if (sandstormBlocks()) {
+        return Promise.resolve(null);
+    }
     // If AI has already provided a target (e.g., for ultimates), only use it on AI turn
     if (window.__ow_aiUltimateTarget) {
         const getTurn = typeof window.__ow_getPlayerTurn === 'function' ? window.__ow_getPlayerTurn : null;
@@ -243,15 +430,15 @@ export function selectRowTarget(options = {}) {
         }
     }
 
-    // Check if AI should handle targeting
-    const isAITurn = !!window.__ow_isAITurn;
-    const aiTriggering = !!window.__ow_aiTriggering;
-    const getTurn = typeof window.__ow_getPlayerTurn === 'function' ? window.__ow_getPlayerTurn : null;
-    const currentPlayer = getTurn ? getTurn() : null;
-    // Delegate ONLY when AI explicitly triggered this flow and it's AI's turn
-    if (window.__ow_selectRowTarget && aiTriggering && currentPlayer === 2) {
-        console.log('Delegating to AI row targeting with options:', options);
-        return window.__ow_selectRowTarget(options);
+    // The AI aims its own abilities; never hand its choices to the player.
+    if (aiOwnsTargeting()) {
+        if (window.__ow_selectRowTarget) {
+            console.log('Delegating to AI row targeting with options:', options);
+            return window.__ow_selectRowTarget(options);
+        }
+        // No delegate installed: skip the ability rather than prompt the human.
+        console.warn('AI row targeting requested with no delegate installed');
+        return Promise.resolve(null);
     }
 
     return new Promise((resolve) => {
@@ -261,16 +448,23 @@ export function selectRowTarget(options = {}) {
         const DRAG_THRESHOLD = 15; // pixels - minimum movement to consider it a drag (increased for better detection)
 
         // Determine current player for validation
-        const currentPlayerNum = getTurn ? getTurn() : 1;
+        const currentPlayerNum = typeof window.__ow_getPlayerTurn === 'function'
+            ? window.__ow_getPlayerTurn()
+            : 1;
         const isDamage = options.isDamage || false;
         const isBuff = options.isBuff || false;
         const isDebuff = options.isDebuff || false;
         const allowAnyRow = options.allowAnyRow || false;
+        const previewHover = bindPreviewHover(
+            { ...options, previewShape: options.previewShape || 'row' },
+            currentPlayerNum,
+        );
         
         // Add visual feedback for targeting mode
         const addTargetingVisuals = () => {
             try {
                 document.body.classList.add('targeting-mode');
+                applyEnemyTargetCursor(options);
                 // Add a subtle overlay to indicate targeting is active
                 if (!document.getElementById('targeting-overlay')) {
                     const overlay = document.createElement('div');
@@ -295,7 +489,9 @@ export function selectRowTarget(options = {}) {
         
         const removeTargetingVisuals = () => {
             try {
+                previewHover.unbind();
                 document.body.classList.remove('targeting-mode');
+                clearEnemyTargetCursor();
                 const overlay = document.getElementById('targeting-overlay');
                 if (overlay) {
                     overlay.remove();
@@ -389,6 +585,7 @@ export function selectRowTarget(options = {}) {
             const rowPosition = rowId[1];
             $('.row').off('click', handler);
             for (const rid of rowIds) { $(document).off('click', handler, `#${rid}`); }
+            removeTargetingVisuals();
             resolve({ rowId, rowPosition });
         };
         const cancelHandler = () => {
@@ -404,12 +601,14 @@ export function selectRowTarget(options = {}) {
             document.removeEventListener('mousemove', mouseMoveHandler);
             document.removeEventListener('ow:targeting:cancel', cancelHandler);
             document.removeEventListener('contextmenu', contextCancel, true);
+            removeTargetingVisuals();
             resolve(null);
         };
         const contextCancel = (e) => {
             try { e.preventDefault(); e.stopPropagation(); } catch {}
             cancelHandler();
         };
+        addTargetingVisuals();
         // Attach to generic row containers and specific ids as fallback
         $('.row').on('click', handler);
         $('.row').on('mousedown', mouseDownHandler);

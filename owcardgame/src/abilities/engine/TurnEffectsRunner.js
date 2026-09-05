@@ -6,6 +6,8 @@ import { processAnnihilation } from '../heroes/nemesis';
 import junkerqueen from '../heroes/junkerqueen';
 import { cleanupTemporaryHP } from '../heroes/lifeweaver';
 import { processTurretDamage } from '../heroes/turret';
+import { recomputeAnaTokens } from '../heroes/ana';
+import { tickDisorientOnCards } from '../../game/disorient';
 
 export default function TurnEffectsRunner() {
     const { gameState } = useContext(gameContext);
@@ -42,6 +44,26 @@ export default function TurnEffectsRunner() {
 
             // Junker Queen: apply wound ticks at wounded hero's turn start
             try { junkerqueen.processWoundsAtTurnStart?.(playerTurn); } catch {}
+
+            try { recomputeAnaTokens(); } catch {}
+
+            try {
+                const cardsById = {};
+                ['1f', '1m', '1b', '2f', '2m', '2b'].forEach((rid) => {
+                    (gameState.rows[rid]?.cardIds || []).forEach((id) => {
+                        const p = id[0];
+                        cardsById[id] = gameState.playerCards[`player${p}cards`]?.cards?.[id];
+                    });
+                });
+                const { remove, update } = tickDisorientOnCards(cardsById, playerTurn);
+                remove.forEach(({ cardId }) => window.__ow_removeCardEffect?.(cardId, 'disorient'));
+                update.forEach(({ cardId, effect }) => {
+                    window.__ow_removeCardEffect?.(cardId, 'disorient');
+                    window.__ow_appendCardEffect?.(cardId, effect);
+                });
+            } catch (error) {
+                console.error('TurnEffectsRunner: Error ticking Disorient:', error);
+            }
             
             // Clean up temporary HP effects at the start of each turn
             try {

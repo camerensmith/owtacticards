@@ -3,6 +3,12 @@
  * Understands row/column tactics, Reinhardt shield lanes, targeting priorities
  */
 
+import { getCardForAi } from '../game/rosterRules';
+
+function aiCard(cardId) {
+    return getCardForAi(cardId, (id) => window.__ow_getCard?.(id), { viewerPlayerNum: 2 });
+}
+
 /**
  * Determine best row for a card based on game state and strategy
  */
@@ -195,7 +201,7 @@ function evaluateRowFit(card, row, aiBoard, enemyBoard) {
 
         // Check if enemy has high-value AOE ultimates ready
         enemyRowData.cardIds?.forEach(cardId => {
-            const enemyCard = window.__ow_getCard?.(cardId);
+            const enemyCard = aiCard(cardId);
             if (enemyCard && ['pharah', 'hanzo', 'junkrat', 'zarya', 'dva'].includes(enemyCard.id)) {
                 const isReady = typeof window.__ow_isUltimateReady === 'function' ?
                               window.__ow_isUltimateReady(cardId) : false;

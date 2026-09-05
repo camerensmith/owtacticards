@@ -1,3 +1,6 @@
+import { firstEmptySlot, isRedeployLocked, occupiedCount } from '../../game/rules';
+import { playCardIntent } from '../../presentation/intents';
+import { disguiseMirageForAi } from '../../game/rosterRules';
 import GameAdapter from './GameAdapter';
 
 export default class BrowserGameAdapter extends GameAdapter {
@@ -14,32 +17,41 @@ export default class BrowserGameAdapter extends GameAdapter {
 
     getCard(cardId) {
         const fromWin = typeof window !== 'undefined' && window.__ow_getCard ? window.__ow_getCard(cardId) : null;
-        if (fromWin) return { ...fromWin, cardId };
-        const lookup = this.gameState?.cards?.[cardId];
-        return lookup ? { ...lookup, cardId } : null;
+        const lookup = fromWin || this.gameState?.cards?.[cardId] || null;
+        if (!lookup) return null;
+        const owner = parseInt(String(cardId || '')[0], 10);
+        const seen = owner === 1 ? disguiseMirageForAi(lookup) : lookup;
+        return { ...seen, cardId };
     }
 
     async playCard(cardId, rowKey) {
         // Use in-app dispatch bridge to move the card and trigger onEnter
         if (typeof window === 'undefined') throw new Error('playCard requires browser environment');
 
-        const map = { front: '2f', middle: '2m', back: '2b' };
+        const heroId = String(cardId || '').slice(1);
+        // Mantis Cloak: AI deploys onto the enemy (player 1) rows.
+        const allyMap = { front: '2f', middle: '2m', back: '2b' };
+        const enemyMap = { front: '1f', middle: '1m', back: '1b' };
+        const map = heroId === 'mantis' ? enemyMap : allyMap;
         let rowId = map[rowKey];
         if (!rowId) {
-            // Fallback to middle
-            rowId = '2m';
+            rowId = heroId === 'mantis' ? '1m' : '2m';
+        }
+
+        if (isRedeployLocked(window.__ow_getCard?.(cardId), window.__ow_getTurnCount?.())) {
+            throw new Error('Held until next turn');
         }
 
         // Capacity check - double check with actual row data
+        const sideRows = heroId === 'mantis' ? ['1f', '1m', '1b'] : ['2f', '2m', '2b'];
         const currentRow = window.__ow_getRow?.(rowId);
-        const currentCount = currentRow?.cardIds?.length || 0;
+        const currentCount = occupiedCount(currentRow?.cardIds);
         
         if (currentCount >= 4) {
             console.log(`Row ${rowId} is full (${currentCount}/4), finding alternative`);
-            // Find least-filled available row
-            const counts = ['2f','2m','2b'].map(id => ({ 
+            const counts = sideRows.map(id => ({ 
                 id, 
-                n: window.__ow_getRow?.(id)?.cardIds?.length || 0 
+                n: occupiedCount(window.__ow_getRow?.(id)?.cardIds)
             }));
             const available = counts.filter(c => c.n < 4);
             if (available.length === 0) {
@@ -51,76 +63,27 @@ export default class BrowserGameAdapter extends GameAdapter {
             console.log(`Switching to row ${rowId} (${available[0].n}/4)`);
         }
 
-        // Enforce per-side max heroes (6) before placing
-        // BOB and Turret do NOT count as heroes
-        const countHeroes = (rowId) => {
-            const row = window.__ow_getRow?.(rowId);
-            if (!row || !row.cardIds) return 0;
-            return row.cardIds.filter(cardId => {
-                const card = window.__ow_getCard?.(cardId);
-                const heroId = card?.id || cardId.slice(1); // Remove player number
-                // Exclude turret and bob from hero count
-                return heroId !== 'turret' && heroId !== 'bob';
-            }).length;
-        };
-        
-        const totalHeroesOnBoard = countHeroes('2f') + countHeroes('2m') + countHeroes('2b');
-        const maxPerSide = typeof window.__ow_getGameLogic === 'function' ? (window.__ow_getGameLogic()?.maxHeroesPerPlayer || 6) : 6;
-        
-        // Check if the card being played is a hero (not turret/bob)
-        const cardBeingPlayed = window.__ow_getCard?.(cardId);
-        const heroIdBeingPlayed = cardBeingPlayed?.id || cardId.slice(1);
-        const isHero = heroIdBeingPlayed !== 'turret' && heroIdBeingPlayed !== 'bob';
-        
-        // Only enforce limit if playing an actual hero (turrets and bob can always be played)
-        if (isHero && totalHeroesOnBoard >= maxPerSide) {
-            console.log(`AI placement blocked: hero capacity ${totalHeroesOnBoard}/${maxPerSide} (turrets and BOB excluded)`);
-            throw new Error('Side capacity reached');
-        }
-
         const handRow = window.__ow_getRow?.('player2hand');
         const startIndex = handRow?.cardIds?.indexOf(cardId);
-        if (startIndex === -1 || startIndex === undefined) throw new Error('Card not found in hand');
-
-        // Move card to target row
-        window.__ow_dispatch?.({
-            type: 'move-card',
-            payload: {
-                targetCardId: cardId,
-                startRowId: 'player2hand',
-                finishRowId: rowId,
-                startIndex,
-                finishIndex: 0
-            }
-        });
-
-        // Mark as played and set enteredTurn
-        window.__ow_dispatch?.({
-            type: 'edit-card',
-            payload: {
-                playerNum: 2,
-                targetCardId: cardId,
-                editKeys: ['isPlayed', 'enteredTurn', 'synergy'],
-                editValues: [true, window.__ow_getTurnCount?.() || 1, { f: 0, m: 0, b: 0 }]
-            }
-        });
-
-        // Apply synergy to the row if any
-        const finishPosition = rowId[1];
-        const card = window.__ow_getCard?.(cardId);
-        const addSynergy = card?.synergy?.[finishPosition] || 0;
-        if (addSynergy > 0) {
-            window.__ow_dispatch?.({
-                type: 'update-synergy',
-                payload: { rowId, synergyCost: addSynergy }
-            });
+        if (startIndex === -1 || startIndex === undefined) {
+            console.warn('playCard: card not in Player 2 hand', cardId);
+            return false;
         }
 
-        // Trigger onEnter abilities (AI targeting overrides handle choice)
-        if (window.__ow_triggerOnEnter) {
-            setTimeout(() => window.__ow_triggerOnEnter(cardId, rowId, 2), 300);
-        }
+        const slotIndex = firstEmptySlot(window.__ow_getRow?.(rowId)?.cardIds);
+        if (slotIndex < 0) throw new Error('All rows full');
 
+        const queued = window.__ow_enqueuePlayCard?.(playCardIntent({
+            cardId,
+            startRowId: 'player2hand',
+            finishRowId: rowId,
+            slotIndex,
+            playerNum: 2,
+        }));
+        if (queued === false || queued == null) {
+            throw new Error('Theater locked');
+        }
+        await queued;
         return true;
     }
 

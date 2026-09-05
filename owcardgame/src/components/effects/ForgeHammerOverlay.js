@@ -1,9 +1,16 @@
 import React, { useContext } from 'react';
 import gameContext from 'context/gameContext';
 
+/**
+ * Torbjörn's Forge Hammer marker.
+ *
+ * Deliberately quiet: a small corner badge rather than a glowing disc across the
+ * card. It is a persistent status, so it has to sit alongside health, shields
+ * and the marked-target blip without competing with any of them.
+ */
 export default function ForgeHammerOverlay({ playerHeroId, rowId }) {
     const { gameState } = useContext(gameContext);
-    
+
     const playerNum = parseInt(playerHeroId[0]);
     const card = gameState.playerCards[`player${playerNum}cards`]?.cards?.[playerHeroId];
     const hasForgeHammer = Array.isArray(card?.effects) &&
@@ -12,35 +19,34 @@ export default function ForgeHammerOverlay({ playerHeroId, rowId }) {
     if (!hasForgeHammer) return null;
 
     return (
-        <div className="forge-hammer-overlay" style={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            zIndex: 10,
-            pointerEvents: 'none',
-            width: '100%',
-            height: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-        }}>
-            <div className="forge-hammer-icon" style={{
-                width: '60px',
-                height: '60px',
-                background: 'radial-gradient(circle, #ff6b35, #ff8c42)',
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '24px',
-                fontWeight: 'bold',
-                color: '#fff',
-                textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
-                border: '3px solid #ff4500',
-                boxShadow: '0 0 20px rgba(255, 107, 53, 0.8), inset 0 0 20px rgba(255, 255, 255, 0.3)',
-                animation: 'forgeHammerPulse 2s ease-in-out infinite'
-            }}>
+        <div
+            className='forge-hammer-overlay'
+            title='Forge Hammer'
+            style={{
+                position: 'absolute',
+                bottom: '4px',
+                left: '4px',
+                zIndex: 10,
+                pointerEvents: 'none',
+            }}
+        >
+            <div
+                className='forge-hammer-icon'
+                style={{
+                    width: '20px',
+                    height: '20px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '11px',
+                    lineHeight: 1,
+                    borderRadius: '50%',
+                    background: 'rgba(120, 52, 20, 0.82)',
+                    border: '1px solid rgba(255, 160, 90, 0.7)',
+                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.5)',
+                    animation: 'forgeHammerPulse 2.8s ease-in-out infinite',
+                }}
+            >
                 🔨
             </div>
         </div>

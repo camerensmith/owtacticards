@@ -2,6 +2,7 @@ import { selectRowTarget } from '../engine/targeting';
 import { selectCardTarget } from '../engine/targeting';
 import { showMessage as showToast, clearMessage as clearToast } from '../engine/targetingBus';
 import { playAudioByKey } from '../../assets/imageImports';
+import effectsBus, { Effects } from '../engine/effectsBus';
 
 export async function onEnter({ playerHeroId, rowId }) {
     const playerNum = parseInt(playerHeroId[0]);
@@ -23,7 +24,7 @@ export async function onEnter({ playerHeroId, rowId }) {
             sourceCardId: playerHeroId,
             sourceRowId: rowId,
             tooltip: 'Infra-Sight: All damage dealt to enemies in this row is increased by 1',
-            visual: 'widowmaker-icon'
+            visual: 'infrasight'
         };
         
         window.__ow_appendRowEffect?.(randomRow, 'enemyEffects', widowmakerToken);
@@ -58,7 +59,7 @@ export async function onEnter({ playerHeroId, rowId }) {
             sourceCardId: playerHeroId,
             sourceRowId: rowId,
             tooltip: 'Infra-Sight: All damage dealt to enemies in this row is increased by 1',
-            visual: 'widowmaker-icon'
+            visual: 'infrasight'
         };
         
         window.__ow_appendRowEffect?.(target.rowId, 'enemyEffects', widowmakerToken);
@@ -114,6 +115,7 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
         const randomTargetId = validTargets[Math.floor(Math.random() * validTargets.length)];
         
         // Deal 999 damage to defeat the target
+        try { effectsBus.publish(Effects.bloodSpray(randomTargetId)); } catch {}
         window.__ow_dealDamage?.(randomTargetId, opposingRowId, 999);
         
         try {
@@ -144,6 +146,7 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
         }
         
         // Deal 999 damage to defeat the target
+        try { effectsBus.publish(Effects.bloodSpray(target.cardId)); } catch {}
         window.__ow_dealDamage?.(target.cardId, target.rowId, 999);
         
         try {

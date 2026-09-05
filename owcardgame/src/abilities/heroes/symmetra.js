@@ -1,6 +1,7 @@
 import { selectCardTarget } from '../engine/targeting';
 import { showMessage as showToast, clearMessage as clearToast } from '../engine/targetingBus';
 import { playAudioByKey } from '../../assets/imageImports';
+import effectsBus, { Effects } from '../engine/effectsBus';
 
 export async function onEnter({ playerHeroId, rowId }) {
     const playerNum = parseInt(playerHeroId[0]);
@@ -20,9 +21,9 @@ export async function onEnter({ playerHeroId, rowId }) {
         console.log('Symmetra AI: Evaluating teleport targets');
         target = await selectSymmetraTeleportTarget(playerNum);
     } else {
-        // Human player manual selection - allow targeting any hero (ally or enemy)
-        showToast('Symmetra: Select any hero to return to hand');
-        target = await selectCardTarget();
+        // Human player: allied heroes only
+        showToast('Symmetra: Select an allied hero to return to hand');
+        target = await selectCardTarget({ isHeal: true });
     }
 
     if (!target) {
@@ -31,8 +32,12 @@ export async function onEnter({ playerHeroId, rowId }) {
     }
     
     if (target && target.cardId) {
-        // Get the target hero's owner
         const targetPlayerNum = parseInt(target.cardId[0]);
+        if (targetPlayerNum !== playerNum) {
+            showToast('Symmetra: Can only return allied heroes to hand');
+            setTimeout(() => clearToast(), 1500);
+            return;
+        }
 
         // Check if target owner's hand is full (6 cards is the limit)
         const targetHandId = `player${targetPlayerNum}hand`;
@@ -51,10 +56,18 @@ export async function onEnter({ playerHeroId, rowId }) {
             return;
         }
 
+        // Streak the hero off the board before the state change pulls the card
+        // out from under it — the effect pins its start point on publish.
+        try { effectsBus.publish(Effects.teleport(target.cardId, targetPlayerNum)); } catch {}
+
         // Return hero to hand
         window.__ow_dispatchAction?.({
             type: 'return-hero-to-hand',
-            payload: { cardId: target.cardId, rowId: target.rowId }
+            payload: {
+                cardId: target.cardId,
+                rowId: target.rowId,
+                suppressEnterOnRedeploy: true,
+            },
         });
 
         // Remove all tokens and counters
@@ -76,6 +89,9 @@ export function onUltimate({ playerHeroId, rowId, cost }) {
         playAudioByKey('symmetra-ultimate');
     } catch {}
     
+    // Blue washes over the whole allied side as the generator comes up.
+    try { effectsBus.publish(Effects.shieldGenerator(playerNum)); } catch {}
+
     // Apply Shield Generator to all friendly deployed heroes
     const friendlyRows = [`${playerNum}f`, `${playerNum}m`, `${playerNum}b`];
     let heroesAffected = 0;
@@ -147,10 +163,10 @@ function removeAllTokensAndCounters(cardId, rowId) {
 // AI Smart Teleporter Target Selection
 async function selectSymmetraTeleportTarget(playerNum) {
     try {
-        const allRows = ['1f', '1m', '1b', '2f', '2m', '2b'];
+        const allRows = [`${playerNum}f`, `${playerNum}m`, `${playerNum}b`];
         const candidates = [];
 
-        // Gather all living heroes on board
+        // Gather living allied heroes on board
         for (const rowId of allRows) {
             const row = window.__ow_getRow?.(rowId);
             if (!row?.cardIds) continue;
@@ -158,22 +174,19 @@ async function selectSymmetraTeleportTarget(playerNum) {
             for (const cardId of row.cardIds) {
                 const card = window.__ow_getCard?.(cardId);
                 if (!card || card.health <= 0) continue;
-
-                const cardPlayerNum = parseInt(cardId[0]);
-                const isAlly = cardPlayerNum === playerNum;
-                const isEnemy = !isAlly;
+                if (parseInt(cardId[0], 10) !== playerNum) continue;
 
                 // Check hand capacity
-                const targetHandId = `player${cardPlayerNum}hand`;
+                const targetHandId = `player${playerNum}hand`;
                 const targetHand = window.__ow_getRow?.(targetHandId);
-                if (targetHand?.cardIds?.length >= 6) continue; // Hand full, skip
+                if (targetHand?.cardIds?.length >= 6) continue;
 
                 candidates.push({
                     cardId,
                     rowId,
                     card,
-                    isAlly,
-                    isEnemy
+                    isAlly: true,
+                    isEnemy: false,
                 });
             }
         }
@@ -185,68 +198,39 @@ async function selectSymmetraTeleportTarget(playerNum) {
 
         // Score each candidate
         const scored = candidates.map(candidate => {
-            const { card, isAlly, isEnemy } = candidate;
+            const { card } = candidate;
             let score = 0;
+            const maxHealth = window.__ow_getMaxHealth?.(candidate.cardId) || card.health;
+            const healthDeficit = maxHealth - card.health;
 
-            // === ENEMY TARGETING (BOUNCE STRONG THREATS) ===
-            if (isEnemy) {
-                // Target high-power enemies (bounce them to disrupt)
-                const power = (card.front_power || 0) + (card.middle_power || 0) + (card.back_power || 0);
-                score += power * 15; // High weight for removing threats
-
-                // Target high-health tanks (bounce them out)
-                score += (card.health || 0) * 8;
-
-                // Bonus for tanks (annoying blockers)
-                if (card.role === 'Tank') score += 30;
-
-                // Bonus for support (remove their healer)
-                if (card.role === 'Support') score += 25;
-
-                console.log(`Symmetra AI: Enemy ${card.id} score = ${score} (power removal)`);
+            if (card.health === 1) {
+                score += 100;
+                console.log(`Symmetra AI: Ally ${card.id} CRITICAL (1 HP) - save immediately`);
+            } else if (card.health < maxHealth / 2) {
+                score += 50 + (healthDeficit * 10);
+                console.log(`Symmetra AI: Ally ${card.id} wounded (${card.health}/${maxHealth}) - consider saving`);
             }
 
-            // === ALLY TARGETING (SAVE WOUNDED/DEBUFFED) ===
-            if (isAlly) {
-                // Target wounded allies (save them before death)
-                const maxHealth = window.__ow_getMaxHealth?.(candidate.cardId) || card.health;
-                const healthDeficit = maxHealth - card.health;
+            if (Array.isArray(card.effects)) {
+                const hasDebuff = card.effects.some(e =>
+                    e?.type === 'debuff' ||
+                    e?.type === 'damage' ||
+                    e?.type === 'damageBoost' ||
+                    e?.id === 'discord-token' ||
+                    e?.id === 'anti-heal'
+                );
 
-                // Critical health (1 HP left) - VERY HIGH PRIORITY
-                if (card.health === 1) {
-                    score += 100;
-                    console.log(`Symmetra AI: Ally ${card.id} CRITICAL (1 HP) - save immediately`);
+                if (hasDebuff) {
+                    score += 40;
+                    console.log(`Symmetra AI: Ally ${card.id} has debuff - consider cleansing`);
                 }
-                // Low health (< 50%)
-                else if (card.health < maxHealth / 2) {
-                    score += 50 + (healthDeficit * 10);
-                    console.log(`Symmetra AI: Ally ${card.id} wounded (${card.health}/${maxHealth}) - consider saving`);
-                }
-
-                // Check for debuffs
-                if (Array.isArray(card.effects)) {
-                    const hasDebuff = card.effects.some(e =>
-                        e?.type === 'debuff' ||
-                        e?.type === 'damage' ||
-                        e?.type === 'damageBoost' ||
-                        e?.id === 'discord-token' ||
-                        e?.id === 'anti-heal'
-                    );
-
-                    if (hasDebuff) {
-                        score += 40;
-                        console.log(`Symmetra AI: Ally ${card.id} has debuff - consider cleansing`);
-                    }
-                }
-
-                // Penalty for healthy allies (don't waste teleporter)
-                if (card.health === maxHealth && (!card.effects || card.effects.length === 0)) {
-                    score -= 50;
-                }
-
-                console.log(`Symmetra AI: Ally ${card.id} score = ${score}`);
             }
 
+            if (card.health === maxHealth && (!card.effects || card.effects.length === 0)) {
+                score -= 50;
+            }
+
+            console.log(`Symmetra AI: Ally ${card.id} score = ${score}`);
             return { ...candidate, score };
         });
 

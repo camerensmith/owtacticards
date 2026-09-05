@@ -1,6 +1,7 @@
-// Central damage bus: decouples hero modules from UI/components.
+// Central damage bus: computes modifiers, then publishes. App.js is the sole HP/shield writer.
 import effectsBus, { Effects } from './effectsBus';
-// Publish a damage intent; HeroAbilities subscribes and applies real damage.
+import { isMirage } from '../../game/disorient';
+import { popMirage } from '../heroes/mirage';
 
 const listeners = new Set();
 
@@ -16,12 +17,22 @@ export function publish(event) {
     }
 }
 
-export function dealDamage(targetCardId, targetRow, amount, ignoreShields = false, sourceCardId = null, fixedDamage = false) {
+export function dealDamage(targetCardId, targetRow, amount, ignoreShields = false, sourceCardId = null, fixedDamage = false, options = {}) {
     // Safety check: ensure targetCardId is valid
     if (!targetCardId || typeof targetCardId !== 'string') {
         console.warn('DamageBus - Invalid targetCardId:', targetCardId);
         return;
     }
+
+    // Cloaked Mantis: untargetable by enemy damage; immune to friendly ability damage.
+    try {
+        const { isCloakedMantis } = require('../../game/mantis');
+        const target = window.__ow_getCard?.(targetCardId);
+        if (isCloakedMantis(target)) {
+            console.log(`DamageBus - Cloaked Mantis ${targetCardId} ignores damage`);
+            return;
+        }
+    } catch {}
     
     // Check if the target slot is invulnerable
     if (window.__ow_isSlotInvulnerable) {
@@ -55,6 +66,27 @@ export function dealDamage(targetCardId, targetRow, amount, ignoreShields = fals
         }
     }
     
+    /*
+     * The illusion has no health to take off it.
+     *
+     * It shows 3 to look like a real hero, but nothing is holding it up except
+     * not having been touched — so anything aimed at it destroys it, whatever
+     * the number attached. This has to happen before shields, absorption and
+     * reduction: the check used to sit at the bottom behind `finalAmount > 0`,
+     * so a hit that was blocked down to nothing left the decoy standing and
+     * told the attacker it was real.
+     */
+    if (isMirage(targetCard)) {
+        try { popMirage({ mirageId: targetCardId, sourceCardId: sourceCardId || null }); } catch {}
+        return;
+    }
+
+    if (!ignoreShields && targetCard && Array.isArray(targetCard.effects)) {
+        if (targetCard.effects.some((effect) => effect?.id === 'warden-mark')) {
+            ignoreShields = true;
+        }
+    }
+
     // Spike Guard (Hazard): reflect 1 fixed damage to direct attackers only
     // Conditions:
     // - Target has spike-guard effect
@@ -80,76 +112,23 @@ export function dealDamage(targetCardId, targetRow, amount, ignoreShields = fals
         if (!targetCard) console.log(`DamageBus - Spike Guard: Could not resolve target card ${targetCardId}`);
     }
 
-    // Check for Tracer Ultimate (avoid fatal damage)
-    if (targetCard && targetCard.id === 'tracer') {
-        const currentHealth = targetCard.health || 0;
-        const newHealth = currentHealth - amount;
-        const wouldBeFatal = newHealth <= 0;
-        
-        if (wouldBeFatal) {
-            // Check if Tracer's ultimate is available and has enough synergy
-            const row = window.__ow_getRow?.(targetRow);
-            const currentSynergy = row?.synergy || 0;
-            const ultimateCost = 2;
-            
-            if (currentSynergy >= ultimateCost && window.__ow_triggerTracerUltimate) {
-                console.log(`DamageBus - Tracer Ultimate: ${amount} damage would be fatal - triggering ultimate instead`);
-                
-                // Store HP before damage for restoration
-                const hpBeforeDamage = currentHealth;
-                
-                // Trigger Tracer Ultimate
-                window.__ow_triggerTracerUltimate(targetCardId, targetRow, hpBeforeDamage);
-                return; // Block the damage
-            } else {
-                console.log(`DamageBus - Tracer Ultimate: Not available (synergy: ${currentSynergy}/${ultimateCost})`);
-            }
-        }
-    }
-    
-    // Fixed damage bypasses all modifications but still respects shields
+    // Fixed damage bypasses ability modifiers; App.js still applies row/card shields unless ignored
     if (fixedDamage) {
         console.log(`Fixed Damage: ${amount} damage to ${targetCardId} (no modifications)`);
-        let finalAmount = amount;
-        
-        // Still respect shields if not ignoring them
-        if (!ignoreShields && finalAmount > 0) {
-            const card = window.__ow_getCard?.(targetCardId);
-            if (card && card.shield > 0) {
-                const shieldAbsorbed = Math.min(finalAmount, card.shield);
-                finalAmount = Math.max(0, finalAmount - shieldAbsorbed);
-                
-                // Update shield count
-                window.__ow_dispatchShieldUpdate?.(targetCardId, card.shield - shieldAbsorbed);
-                console.log(`Fixed Damage - Shields absorbed ${shieldAbsorbed}, remaining damage: ${finalAmount}`);
-            }
-        }
-        
-        // Apply remaining damage to health
-        if (finalAmount > 0) {
-            const card = window.__ow_getCard?.(targetCardId);
-            if (card) {
-                const newHealth = Math.max(0, card.health - finalAmount);
-                window.__ow_setCardHealth?.(targetCardId, newHealth);
-                console.log(`Fixed Damage - Applied ${finalAmount} damage to health (${card.health} → ${newHealth})`);
-            }
-        }
-        
-        // Publish damage event for consistency
-        const damageEvent = { 
-            type: 'damage', 
-            targetCardId, 
-            targetRow, 
-            amount: finalAmount, 
-            ignoreShields, 
+        const damageEvent = {
+            type: 'damage',
+            targetCardId,
+            targetRow,
+            amount,
+            ignoreShields,
             sourceCardId,
-            fixedDamage: true 
+            fixedDamage: true
         };
         console.log('DamageBus - Publishing fixed damage event:', damageEvent);
         publish(damageEvent);
         return;
     }
-    
+
     // Check for Hanzo token damage reduction
     let finalAmount = amount;
     if (sourceCardId && window.__ow_getRow) {
@@ -226,7 +205,7 @@ export function dealDamage(targetCardId, targetRow, amount, ignoreShields = fals
     }
     
     // Check for Orisa Protective Barrier damage reduction
-    if (window.__ow_getRow) {
+    if (finalAmount > 0 && !ignoreShields && window.__ow_getRow) {
         const targetRowData = window.__ow_getRow(targetRow);
         if (targetRowData && targetRowData.allyEffects) {
             const barrierEffect = targetRowData.allyEffects.find(effect => 
@@ -244,7 +223,7 @@ export function dealDamage(targetCardId, targetRow, amount, ignoreShields = fals
     // Publish damage and apply to health
     // Check for Reinhardt Barrier Field damage absorption
     let absorbedAmount = 0;
-    if (finalAmount > 0 && window.__ow_getRow) {
+    if (finalAmount > 0 && !ignoreShields && window.__ow_getRow) {
         // Find all Reinhardt cards that might absorb this damage
         const allRows = ['1f', '1m', '1b', '2f', '2m', '2b'];
         for (const rowId of allRows) {
@@ -406,23 +385,18 @@ export function dealDamage(targetCardId, targetRow, amount, ignoreShields = fals
         }
     }
     
-    // Handle shields for regular damage (not fixed damage)
-    if (finalAmount > 0 && !ignoreShields && window.__ow_getCard) {
-        const card = window.__ow_getCard(targetCardId);
-        if (card && card.shield > 0) {
-            const shieldAbsorbed = Math.min(finalAmount, card.shield);
-            finalAmount = Math.max(0, finalAmount - shieldAbsorbed);
-            absorbedAmount += shieldAbsorbed;
-            
-            // Update shield count
-            window.__ow_dispatchShieldUpdate?.(targetCardId, card.shield - shieldAbsorbed);
-            console.log(`DamageBus - Shields absorbed ${shieldAbsorbed}, remaining damage: ${finalAmount}`);
-        }
-    }
-    
     const damageEvent = { type: 'damage', targetCardId, targetRow, amount: finalAmount, ignoreShields, sourceCardId, absorbedAmount };
     console.log('DamageBus - Publishing damage event:', damageEvent);
     publish(damageEvent);
+    if (finalAmount > 0 && sourceCardId) {
+        if (!options?.skipProjectileFx) {
+            try {
+                effectsBus.publish(Effects.beam(sourceCardId, targetCardId));
+                effectsBus.publish(Effects.impact(targetCardId));
+            } catch {}
+        }
+        try { window.__ow_onDirectAttack?.({ sourceCardId, targetCardId, targetRow }); } catch {}
+    }
 }
 
 export default { subscribe, publish, dealDamage };

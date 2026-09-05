@@ -1,20 +1,31 @@
 import { selectCardTarget } from '../engine/targeting';
 import { showMessage as showToast, clearMessage as clearToast } from '../engine/targetingBus';
 import { dealDamage } from '../engine/damageBus';
-import { getAudioFile } from '../../assets/imageImports';
+import { playAudioByKey } from '../../assets/imageImports';
 import effectsBus, { Effects } from '../engine/effectsBus';
 
-// Helper function to play audio by key
-function playAudioByKey(audioKey) {
-    try {
-        const audioFile = getAudioFile(audioKey);
-        if (audioFile) {
-            const audio = new Audio(audioFile);
-            audio.play().catch(err => console.log('Audio play failed:', err));
-        }
-    } catch (error) {
-        console.error(`Failed to play audio ${audioKey}:`, error);
+function findBoardRow(cardId) {
+    const rows = ['1f', '1m', '1b', '2f', '2m', '2b'];
+    return rows.find((rid) => (window.__ow_getRow?.(rid)?.cardIds || []).includes(cardId)) || null;
+}
+
+function rowBehind(rowId) {
+    const pos = rowId?.[1];
+    const player = rowId?.[0];
+    if (pos === 'f') return `${player}m`;
+    if (pos === 'm') return `${player}b`;
+    return null;
+}
+
+function resolveRocketPunch({ playerHeroId, targetCardId, currentRowId }) {
+    const dest = rowBehind(currentRowId);
+    if (dest && !window.__ow_isRowFull?.(dest)) {
+        window.__ow_moveCardToRow?.(targetCardId, dest);
     }
+    const damageRow = findBoardRow(targetCardId) || currentRowId;
+    try { effectsBus.publish(Effects.punch(playerHeroId, targetCardId)); } catch {}
+    dealDamage(targetCardId, damageRow, 2, false, playerHeroId, false, { skipProjectileFx: true });
+    try { playAudioByKey('doomfist-punch'); } catch {}
 }
 
 // On Enter - Rocket Punch: Move target enemy back one row (if possible) and deal 2 damage.
@@ -50,24 +61,11 @@ export async function onEnter({ playerHeroId, rowId }) {
         
         // Select random enemy
         const randomEnemy = livingEnemies[Math.floor(Math.random() * livingEnemies.length)];
-        const targetCard = window.__ow_getCard?.(randomEnemy.cardId);
-
-        // First: attempt to push the target back one row (if possible)
-        const currentRowId = randomEnemy.rowId;
-        const currentRowPos = currentRowId[1]; // f/m/b
-        let pushToRow = null;
-        if (currentRowPos === 'f') pushToRow = `${enemyPlayer}m`;
-        else if (currentRowPos === 'm') pushToRow = `${enemyPlayer}b`;
-
-        if (pushToRow && !window.__ow_isRowFull?.(pushToRow)) {
-            window.__ow_moveCardToRow?.(randomEnemy.cardId, pushToRow);
-        }
-
-        // Then: deal 2 damage to the target (respects shields)
-        const damageRow = pushToRow || currentRowId; // if pushed, damage from new row context
-        dealDamage(randomEnemy.cardId, damageRow, 2, false, playerHeroId);
-
-        try { playAudioByKey('doomfist-punch'); } catch {}
+        resolveRocketPunch({
+            playerHeroId,
+            targetCardId: randomEnemy.cardId,
+            currentRowId: randomEnemy.rowId,
+        });
         showToast('Doomfist AI: Rocket Punch resolved');
         setTimeout(() => clearToast(), 1500);
         return;
@@ -99,23 +97,11 @@ export async function onEnter({ playerHeroId, rowId }) {
             return;
         }
 
-        // First: attempt to push the target back one row (if possible)
-        const enemyPlayer = playerNum === 1 ? 2 : 1;
-        const currentRowId = target.rowId;
-        const currentRowPos = currentRowId[1]; // f/m/b
-        let pushToRow = null;
-        if (currentRowPos === 'f') pushToRow = `${enemyPlayer}m`;
-        else if (currentRowPos === 'm') pushToRow = `${enemyPlayer}b`;
-
-        if (pushToRow && !window.__ow_isRowFull?.(pushToRow)) {
-            window.__ow_moveCardToRow?.(target.cardId, pushToRow);
-        }
-
-        // Then: deal 2 damage to the target (respects shields)
-        const damageRow = pushToRow || currentRowId; // if pushed, damage from new row context
-        dealDamage(target.cardId, damageRow, 2, false, playerHeroId);
-
-        try { playAudioByKey('doomfist-punch'); } catch {}
+        resolveRocketPunch({
+            playerHeroId,
+            targetCardId: target.cardId,
+            currentRowId: target.rowId,
+        });
         showToast('Doomfist: Rocket Punch resolved');
         setTimeout(() => clearToast(), 1500);
     } catch (error) {
@@ -143,7 +129,9 @@ async function handleRocketPunch(playerHeroId, rowId, playerNum) {
             
             // Deal 2 damage to target (respects shields)
             const originalRowId = target.rowId;
-            dealDamage(target.cardId, originalRowId, 2, false, playerHeroId);
+            // The punch streak is the projectile.
+            try { effectsBus.publish(Effects.punch(playerHeroId, target.cardId)); } catch {}
+            dealDamage(target.cardId, originalRowId, 2, false, playerHeroId, false, { skipProjectileFx: true });
             
             // Play punch sound after damage
             try {
@@ -171,7 +159,9 @@ async function handleRocketPunch(playerHeroId, rowId, playerNum) {
                 const rowCards = window.__ow_getRow?.(originalRowId)?.cardIds || [];
                 for (const cardId of rowCards) {
                     if (cardId !== target.cardId) {
-                        dealDamage(cardId, originalRowId, 1, false, playerHeroId);
+                        // Fallout from the punch, not separate shots: without
+                        // this every survivor draws its own beam from Doomfist.
+                        dealDamage(cardId, originalRowId, 1, false, playerHeroId, false, { skipProjectileFx: true });
                         effectsBus.publish(Effects.showDamage(cardId, 1));
                     }
                 }
@@ -210,7 +200,9 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
         }
         
         // Deal 3 damage to primary target
-        dealDamage(target.cardId, target.rowId, 3, false, playerHeroId);
+        // Doomfist leaps off the board and slams down on the target.
+        try { effectsBus.publish(Effects.meteor(playerHeroId, target.cardId)); } catch {}
+        dealDamage(target.cardId, target.rowId, 3, false, playerHeroId, false, { skipProjectileFx: true });
         effectsBus.publish(Effects.showDamage(target.cardId, 3));
         
         // Deal 1 damage to adjacent enemies
@@ -246,7 +238,8 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
         for (const adjacentRow of adjacentPositions) {
             const rowCards = window.__ow_getRow?.(adjacentRow)?.cardIds || [];
             for (const cardId of rowCards) {
-                dealDamage(cardId, adjacentRow, 1, false, playerHeroId);
+                // The meteor is the projectile; splash must not add beams.
+                dealDamage(cardId, adjacentRow, 1, false, playerHeroId, false, { skipProjectileFx: true });
                 effectsBus.publish(Effects.showDamage(cardId, 1));
                 totalTargets++;
             }
@@ -254,12 +247,12 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
         
         // Damage left and right adjacent cards in same row
         if (leftCard) {
-            dealDamage(leftCard, targetRow, 1, false, playerHeroId);
+            dealDamage(leftCard, targetRow, 1, false, playerHeroId, false, { skipProjectileFx: true });
             effectsBus.publish(Effects.showDamage(leftCard, 1));
             totalTargets++;
         }
         if (rightCard) {
-            dealDamage(rightCard, targetRow, 1, false, playerHeroId);
+            dealDamage(rightCard, targetRow, 1, false, playerHeroId, false, { skipProjectileFx: true });
             effectsBus.publish(Effects.showDamage(rightCard, 1));
             totalTargets++;
         }

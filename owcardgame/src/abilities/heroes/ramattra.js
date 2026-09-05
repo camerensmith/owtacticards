@@ -212,7 +212,7 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
 }
 
 // Transform Ramattra to Nemesis
-function transformToNemesis(playerNum, playerHeroId, rowId) {
+export function transformToNemesis(playerNum, playerHeroId, rowId) {
     console.log('Ramattra: Starting transformation to Nemesis');
     console.log('Ramattra: PlayerHeroId:', playerHeroId);
     console.log('Ramattra: PlayerNum:', playerNum);
@@ -277,5 +277,6 @@ function transformToNemesis(playerNum, playerHeroId, rowId) {
 
 export default {
     onEnter,
-    onUltimate
+    onUltimate,
+    transformToNemesis
 };

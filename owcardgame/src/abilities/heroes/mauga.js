@@ -1,7 +1,12 @@
 import { dealDamage } from '../engine/damageBus';
 import effectsBus, { Effects } from '../engine/effectsBus';
-import { showMessage as showToast, clearMessage as clearToast } from '../engine/targetingBus';
 import { playAudioByKey } from '../../assets/imageImports';
+import {
+    cageFightDamage,
+    cageFightTargetIds,
+    opposingRowId,
+} from '../../game/cageFight';
+import { maugaContactMs, maugaSmashMs } from '../../presentation/pixi/fxMath';
 
 // Berserker — When an ally Hero deals direct ability damage, Mauga gains +1 permanent HP (cap 12).
 // Heals only up to base; extra is permanent additional HP (not healable beyond current), styled like Lifeweaver temp HP.
@@ -43,6 +48,8 @@ export function onAllyDirectDamageDealt(sourceCardId) {
                     if (newHealth > currentHealth) {
                         window.__ow_setCardHealth?.(cid, newHealth);
                         try { effectsBus.publish(Effects.showHeal(cid, 1)); } catch {}
+                        // Berserker reads red: this is rage, not healing.
+                        try { effectsBus.publish(Effects.berserk(cid)); } catch {}
                         // Update counter overlay by replacing effect with incremented counter
                         window.__ow_removeCardEffect?.(cid, 'mauga-berserker');
                         setTimeout(() => {
@@ -58,49 +65,59 @@ export function onAllyDirectDamageDealt(sourceCardId) {
     }
 }
 
-// Cage Fight (3): Lock opposing row (no movement) until end of round; deal HP difference (only if Mauga > target) to enemy directly opposite Mauga's column.
-export async function onUltimate({ playerHeroId, rowId, cost }) {
-    const playerNum = parseInt(playerHeroId[0]);
-    const enemyPlayer = playerNum === 1 ? 2 : 1;
+// Cage Fight (4): Lock opposing row while Mauga lives; deal |HP − HP| to every hero there.
+export async function onUltimate({ playerHeroId, rowId }) {
     try { playAudioByKey('mauga-ultimate'); } catch {}
+    const targetRowId = opposingRowId(rowId);
+    if (!targetRowId) return;
 
-    // Determine Mauga's column index in his current row
-    const myRow = window.__ow_getRow?.(rowId);
-    if (!myRow) return;
-    const maugaIndex = myRow.cardIds.indexOf(playerHeroId);
-    if (maugaIndex === -1) return;
-    
-    // Auto-select opposing row based on Mauga's current row position (f/m/b)
-    const pos = rowId[1];
-    const targetRowId = `${enemyPlayer}${pos}`;
+    window.__ow_dispatchAction?.({
+        type: 'apply-row-lock',
+        payload: { rowId: targetRowId, sourceCardId: playerHeroId },
+    });
 
-    // Apply visual lock and movement prevention until end of round (persists if Mauga dies)
-    try {
-        window.__ow_dispatchAction?.({
-            type: 'apply-row-lock',
-            payload: { rowId: targetRowId, sourceCardId: playerHeroId }
-        });
-    } catch {}
-
-    // One-time damage to the unit directly opposite Mauga's column, if present and Mauga HP > target HP
+    const mauga = window.__ow_getCard?.(playerHeroId);
     const enemyRow = window.__ow_getRow?.(targetRowId);
-    if (enemyRow && Array.isArray(enemyRow.cardIds)) {
-        const targetCardId = enemyRow.cardIds[maugaIndex];
-        if (targetCardId) {
-            const myCard = window.__ow_getCard?.(playerHeroId);
-            const targetCard = window.__ow_getCard?.(targetCardId);
-            if (myCard && targetCard) {
-                const diff = myCard.health - targetCard.health;
-                if (diff > 0) {
-                    dealDamage(targetCardId, targetRowId, diff, false, playerHeroId);
-                    try { effectsBus.publish(Effects.showDamage(targetCardId, diff)); } catch {}
-                }
+    const entries = (enemyRow?.cardIds || []).map((cardId) => ({
+        cardId,
+        card: window.__ow_getCard?.(cardId),
+    }));
+    // He goes through the cage one hero at a time, and slams into every one of
+    // them — including anyone the damage formula happens to leave untouched.
+    // A hit that deals nothing is still a hit.
+    const targets = cageFightTargetIds(entries);
+    await Promise.all(targets.map((cardId, index) => new Promise((resolve) => {
+        // He starts the lunge...
+        setTimeout(() => {
+            try { effectsBus.publish(Effects.maugaSmash(playerHeroId, cardId)); } catch {}
+        }, maugaSmashMs(index));
+
+        // ...and the hit lands part-way through it. Sound and damage both go
+        // here, so the thud and the number arrive with the impact rather than
+        // when he sets off.
+        setTimeout(() => {
+            // Debouncing is off: the slams are close enough together that the
+            // default window would swallow every hit after the first.
+            try { playAudioByKey('mauga-cagefight-hit', { debounceMs: 0 }); } catch {}
+
+            const target = window.__ow_getCard?.(cardId);
+            const amount = cageFightDamage(mauga?.health, target?.health);
+            if (amount > 0) {
+                // The slam is the projectile; the damage bus must not add one.
+                dealDamage(cardId, targetRowId, amount, false, playerHeroId, false, { skipProjectileFx: true });
+                try { effectsBus.publish(Effects.showDamage(cardId, amount)); } catch {}
             }
-        }
-    }
+            resolve();
+        }, maugaContactMs(index));
+    })));
 }
 
-export function onDeath() { /* no special cleanup; row lock persists until round end */ }
+export function onDeath({ playerHeroId }) {
+    window.__ow_dispatchAction?.({
+        type: 'clear-row-locks',
+        payload: { sourceCardId: playerHeroId },
+    });
+}
 
 export default { onEnter, onUltimate, onAllyDirectDamageDealt, onDeath };
 

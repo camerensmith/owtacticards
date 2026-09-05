@@ -33,6 +33,7 @@ class PlayerCard {
             ...heroData,
             maxHealth,
             shield,
+            armor: 0,
             effects: [], // Initialize effects array for all cards
             enemyEffects,
             allyEffects,

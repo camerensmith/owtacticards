@@ -4,11 +4,15 @@ import turnContext from 'context/turnContext';
 import data from 'data';
 import getRandInt from 'helper';
 import { ACTIONS } from 'App';
-import { playGameEvent } from '../../abilities/engine/soundController';
-import { cancelTargeting, selectCardTarget } from '../../abilities/engine/targeting';
-import { getAudioFile, clearDeadCursor } from '../../assets/imageImports';
+import { playGameEvent, playClip } from '../../abilities/engine/soundController';
+import { cancelTargeting } from '../../abilities/engine/targeting';
 import { showMessage as showToast, clearMessage as clearToast } from '../../abilities/engine/targetingBus';
+import { TURBOJACK_MARK } from '../../game/rules';
 import targetingBus from '../../abilities/engine/targetingBus';
+import Graveyard from './Graveyard';
+import { deckCounts, shouldReshuffle } from '../../game/graveyard';
+import { shouldDrawOnTurnStart } from '../../game/openingDeal';
+import { excludeQueuedFromPool } from '../../game/drawQueue';
 
 export default function PlayerHand(props) {
     // Context
@@ -19,7 +23,6 @@ export default function PlayerHand(props) {
     const playerNum = parseInt(props.playerNum);
     const playerHandId = `player${playerNum}hand`;
     const playerCardsId = `player${playerNum}cards`;
-    const handCards = gameState.rows[playerHandId].cardIds;
     const nextCardDraw = props.nextCardDraw;
     const setNextCardDraw = props.setNextCardDraw;
     const setCardFocus = props.setCardFocus;
@@ -33,90 +36,18 @@ export default function PlayerHand(props) {
         return unsub;
     }, []);
 
-    // Track whether we're in clear mode (for custom cursor)
-    const [isClearMode, setIsClearMode] = useState(false);
+    // Deck counter: how many heroes are still drawable, out of the full deck.
+    const drawnHeroes = gameLogic[`player${playerNum}DrawnHeroes`] || [];
+    const deck = deckCounts({ heroes: data.heroes, drawnHeroes });
 
-    // Apply custom cursor when in clear mode
+    // Draw a card at the start of the player's turn, after both opening turns.
+    // Opening hands are already asymmetric (first 4 / second 5), so turn 1 and
+    // turn 2 must not draw again.
     useEffect(() => {
-        if (isClearMode) {
-            document.body.style.cursor = `url(${clearDeadCursor}) 16 16, auto`;
-        } else {
-            document.body.style.cursor = 'default';
-        }
-
-        // Cleanup on unmount
-        return () => {
-            document.body.style.cursor = 'default';
-        };
-    }, [isClearMode]);
-
-    // Handle Clear button click - remove dead heroes from board
-    const handleClearButtonClick = async () => {
-        // If already in clear mode, exit it
-        if (isClearMode) {
-            setIsClearMode(false);
-            clearToast();
-            showToast('Exited clear mode');
-            setTimeout(() => clearToast(), 1500);
-            return;
-        }
-
-        setIsClearMode(true);
-        showToast('Clear: Click on a dead hero to remove it from the board');
-        
-        try {
-            const target = await selectCardTarget();
-            if (!target) { 
-                clearToast(); 
-                setIsClearMode(false);
-                return; 
-            }
-            
-            const targetCard = gameState.playerCards[`player${parseInt(target.cardId[0])}cards`]?.cards?.[target.cardId];
-            const targetPlayerNum = parseInt(target.cardId[0]);
-            
-            // Check if target is on the current player's side
-            if (targetPlayerNum !== playerNum) {
-                showToast('Clear: You can only clear dead heroes on your own side');
-                setTimeout(() => clearToast(), 2000);
-                return; // Stay in clear mode to try again
-            }
-            
-            // Check if target is dead (health <= 0)
-            if (!targetCard || targetCard.health > 0) {
-                showToast('Clear: Target must be a dead hero (health <= 0)');
-                setTimeout(() => clearToast(), 2000);
-                return; // Stay in clear mode to try again
-            }
-            
-            // Remove the dead card
-            dispatch({
-                type: ACTIONS.REMOVE_DEAD_CARD,
-                payload: { cardId: target.cardId }
-            });
-            
-            clearToast();
-            showToast(`Cleared ${targetCard.name || 'dead hero'} from the board`);
-            setTimeout(() => clearToast(), 2000);
-            
-            // Ask if user wants to clear another dead hero
-            showToast('Clear: Click another dead hero or right-click to exit clear mode');
-            
-        } catch (error) {
-            console.error('Clear button error:', error);
-            showToast('Clear cancelled');
-            setTimeout(() => clearToast(), 1500);
-            setIsClearMode(false);
-        }
-    };
-
-    // Draw a card at the start of the player's turn (except for the very first turn)
-    useEffect(() => {
-        // Only draw if it's this player's turn and it's not the very first turn of a round
-        // First player on turnCount===1 should NOT draw; second player on turnCount===2 should draw
-        const shouldDraw = turnState.playerTurn === playerNum && !(
-            turnState.turnCount === 1 // opening turn of the round
-        );
+        // Practice deals nothing: you add exactly the cards you want to test.
+        const shouldDraw = !window.__ow_practiceMode
+            && turnState.playerTurn === playerNum
+            && shouldDrawOnTurnStart(turnState.turnCount);
         if (shouldDraw) {
             // Prevent duplicate draws within the same player's turn
             if (!window.__ow_lastDraw || window.__ow_lastDraw.player !== playerNum || window.__ow_lastDraw.turn !== turnState.turnCount) {
@@ -134,18 +65,66 @@ export default function PlayerHand(props) {
     // Helper function to get available heroes for drawing
     const getAvailableHeroes = () => {
         const drawnHeroes = playerNum === 1 ? gameLogic.player1DrawnHeroes : gameLogic.player2DrawnHeroes;
-        return Object.keys(data.heroes).filter(heroId => 
+        const pool = Object.keys(data.heroes).filter(heroId => 
             !drawnHeroes.includes(heroId) && 
             !data.heroes[heroId].special // Special cards can only be spawned, not drawn
         );
+        const queued = window.__ow_getDrawQueue?.(playerNum) || [];
+        return excludeQueuedFromPool(pool, queued);
     };
 
     // Draws one random card and puts the card into the player's hand
+    function playDrawCardSound() {
+        try { playClip('drawcard'); } catch {}
+    }
+
     function drawCards(playIntroSound = true) {
         // Check if hand is at maximum size (6 cards)
         const currentHandSize = gameState.rows[`player${playerNum}hand`].cardIds.length;
         if (currentHandSize >= gameLogic.maxHandSize) {
             console.log(`Player ${playerNum} hand is full (${currentHandSize}/${gameLogic.maxHandSize} cards)`);
+            return;
+        }
+
+        const pending = window.__ow_peekReshuffle?.(playerNum);
+        if (pending) {
+            const playerHeroId = `${playerNum}${pending.heroId}`;
+            dispatch({
+                type: ACTIONS.ADD_CARD_TO_HAND,
+                payload: { playerNum, playerHeroId },
+            });
+            window.__ow_setCardHealth?.(playerHeroId, pending.health, true);
+            if (pending.turbojacked) {
+                // Put the mark back on the card so the banner shows in hand and
+                // its on-enter stays suppressed when it is played.
+                window.__ow_appendCardEffect?.(playerHeroId, {
+                    id: TURBOJACK_MARK,
+                    hero: 'cyclo',
+                    type: 'debuff',
+                    tooltip: 'Turbojack: thrown back into the deck — no on-enter when replayed',
+                });
+            }
+            window.__ow_shiftReshuffleBag?.(playerNum);
+            playDrawCardSound();
+            return;
+        }
+
+        // Vega Temporal Rift: reserved upcoming draws ahead of the random pool.
+        const queuedHeroId = window.__ow_peekDrawQueue?.(playerNum);
+        if (queuedHeroId) {
+            const playerHeroId = `${playerNum}${queuedHeroId}`;
+            dispatch({
+                type: ACTIONS.CREATE_CARD,
+                payload: { playerNum, heroId: queuedHeroId },
+            });
+            dispatch({
+                type: ACTIONS.ADD_CARD_TO_HAND,
+                payload: { playerNum, playerHeroId },
+            });
+            window.__ow_shiftDrawQueue?.(playerNum);
+            trackDrawnHero(queuedHeroId, playerNum);
+            playDrawCardSound();
+            if (playIntroSound) playClip(`${queuedHeroId}-intro`);
             return;
         }
 
@@ -176,13 +155,20 @@ export default function PlayerHand(props) {
             }));
             
             // Special cards don't count against the unique hero rule
+            playDrawCardSound();
             return;
         }
 
-        // Draw a random card from available heroes
+        // Draw a random card from available heroes.
+        //
+        // The pool is every hero not yet drawn this match, so the dead are not
+        // in it: what goes to the graveyard stays in the graveyard. The deck is
+        // never refilled from it — a hero is dealt once and once only.
         const availableHeroes = getAvailableHeroes();
+
         if (availableHeroes.length === 0) {
-            console.log(`Player ${playerNum} has no more heroes available to draw`);
+            showToast(`Player ${playerNum}: deck is empty`);
+            setTimeout(() => clearToast(), 2000);
             return;
         }
 
@@ -206,23 +192,11 @@ export default function PlayerHand(props) {
         // Track drawn hero
         trackDrawnHero(newCardId, playerNum);
         console.log(`Player ${playerNum} drew ${newCardId}`);
+        playDrawCardSound();
 
         // Play intro sound if requested (not during initial setup)
         if (playIntroSound) {
-            try {
-                const introAudioSrc = getAudioFile(`${newCardId}-intro`);
-                if (introAudioSrc) {
-                    console.log(`Playing ${newCardId} intro sound...`);
-                    const introAudio = new Audio(introAudioSrc);
-                    introAudio.play().then(() => {
-                        console.log(`${newCardId} intro sound played successfully`);
-                    }).catch(err => {
-                        console.log(`${newCardId} intro sound play failed:`, err);
-                    });
-                }
-            } catch (err) {
-                console.log(`${newCardId} intro audio creation failed:`, err);
-            }
+            playClip(`${newCardId}-intro`);
         }
     }
 
@@ -231,14 +205,17 @@ export default function PlayerHand(props) {
             <div className='common-buttons'>
                 <div
                     className='hand-indicator'
+                    title='Cards left in your deck'
                 >
-                    Hand ({handCards.length}/{gameLogic.maxHandSize})
+                    Deck ({deck.remaining}/{deck.total})
                 </div>
                 <button
-                    disabled={!(turnState.playerTurn === playerNum) || isTargeting}
+                    disabled={!(turnState.playerTurn === playerNum) || isTargeting || props.theaterLocked}
                     className='endturnbutton'
                     onClick={
-                        turnState.playerTurn === 1
+                        props.theaterLocked
+                            ? undefined
+                            : turnState.playerTurn === 1
                             ? () => {
                                   playGameEvent('endturn');
                                   try { cancelTargeting(); } catch {}
@@ -274,14 +251,7 @@ export default function PlayerHand(props) {
                     End Turn
                 </button>
             </div>
-            <button
-                className={`clearbutton ${isClearMode ? 'clearbutton-active' : ''}`}
-                onClick={() => {
-                    handleClearButtonClick();
-                }}
-            >
-                {isClearMode ? 'Exit Clear' : 'Clear'}
-            </button>
+            <Graveyard playerNum={playerNum} />
         </div>
     );
 }

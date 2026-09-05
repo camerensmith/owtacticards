@@ -4,6 +4,7 @@ import ShieldCounter from './ShieldCounter';
 export default function HeroCounter(props) {
     const playerHeroId = props.playerHeroId;
     const heroId = props.heroId;
+    const iconId = props.iconId || heroId;
     const playerNum = props.playerNum;
     const rowId = props.rowId;
     const health = props.health;
@@ -23,7 +24,7 @@ export default function HeroCounter(props) {
             title={tooltip || ''}
         >
             <img
-                src={heroIconImages[`${heroId}-icon`] || heroCardImages[heroId]}
+                src={heroIconImages[`${iconId}-icon`] || heroIconImages[`${heroId}-icon`] || heroCardImages[heroId]}
                 className='counter herocounter'
                 alt='Hero Counter'
             />

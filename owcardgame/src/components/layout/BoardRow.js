@@ -11,6 +11,10 @@ import WreckingBallTokenOverlay from 'components/effects/WreckingBallTokenOverla
 import CardFocusLite from 'components/cards/CardFocusLite';
 import { ACTIONS } from 'App';
 import { isOverflown } from 'helper';
+import { getCardFromState } from '../../game/cardLookup';
+import { clampBlocksMovement } from '../../game/abilityRules';
+import { cardPowerContribution } from '../../game/disorient';
+import { isCloakedMantis, oppositeRowId } from '../../game/mantis';
 
 export default function BoardRow(props) {
     // Context
@@ -28,20 +32,33 @@ export default function BoardRow(props) {
     useEffect(() => {
         let playerPower = 0;
 
-        // For every card in the row (that is alive), add up the power values
+        // For every card in the row (that is alive), add up the power values.
+        // Cloaked Mantis on an enemy row does not feed that enemy's power total.
         for (let cardId of gameState.rows[rowId].cardIds) {
-            if (
-                gameState.playerCards[`player${playerNum}cards`].cards[cardId]
-                    .health > 0
-            ) {
-                playerPower +=
-                    gameState.playerCards[`player${playerNum}cards`].cards[
-                        cardId
-                    ].power[rowPosition];
+            const card = getCardFromState(gameState, cardId);
+            if (!card || card.health <= 0) continue;
+            if (isCloakedMantis(card) && String(cardId[0]) !== String(playerNum)) continue;
+            playerPower += cardPowerContribution(card, rowPosition);
+        }
+
+        // Cloaked Mantis on the opposite enemy row still powers THIS (owner) row.
+        const oppId = oppositeRowId(rowId);
+        if (oppId) {
+            for (const cardId of gameState.rows[oppId]?.cardIds || []) {
+                const card = getCardFromState(gameState, cardId);
+                if (!card || card.health <= 0) continue;
+                if (!isCloakedMantis(card)) continue;
+                if (String(cardId[0]) !== String(playerNum)) continue;
+                playerPower += cardPowerContribution(card, rowPosition);
             }
         }
 
-        // Set power state
+        // Every board change runs this effect in all six rows. Dispatching an
+        // unchanged total would put six more reducer passes through a state
+        // tree this size for nothing, so only a real change is written.
+        const current = gameState.rows[`player${playerNum}hand`]?.power?.[rowPosition];
+        if (playerPower === current) return;
+
         dispatch({
             type: ACTIONS.SET_POWER,
             payload: {
@@ -77,11 +94,11 @@ export default function BoardRow(props) {
     // });
 
     const isLocked = !!gameState.rows[rowId]?.locked;
+    const isClamped = clampBlocksMovement(gameState.rows[rowId]);
 
     return (
-        <div id={rowId} className={`rowarea row ${isLocked ? 'row-locked' : ''}`}>
+        <div id={rowId} className={`rowarea row ${isLocked ? 'row-locked' : ''} ${isClamped ? 'row-clamped' : ''}`}>
             <div className='rowcountercontainer'>
-                <SynergyCounter synergy={synergyValue} />
                 <div className='rowcountercontainer2'>
                     {rowShield > 0 && (
                         <ShieldCounter type='rowcounter' shield={rowShield} />
@@ -149,6 +166,9 @@ export default function BoardRow(props) {
                     
                 </div>
                 <CardFocusLite focus={props.cardFocus && props.cardFocus.playerHeroId ? props.cardFocus : null} onClose={() => props.setCardFocus('invisible')} />
+            </div>
+            <div className='row-synergy'>
+                <SynergyCounter synergy={synergyValue} />
             </div>
         </div>
     );

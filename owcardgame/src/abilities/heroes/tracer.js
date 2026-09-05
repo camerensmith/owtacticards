@@ -1,65 +1,10 @@
-import { dealDamage } from '../engine/damageBus';
+﻿import { dealDamage } from '../engine/damageBus';
 import { showMessage as showToast, clearMessage as clearToast } from '../engine/targetingBus';
 import { selectCardTarget } from '../engine/targeting';
 import { showOnEnterChoice } from '../engine/modalController';
 import { playAudioByKey } from '../../assets/imageImports';
 import effectsBus, { Effects } from '../engine/effectsBus';
-import { withAIContext } from '../engine/aiContextHelper';
-
-// Tracer Ultimate System - Avoid Fatal Damage
-let tracerUltimateUsed = false;
-let tracerHpBeforeDamage = 0;
-
-// Expose Tracer Ultimate function to window for damage bus
-window.__ow_triggerTracerUltimate = triggerTracerUltimate;
-
-// Trigger Tracer Ultimate (avoid fatal damage)
-function triggerTracerUltimate(cardId, rowId, hpBeforeDamage) {
-    if (tracerUltimateUsed) return; // Already used this game
-    
-    tracerUltimateUsed = true;
-    tracerHpBeforeDamage = hpBeforeDamage;
-    
-    console.log(`Tracer Ultimate: Avoiding fatal damage for ${cardId}, restoring HP to ${hpBeforeDamage}`);
-    
-    // Play ultimate audio
-    try {
-        playAudioByKey('tracer-ultimate');
-    } catch {}
-    
-    // Remove all effects from Tracer (like a revive)
-    const card = window.__ow_getCard?.(cardId);
-    if (card && Array.isArray(card.effects)) {
-        const effectsToRemove = card.effects.map(effect => effect.id);
-        effectsToRemove.forEach(effectId => {
-            window.__ow_removeCardEffect?.(cardId, effectId);
-        });
-        console.log(`Tracer Ultimate: Removed ${effectsToRemove.length} effects from ${cardId}`);
-    }
-    
-    // Restore HP to what it was before the fatal damage
-    window.__ow_setCardHealth?.(cardId, hpBeforeDamage);
-    
-    // Consume synergy for ultimate (cost 2)
-    window.__ow_updateSynergy?.(rowId, -2);
-    console.log(`Tracer Ultimate: Consumed 2 synergy from ${rowId}`);
-    
-    // Mark ultimate as used
-    window.__ow_dispatchAction?.({
-        type: 'MARK_ULTIMATE_USED',
-        payload: {
-            playerNum: parseInt(cardId[0]),
-            heroId: 'tracer'
-        }
-    });
-    console.log(`Tracer Ultimate: Marked ultimate as used for ${cardId}`);
-    
-    // Show ultimate effect
-    effectsBus.publish(Effects.showDamage(cardId, 0, 'AVOIDED!'));
-    
-    showToast(`Tracer: AVOIDED! HP restored to ${hpBeforeDamage}`);
-    setTimeout(() => clearToast(), 2000);
-}
+import { canTracerRecall, TRACER_RECALL_COST } from '../../game/redeployRules';
 
 // Pulse Pistols - Single Target
 export async function onEnter1({ playerHeroId, rowId, playerNum }) {
@@ -321,20 +266,78 @@ export function onEnter({ playerHeroId, rowId }) {
     });
 }
 
-// Manual Ultimate (Cost 2) - Not used in new system
-export function onUltimate({ playerHeroId, rowId, cost }) {
-    showToast('Tracer: Ultimate is automatic - activates when taking fatal damage');
+/** Manual ult button — Recall is automatic on death. */
+export function onUltimate() {
+    showToast('Tracer: Recall is automatic when she dies (costs 2 synergy)');
     setTimeout(() => clearToast(), 2000);
+    return false;
 }
 
-// Cleanup when Tracer dies
+/**
+ * Recall (2): On death, if the row can pay 2 synergy and Recall is unused,
+ * spend it, play ult VO, animate to hand. Redeploy fires On-Enter again;
+ * ultimate stays spent.
+ */
 export function onDeath({ playerHeroId, rowId }) {
-    // Reset ultimate system if this Tracer dies
-    if (tracerUltimateUsed) {
-        tracerUltimateUsed = false;
-        tracerHpBeforeDamage = 0;
-        console.log('Tracer Ultimate: System reset due to death');
+    const playerNum = parseInt(String(playerHeroId || '')[0], 10);
+    const row = window.__ow_getRow?.(rowId);
+    const alreadyUsed = !!window.__ow_hasUsedUltimate?.(playerNum, 'tracer');
+
+    if (!canTracerRecall({
+        rowSynergy: row?.synergy || 0,
+        alreadyUsed,
+        cost: TRACER_RECALL_COST,
+    })) {
+        return false;
     }
+
+    const hand = window.__ow_getRow?.(`player${playerNum}hand`);
+    if (hand?.cardIds && hand.cardIds.length >= 6) {
+        showToast('Tracer: Hand full — Recall failed');
+        setTimeout(() => clearToast(), 2000);
+        return false;
+    }
+
+    try {
+        window.__ow_updateSynergy?.(rowId, -TRACER_RECALL_COST);
+    } catch {}
+
+    try {
+        playAudioByKey('tracer-ultimate');
+    } catch {}
+
+    try {
+        effectsBus.publish(Effects.teleport(playerHeroId, playerNum));
+    } catch {}
+
+    const card = window.__ow_getCard?.(playerHeroId);
+    const maxHp = card?.maxHealth || 2;
+    if (Array.isArray(card?.effects)) {
+        [...card.effects].forEach((effect) => {
+            if (effect?.id) window.__ow_removeCardEffect?.(playerHeroId, effect.id);
+        });
+    }
+    // Revive above 0 so the delayed graveyard bury skips her.
+    window.__ow_setCardHealth?.(playerHeroId, maxHp, true);
+
+    window.__ow_dispatchAction?.({
+        type: 'mark-ultimate-used',
+        payload: { playerNum, heroId: 'tracer' },
+    });
+
+    window.__ow_dispatchAction?.({
+        type: 'return-hero-to-hand',
+        payload: {
+            cardId: playerHeroId,
+            rowId,
+            suppressEnterOnRedeploy: false,
+            turnCount: window.__ow_getTurnCount?.(),
+        },
+    });
+
+    showToast('Tracer: Recall — returned to hand');
+    setTimeout(() => clearToast(), 2000);
+    return true;
 }
 
 export default { onEnter, onUltimate, onDeath };

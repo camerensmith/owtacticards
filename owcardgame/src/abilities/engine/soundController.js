@@ -3,6 +3,7 @@
 // onRez, onFlavor, onAcquaintance, onEnemy, onInterrupt, onAbility, onGameEvent.
 
 import { getAudioFile } from '../../assets/imageImports';
+import { playSrc, warmAudio } from '../../assets/audioPool';
 
 // Canonical event names
 export const SoundEvents = {
@@ -35,6 +36,8 @@ export const AvailableAudio = {
         round3: 'announcer-round3',
         initiatingMatch: 'announcer-initiatingmatch',
         prepareToAttack: 'announcer-preparetoattack',
+        drawcard: 'drawcard',
+        cardshuffle: 'cardshuffle',
     },
     
     // Hero Intros (all heroes have intro sounds)
@@ -74,6 +77,9 @@ export const AvailableAudio = {
         wreckingball: 'wreckingball-intro',
         zarya: 'zarya-intro',
         zenyatta: 'zenyatta-intro',
+        lockjaw: 'lockjaw-intro',
+        sylvain: 'sylvain-intro',
+        axiom: 'axiom-intro',
     },
     
     // Hero Ultimates
@@ -111,6 +117,9 @@ export const AvailableAudio = {
         wreckingball: 'wreckingball-ult',
         zarya: 'zarya-ult',
         zenyatta: 'zenyatta-ult',
+        lockjaw: 'lockjaw-ult-start',
+        sylvain: 'sylvain-ult',
+        axiom: 'axiom-ultimate',
     },
     
     // Hero Abilities (key abilities with unique sounds)
@@ -147,6 +156,9 @@ export const AvailableAudio = {
         wreckingball: ['wreckingball-shields', 'wreckingball-squeaks'],
         zarya: ['zarya-barrier', 'zarya-barrierally'],
         zenyatta: ['zenyatta-discord', 'zenyatta-discord2', 'zenyatta-harmony'],
+        lockjaw: ['lockjaw-ability1-resolve'],
+        sylvain: ['sylvain-ability1-resolve'],
+        axiom: ['axiom-ability1-resolve'],
     },
 };
 
@@ -176,10 +188,7 @@ export function playHeroEventSound(heroId, eventName) {
     const keys = heroMap[eventName];
     const key = Array.isArray(keys) ? pickSoundKey(keys) : keys;
     if (!key) return;
-    const src = getAudioFile(key);
-    if (!src) return;
-    const audio = new Audio(src);
-    audio.play().catch(() => {});
+    playSrc(getAudioFile(key));
 }
 
 // Overlay hook: callers can subscribe to be notified when to show a speech icon
@@ -211,10 +220,45 @@ export function playGameEvent(eventName) {
         console.warn(`Unknown game event: ${eventName}`);
         return;
     }
-    const src = getAudioFile(audioKey);
-    if (!src) return;
-    const audio = new Audio(src);
-    audio.play().catch(() => {});
+    playSrc(getAudioFile(audioKey));
+}
+
+/**
+ * Buffers the clips that fire on every turn — draw, shuffle, placement, end of
+ * turn — so the first one of a match is not the one that arrives late.
+ * Called once when the match screen opens.
+ */
+export function warmGameEventAudio() {
+    return warmAudio(
+        Object.values(AvailableAudio.gameEvents)
+            .map((key) => getAudioFile(key))
+            .filter(Boolean)
+    );
+}
+
+export function playClip(key, { awaitEnd = false, fallbackMs = 800 } = {}) {
+    return new Promise((resolve) => {
+        try {
+            const src = getAudioFile(key);
+            if (!src) {
+                if (awaitEnd) setTimeout(resolve, fallbackMs);
+                else resolve();
+                return;
+            }
+            const audio = playSrc(src);
+            if (!awaitEnd || !audio) {
+                resolve();
+                return;
+            }
+            const timer = setTimeout(resolve, fallbackMs);
+            audio.addEventListener('ended', () => {
+                clearTimeout(timer);
+                resolve();
+            }, { once: true });
+        } catch {
+            resolve();
+        }
+    });
 }
 
 export function playHeroIntro(heroId) {
@@ -223,10 +267,7 @@ export function playHeroIntro(heroId) {
         console.warn(`No intro sound for hero: ${heroId}`);
         return;
     }
-    const src = getAudioFile(audioKey);
-    if (!src) return;
-    const audio = new Audio(src);
-    audio.play().catch(() => {});
+    playSrc(getAudioFile(audioKey));
 }
 
 export function playHeroUltimate(heroId) {
@@ -235,10 +276,7 @@ export function playHeroUltimate(heroId) {
         console.warn(`No ultimate sound for hero: ${heroId}`);
         return;
     }
-    const src = getAudioFile(audioKey);
-    if (!src) return;
-    const audio = new Audio(src);
-    audio.play().catch(() => {});
+    playSrc(getAudioFile(audioKey));
 }
 
 export function playHeroAbility(heroId, abilityIndex = 0) {
@@ -247,11 +285,7 @@ export function playHeroAbility(heroId, abilityIndex = 0) {
         console.warn(`No ability sound for hero: ${heroId}, ability: ${abilityIndex}`);
         return;
     }
-    const audioKey = abilities[abilityIndex];
-    const src = getAudioFile(audioKey);
-    if (!src) return;
-    const audio = new Audio(src);
-    audio.play().catch(() => {});
+    playSrc(getAudioFile(abilities[abilityIndex]));
 }
 
 export function playRandomHeroAbility(heroId) {
@@ -296,6 +330,8 @@ export default {
     SoundEvents,
     AvailableAudio,
     playGameEvent,
+    warmGameEventAudio,
+    playClip,
     playHeroIntro,
     playHeroUltimate,
     playHeroAbility,

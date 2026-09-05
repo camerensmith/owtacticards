@@ -1,92 +1,140 @@
-import $ from 'jquery';
-import { getAudioFile } from '../../assets/imageImports';
+import { playAudioByKey } from '../../assets/imageImports';
 import { selectRowTarget } from '../engine/targeting';
 import effectsBus, { Effects } from '../engine/effectsBus';
-import aimLineBus from '../engine/aimLineBus';
 import { showMessage as showToast, clearMessage as clearToast } from '../engine/targetingBus';
-import { subscribe as subscribeDamage, dealDamage } from '../engine/damageBus';
+import { dealDamage } from '../engine/damageBus';
+import { PALETTE } from '../../presentation/pixi/fxConfig';
+import { countNanoBoostHeroes, nanoBoostSynergyDelta } from '../../game/abilityRules';
+
+/** Ana's biotic canister reads blue; McCree's flashbang is yellow. */
+const BIOTIC_BLUE = PALETTE.iceDeep;
 
 // Ana module scaffold
 
 export function onDraw() {
-    try { const s = getAudioFile('ana-intro'); if (s) new Audio(s).play().catch(()=>{}); } catch {}
+    try { playAudioByKey('ana-intro'); } catch {}
 }
 
 export function onEnter({ playerHeroId, rowId }) {
-    const playerNum = parseInt(playerHeroId[0]);
-    try { const s = getAudioFile('ana-enter'); if (s) new Audio(s).play().catch(()=>{}); } catch {}
-    // Ensure no AI auto when it is human turn
-    if (!(window.__ow_aiTriggering || window.__ow_isAITurn) || (typeof window.__ow_getPlayerTurn === 'function' && window.__ow_getPlayerTurn() !== 2)) {
-        // human-only path; do nothing here, actual choices via onEnterAbility1
-        return;
+    try { playAudioByKey('ana-enter'); } catch {}
+}
+
+export default { onDraw, onEnter, onEnterAbility1, onUltimate, recomputeAnaTokens };
+
+export function recomputeAnaTokens() {
+    const allRows = ['1f', '1m', '1b', '2f', '2m', '2b'];
+    for (const rowId of allRows) {
+        const row = window.__ow_getRow?.(rowId);
+        if (!row) continue;
+        const effects = row.allyEffects || [];
+        const tokenIndex = effects.findIndex((effect) => effect?.id === 'ana-token');
+        if (tokenIndex === -1) continue;
+
+        const cards = (row.cardIds || []).map((pid) => {
+            const heroId = pid.slice(1);
+            return {
+                heroId,
+                health: window.__ow_getCard?.(pid)?.health ?? 0,
+                isSpecial: !!window.__ow_isSpecial?.(heroId),
+            };
+        });
+        const newCount = countNanoBoostHeroes(cards);
+        const token = effects[tokenIndex];
+        const delta = nanoBoostSynergyDelta(token.contribution, newCount);
+        if (delta !== 0) {
+            window.__ow_updateSynergy?.(rowId, delta);
+        }
+        if (token.contribution !== newCount) {
+            const nextEffects = effects.map((effect, i) => (
+                i === tokenIndex ? { ...effect, contribution: newCount } : effect
+            ));
+            window.__ow_setRowArray?.(rowId, 'allyEffects', nextEffects);
+        }
     }
 }
 
-export default { onDraw, onEnter, onEnterAbility1, onUltimate };
+// Ana ultimate: Nano Boost (2)
+// Place an Ana token in any row on the board, friendly or enemy. The token adds
+// X synergy to that row, where X is the number of living heroes in it (special
+// cards excluded, except 'nemesis'). It persists even if Ana dies, and the
+// synergy tracks heroes entering, leaving and dying.
 
-// Ana ultimate: Nano Boost (3)
-// Place an Ana token in Ana's row. Token adds X power to that row, where X equals the
-// number of heroes (alive) in that row (exclude special=true except 'nemesis').
-// This persists even if Ana dies; power adjusts dynamically as heroes enter/leave/die.
-export function onUltimate({ playerHeroId, rowId, cost }) {
+/** Living heroes standing in a row — what the token is worth there. */
+function livingCount(rowId) {
+    return (window.__ow_getRow?.(rowId)?.cardIds || []).filter((cid) => {
+        const c = window.__ow_getCard?.(cid);
+        return c && c.health > 0;
+    }).length;
+}
+
+/**
+ * Where Nano Boost lands.
+ *
+ * Ana picks any row on the board, hers or the enemy's — the boost is no longer
+ * tied to whichever row she happens to be standing in. The AI takes its own
+ * fullest row, since the token is worth one synergy per living hero on it.
+ */
+async function pickNanoRow(playerNum) {
+    const friendly = [`${playerNum}f`, `${playerNum}m`, `${playerNum}b`];
+    if (window.__ow_aiTriggering || window.__ow_isAITurn) {
+        const best = friendly
+            .map((rowId) => ({ rowId, living: livingCount(rowId) }))
+            .sort((a, b) => b.living - a.living)[0];
+        // Cost 2 — skip only if the row would gain less than that.
+        if (!best || best.living < 2) {
+            showToast('Ana AI: Skipping Nano Boost (need 2+ heroes in a row)');
+            setTimeout(() => clearToast(), 1500);
+            return null;
+        }
+        return best.rowId;
+    }
+
+    showToast('Ana: Select any row for Nano Boost');
+    const target = await selectRowTarget();
+    clearToast();
+    return target?.rowId || null;
+}
+
+export async function onUltimate({ playerHeroId, rowId, cost }) {
     try {
-        const playerNum = parseInt(playerHeroId[0]);
-        // Find Ana's current row by scanning rows for playerHeroId
-        const rows = [`${playerNum}f`, `${playerNum}m`, `${playerNum}b`];
-        let anaRow = null;
-        for (const r of rows) {
-            const arr = window.__ow_getRow?.(r)?.cardIds || [];
-            if (arr.includes(playerHeroId)) { anaRow = r; break; }
-        }
-        if (!anaRow) return;
+        const anaRow = await pickNanoRow(parseInt(playerHeroId[0], 10));
+        if (!anaRow) return false;
 
-        // AI gating: only use if 3+ living heroes in Ana's row
-        if (window.__ow_aiTriggering || window.__ow_isAITurn) {
-            const livingHeroes = (window.__ow_getRow?.(anaRow)?.cardIds || []).filter(cid => {
-                const c = window.__ow_getCard?.(cid);
-                return c && c.health > 0;
-            }).length;
-            if (livingHeroes < 3) {
-                showToast('Ana AI: Skipping Nano Boost (need 3+ heroes in row)');
-                setTimeout(() => clearToast(), 1500);
-                return;
-            }
-        }
-
-        // Add Ana token icon to the row effects with tooltip
-        const modifier = {
-            id: 'ana-token',
-            hero: 'ana',
-            playerHeroId,
-            type: 'rowSynergyBoost',
-            tooltip: 'Nano Boost: +X Synergy (heroes in row)',
-        };
-        if (window.__ow_appendRowEffect) {
-            window.__ow_appendRowEffect(anaRow, 'allyEffects', modifier);
-        }
-
-        // Subscribe to row changes and recompute X → set synergy for that row position
-        // For now, compute once immediately
-        const recompute = () => {
-            const cards = window.__ow_getRow?.(anaRow)?.cardIds || [];
-            let heroes = 0;
-            for (const pid of cards) {
+        const existing = (window.__ow_getRow?.(anaRow)?.allyEffects || []).some((e) => e?.id === 'ana-token');
+        if (!existing) {
+            const row = window.__ow_getRow?.(anaRow);
+            const cards = (row?.cardIds || []).map((pid) => {
                 const heroId = pid.slice(1);
-                const isSpecial = !!window.__ow_isSpecial?.(heroId);
-                const countsAsHero = !isSpecial || heroId === 'nemesis';
-                const alive = (window.__ow_getCard?.(pid)?.health ?? 0) > 0;
-                if (countsAsHero && alive) heroes += 1;
-            }
-            // Store the computed X in the row for reference (optional) and set synergy slot
-            const rowPos = anaRow[1];
-            const synergyIndex = { f:'f', m:'m', b:'b' }[rowPos];
-            // Set absolute synergy contribution for this row position
-            window.__ow_setRowSynergy && window.__ow_setRowSynergy(playerNum, synergyIndex, heroes);
-        };
-        recompute();
+                return {
+                    heroId,
+                    health: window.__ow_getCard?.(pid)?.health ?? 0,
+                    isSpecial: !!window.__ow_isSpecial?.(heroId),
+                };
+            });
+            const newCount = countNanoBoostHeroes(cards);
+            // Arcs crackle over the boosted row.
+            try { effectsBus.publish(Effects.nanoBoost(anaRow)); } catch {}
+            window.__ow_appendRowEffect?.(anaRow, 'allyEffects', {
+                id: 'ana-token',
+                hero: 'ana',
+                playerHeroId,
+                type: 'rowSynergyBoost',
+                contribution: newCount,
+                tooltip: 'Nano Boost: +X Synergy (heroes in row)',
+            });
+            if (newCount) window.__ow_updateSynergy?.(anaRow, newCount);
+        } else {
+            recomputeAnaTokens();
+        }
 
-        try { const s = getAudioFile('ana-ult'); if (s) new Audio(s).play().catch(()=>{}); } catch {}
-    } catch {}
+        try { playAudioByKey('ana-ult'); } catch {}
+        return true;
+    } catch (error) {
+        // Reported rather than swallowed: returning undefined here charged the
+        // synergy for an ultimate that had thrown.
+        console.error('Ana Nano Boost error:', error);
+        return false;
+    }
 }
 
 // Ana onEnter ability 1:
@@ -140,6 +188,9 @@ export async function onEnterAbility1({ playerNum, playerHeroId }) {
                 }
             }
             
+            // Biotic grenade arcs into the row, same as the human path.
+            try { effectsBus.publish(Effects.grenade(playerHeroId, bestRow, BIOTIC_BLUE)); } catch {}
+
             // Damage enemies
             const enemyRowData = window.__ow_getRow?.(enemyRow);
             let enemiesDamaged = 0;
@@ -147,7 +198,9 @@ export async function onEnterAbility1({ playerNum, playerHeroId }) {
                 for (const cardId of enemyRowData.cardIds) {
                     const card = window.__ow_getCard?.(cardId);
                     if (card && card.health > 0) {
-                        dealDamage(cardId, enemyRow, 1, false, playerHeroId);
+                        // The grenade is the projectile; suppress the damage
+                        // bus's default beam from Ana to each enemy.
+                        dealDamage(cardId, enemyRow, 1, false, playerHeroId, false, { skipProjectileFx: true });
                         effectsBus.publish(Effects.showDamage(cardId, 1));
                         enemiesDamaged++;
                     }
@@ -159,14 +212,18 @@ export async function onEnterAbility1({ playerNum, playerHeroId }) {
             return;
         }
         
-        // Draw aim line from Ana card to cursor while selecting
-        if (playerHeroId) {
-            aimLineBus.setArrowSource(playerHeroId);
-        }
+        // No aim line: the grenade's arc is the throw, and the line had to be
+        // torn down by hand on every exit — which the cancel path did not do.
         showToast('Ana: Select a row');
-        const { rowId } = await selectRowTarget({ allowAnyRow: true });
+        const target = await selectRowTarget({ allowAnyRow: true });
         clearToast();
-        aimLineBus.clearArrow();
+        // Cancelling used to destructure null and throw, which is what left the
+        // old aim line stuck on screen.
+        if (!target?.rowId) return;
+        const { rowId } = target;
+
+        // Biotic grenade arcs into the chosen row.
+        try { effectsBus.publish(Effects.grenade(playerHeroId, rowId, BIOTIC_BLUE)); } catch {}
 
         // Always heal Ana's side (playerNum) and damage the opposing side, at the same row position
         const pos = rowId[1]; // f/m/b
@@ -206,7 +263,7 @@ export async function onEnterAbility1({ playerNum, playerHeroId }) {
             for (const pid of cards) {
                 // Safety check: ensure pid is valid before processing
                 if (pid && typeof pid === 'string') {
-                    dealDamage(pid, row, 1, false, playerHeroId);
+                    dealDamage(pid, row, 1, false, playerHeroId, false, { skipProjectileFx: true });
                     // show -1 overlay
                     effectsBus.publish(Effects.showDamage(pid, 1));
                 }
@@ -216,7 +273,7 @@ export async function onEnterAbility1({ playerNum, playerHeroId }) {
         healAllies(allyRow);
         damageEnemies(enemyRow);
 
-        try { const s = getAudioFile('ana-ability1'); if (s) new Audio(s).play().catch(()=>{}); } catch {}
+        try { playAudioByKey('ana-ability1'); } catch {}
     } catch (e) {
         clearToast();
     }

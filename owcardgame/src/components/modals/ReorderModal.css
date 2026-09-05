@@ -1,0 +1,74 @@
+.modal-reorder {
+    min-width: min(720px, 94vw);
+}
+
+.reorder-prompt {
+    margin-bottom: 12px;
+    color: #ccc;
+}
+
+.reorder-strip {
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+    flex-wrap: wrap;
+    padding: 8px 0 16px;
+}
+
+.reorder-card {
+    position: relative;
+    width: 140px;
+    cursor: grab;
+    border: 2px solid #555;
+    border-radius: 8px;
+    background: #1a1a1a;
+    padding: 6px;
+    transition: border-color 0.15s ease, transform 0.15s ease;
+    user-select: none;
+}
+
+.reorder-card:hover {
+    border-color: #7ec8ff;
+}
+
+.reorder-card.is-dragging {
+    opacity: 0.55;
+    transform: scale(0.96);
+    cursor: grabbing;
+}
+
+.reorder-card img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 4px;
+    pointer-events: none;
+}
+
+.reorder-index {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 1;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.75);
+    border: 1px solid #7ec8ff;
+    color: #7ec8ff;
+    font-family: Big-Noodle-Titling, 'Arial Narrow', sans-serif;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.reorder-name {
+    display: block;
+    margin-top: 6px;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-size: 0.85rem;
+    color: #ddd;
+}

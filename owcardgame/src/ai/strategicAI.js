@@ -11,6 +11,11 @@
  */
 
 import data from '../data';
+import { getCardForAi } from '../game/rosterRules';
+
+function aiCard(cardId) {
+    return getCardForAi(cardId, (id) => window.__ow_getCard?.(id), { viewerPlayerNum: 2 });
+}
 
 /**
  * Analyze current win condition and recommend strategy
@@ -118,10 +123,10 @@ function calculateBoardMetrics(gameState) {
             if (rowId === '2b') metrics.backSynergy = row.synergy || 0;
 
             (row.cardIds || []).forEach(cardId => {
-                const card = window.__ow_getCard?.(cardId);
+                const card = aiCard(cardId);
                 if (card && card.health > 0) {
                     metrics.allyBoardCount++;
-                    const heroId = cardId.slice(1);
+                    const heroId = card.id || cardId.slice(1);
                     const heroData = data.heroes?.[heroId];
                     if (heroData?.class === 'support') {
                         metrics.allySupportUnits++;
@@ -143,10 +148,10 @@ function calculateBoardMetrics(gameState) {
             metrics.enemyPower += row.power || 0;
 
             (row.cardIds || []).forEach(cardId => {
-                const card = window.__ow_getCard?.(cardId);
+                const card = aiCard(cardId);
                 if (card && card.health > 0) {
                     metrics.enemyBoardCount++;
-                    const heroId = cardId.slice(1);
+                    const heroId = card.id || cardId.slice(1);
                     const heroData = data.heroes?.[heroId];
                     if (heroData?.class === 'offense' || heroData?.class === 'defense') {
                         metrics.enemyDamageThreats++;
@@ -370,9 +375,9 @@ export const heroStrategies = {
             enemyRows.forEach(rowId => {
                 const row = window.__ow_getRow?.(rowId);
                 (row?.cardIds || []).forEach(cardId => {
-                    const card = window.__ow_getCard?.(cardId);
+                    const card = aiCard(cardId);
                     if (card && card.health > 0) {
-                        const heroId = cardId.slice(1);
+                        const heroId = card.id || cardId.slice(1);
                         const heroData = data.heroes?.[heroId];
                         const power = heroData?.[`${rowId[1]}_power`] || 0;
                         enemyTargets.push({ cardId, rowId, power, type: 'enemy_disrupt' });
@@ -385,9 +390,10 @@ export const heroStrategies = {
             allyRows.forEach(rowId => {
                 const row = window.__ow_getRow?.(rowId);
                 (row?.cardIds || []).forEach(cardId => {
-                    const card = window.__ow_getCard?.(cardId);
+                    const card = aiCard(cardId);
                     if (card && card.health > 0) {
-                        const heroId = cardId.slice(1);
+                        const heroId = card.id || cardId.slice(1);
+                        const heroData = data.heroes?.[heroId];
                         // Only send back Symmetra herself or mispositioned units
                         if (heroId === 'symmetra' || (heroData?.class === 'support' && rowId === '2f')) {
                             allyTargets.push({ cardId, rowId, type: 'ally_reposition' });

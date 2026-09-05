@@ -1,20 +1,17 @@
 import React, { useContext } from 'react';
 import gameContext from '../../context/gameContext';
+import { isMinefieldToken, minefieldCharges } from '../../game/minefield';
 
 export default function WreckingBallTokenOverlay({ rowId }) {
     const { gameState } = useContext(gameContext);
     
-    // Check if this row has Wrecking Ball minefield tokens
     const row = gameState.rows[rowId];
     if (!row || !row.enemyEffects) return null;
     
-    const minefieldToken = row.enemyEffects.find(effect => 
-        effect?.hero === 'wreckingball' && effect?.type === 'minefield'
-    );
+    const token = row.enemyEffects.find(isMinefieldToken);
+    const totalCharges = minefieldCharges(token);
     
-    if (!minefieldToken || minefieldToken.charges <= 0) return null;
-    
-    const totalCharges = minefieldToken.charges;
+    if (!token || totalCharges <= 0) return null;
     
     return (
         <div className="wreckingball-token-overlay" style={{

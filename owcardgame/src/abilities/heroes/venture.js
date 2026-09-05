@@ -2,6 +2,13 @@ import { dealDamage } from '../engine/damageBus';
 import effectsBus, { Effects } from '../engine/effectsBus';
 import { playAudioByKey } from '../../assets/imageImports';
 import { selectCardTarget } from '../engine/targeting';
+import {
+    bestColumn,
+    collectShufflable,
+    columnTargets,
+    enemyRowIdsFor,
+    shuffledRowStates,
+} from '../../game/ventureRules';
 import { showMessage as showToast, clearMessage as clearToast } from '../engine/targetingBus';
 
 // Helper function to calculate row distance
@@ -72,7 +79,9 @@ export async function onEnter({ playerHeroId, rowId }) {
         try { playAudioByKey('venture-ability1'); } catch {}
         
         // Deal damage
-        dealDamage(randomEnemy.cardId, randomEnemy.rowId, damage, false, playerHeroId);
+        // Venture tunnels across and erupts under the target.
+        try { effectsBus.publish(Effects.burrow(playerHeroId, randomEnemy.cardId)); } catch {}
+        dealDamage(randomEnemy.cardId, randomEnemy.rowId, damage, false, playerHeroId, false, { skipProjectileFx: true });
         try { effectsBus.publish(Effects.showDamage(randomEnemy.cardId, damage)); } catch {}
         
         const ventureRowName = getRowName(rowId);
@@ -99,7 +108,9 @@ export async function onEnter({ playerHeroId, rowId }) {
     try { playAudioByKey('venture-ability1'); } catch {}
     
     // Deal damage
-    dealDamage(target.cardId, target.rowId, damage, false, playerHeroId);
+    // Venture tunnels across and erupts under the target.
+    try { effectsBus.publish(Effects.burrow(playerHeroId, target.cardId)); } catch {}
+    dealDamage(target.cardId, target.rowId, damage, false, playerHeroId, false, { skipProjectileFx: true });
     try { effectsBus.publish(Effects.showDamage(target.cardId, damage)); } catch {}
     
     const ventureRowName = getRowName(rowId);
@@ -110,82 +121,67 @@ export async function onEnter({ playerHeroId, rowId }) {
 
 export async function onUltimate({ playerHeroId, rowId, cost }) {
     try { playAudioByKey('venture-ultimate'); } catch {}
-    
+
     const playerNum = parseInt(playerHeroId[0]);
     const enemyPlayer = playerNum === 1 ? 2 : 1;
-    
-    // Get all enemy heroes (excluding turrets)
-    const enemyRows = [`${enemyPlayer}f`, `${enemyPlayer}m`, `${enemyPlayer}b`];
-    const enemyHeroes = [];
-    enemyRows.forEach(rid => {
-        const row = window.__ow_getRow?.(rid);
-        if (!row || !row.cardIds) return;
-        row.cardIds.forEach(cid => {
-            const card = window.__ow_getCard?.(cid);
-            if (card && card.health > 0 && card.id !== 'turret' && card.id !== 'bob' && card.id !== 'nemesis') {
-                enemyHeroes.push({ cardId: cid, rowId: rid });
-            }
-        });
-    });
-    
+    const enemyRows = enemyRowIdsFor(enemyPlayer);
+
+    const enemyHeroes = collectShufflable(enemyPlayer, window.__ow_getRow, window.__ow_getCard);
     if (enemyHeroes.length === 0) {
         showToast('Tectonic Shock: No enemies to shuffle');
         setTimeout(() => clearToast(), 2000);
         return;
     }
-    
-    // Shuffle enemy positions (like Ramattra)
-    const shuffledHeroes = [...enemyHeroes];
-    for (let i = shuffledHeroes.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffledHeroes[i], shuffledHeroes[j]] = [shuffledHeroes[j], shuffledHeroes[i]];
+
+    // Venture picks the column to break open. It is a slot index, chosen freely
+    // — it is no longer tied to whichever row Venture happens to stand in.
+    let column;
+    if (window.__ow_aiTriggering || window.__ow_isAITurn) {
+        column = bestColumn(enemyPlayer, window.__ow_getRow, window.__ow_getCard);
+    } else {
+        showToast('Tectonic Shock: Select an enemy column to shatter');
+        const target = await selectCardTarget({
+            isDamage: true,
+            fromCardId: playerHeroId,
+            previewShape: 'column',
+        });
+        clearToast();
+        if (!target) return;
+
+        const targetRow = window.__ow_getRow?.(target.rowId);
+        column = (targetRow?.cardIds || []).indexOf(target.cardId);
     }
-    
-    // Create new row states for all enemy rows
-    const newRowStates = {};
-    enemyRows.forEach(rid => {
-        newRowStates[rid] = [];
-    });
-    
-    // Distribute shuffled heroes across rows
-    shuffledHeroes.forEach((hero, index) => {
-        const newRowId = enemyRows[index % enemyRows.length];
-        newRowStates[newRowId].push(hero.cardId);
-    });
-    
-    // Update all enemy rows with new card arrangements
-    enemyRows.forEach(rid => {
+
+    if (column === null || column < 0) {
+        showToast('Tectonic Shock: Could not read that column');
+        setTimeout(() => clearToast(), 2000);
+        return;
+    }
+
+    // Everything caught in the quake is shaken and tumbled.
+    try { effectsBus.publish(Effects.tectonic(enemyHeroes.map((e) => e.cardId))); } catch {}
+
+    // Shuffle first, then break the chosen column: the column is a place, so
+    // whoever the quake drops into it is who takes the hit.
+    const newRowStates = shuffledRowStates(enemyPlayer, enemyHeroes);
+    enemyRows.forEach((rid) => {
         window.__ow_setRowArray?.(rid, 'cardIds', newRowStates[rid]);
     });
-    
-    // Find enemy in Venture's column after shuffle
-    const ventureColumn = rowId[1]; // f, m, or b
-    const targetRowId = `${enemyPlayer}${ventureColumn}`;
-    const targetRow = window.__ow_getRow?.(targetRowId);
-    
-    if (targetRow && targetRow.cardIds && targetRow.cardIds.length > 0) {
-        // Find the enemy hero in that column (not turret)
-        const targetCardId = targetRow.cardIds.find(cid => {
-            const card = window.__ow_getCard?.(cid);
-            return card && card.health > 0 && card.id !== 'turret' && card.id !== 'bob' && card.id !== 'nemesis';
-        });
-        
-        if (targetCardId) {
-            // Deal 2 damage to the enemy in Venture's column
-            dealDamage(targetCardId, targetRowId, 2, false, playerHeroId);
-            try { effectsBus.publish(Effects.showDamage(targetCardId, 2)); } catch {}
-            
-            const targetRowName = getRowName(targetRowId);
-            showToast(`Tectonic Shock: 2 damage to enemy in ${targetRowName} row`);
-            setTimeout(() => clearToast(), 2000);
-        } else {
-            showToast('Tectonic Shock: No enemy in target column');
-            setTimeout(() => clearToast(), 2000);
-        }
-    } else {
-        showToast('Tectonic Shock: No enemy in target column');
+
+    const targets = columnTargets(enemyPlayer, column, window.__ow_getRow, window.__ow_getCard);
+    if (targets.length === 0) {
+        showToast(`Tectonic Shock: Column ${column + 1} shattered, but nobody was standing there`);
         setTimeout(() => clearToast(), 2000);
+        return;
     }
+
+    for (const target of targets) {
+        dealDamage(target.cardId, target.rowId, 2, false, playerHeroId, false, { skipProjectileFx: true });
+        try { effectsBus.publish(Effects.showDamage(target.cardId, 2)); } catch {}
+    }
+
+    showToast(`Tectonic Shock: 2 damage to ${targets.length} enemy(ies) in column ${column + 1}`);
+    setTimeout(() => clearToast(), 2000);
 }
 
 export default { onEnter, onUltimate };

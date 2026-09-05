@@ -1,5 +1,6 @@
 import $ from 'jquery';
 import { selectCardTarget } from '../engine/targeting';
+import { PALETTE } from '../../presentation/pixi/fxConfig';
 import { showMessage as showToast, clearMessage as clearToast } from '../engine/targetingBus';
 import aimLineBus from '../engine/aimLineBus';
 import { dealDamage } from '../engine/damageBus';
@@ -7,6 +8,10 @@ import effectsBus, { Effects } from '../engine/effectsBus';
 import { getAudioFile, playAudioByKey } from '../../assets/imageImports';
 import { showOnEnterChoice } from '../engine/modalController';
 import { withAIContext } from '../engine/aiContextHelper';
+
+/** Biotic Launcher: red when it harms, green when it heals. */
+const LAUNCHER_HARM = PALETTE.damage;
+const LAUNCHER_HEAL = PALETTE.heal;
 
 export function onDraw() {
     try { playAudioByKey('baptiste-intro'); } catch {}
@@ -43,14 +48,16 @@ const doDamageColumn = async (liIndex, playerNum, playerHeroId) => {
     // Apply damage to up to 3 (front/middle/back)
     for (const [pid, r] of targets) {
         console.log(`Dealing 1 damage to ${pid} in ${r}`);
-        dealDamage(pid, r, 1, false, playerHeroId);
+        // The launcher lobs a ball; no beam should fire as well.
+        try { effectsBus.publish(Effects.orb(playerHeroId, pid, LAUNCHER_HARM)); } catch {}
+        dealDamage(pid, r, 1, false, playerHeroId, false, { skipProjectileFx: true });
         effectsBus.publish(Effects.showDamage(pid, 1));
     }
     playAudioByKey('baptiste-ability1');
     console.log(`Baptiste damage column complete`);
 };
 
-const doHealColumn = async (liIndex, playerNum) => {
+const doHealColumn = async (liIndex, playerNum, playerHeroId) => {
     const rows = [`${playerNum}f`, `${playerNum}m`, `${playerNum}b`];
     const candidates = rows.map(r => window.__ow_getRow?.(r)?.cardIds?.[liIndex]).filter(Boolean);
     for (const pid of candidates) {
@@ -65,6 +72,7 @@ const doHealColumn = async (liIndex, playerNum) => {
         const max = window.__ow_getMaxHealth?.(pid) ?? (card?.health || 0);
         const cur = card?.health || 0;
         if (cur < max) {
+            try { effectsBus.publish(Effects.orb(playerHeroId, pid, LAUNCHER_HEAL)); } catch {}
             window.__ow_setCardHealth && window.__ow_setCardHealth(pid, Math.min(max, cur + 1));
             effectsBus.publish(Effects.showHeal(pid, 1));
         }
@@ -130,7 +138,7 @@ export function onEnter({ playerHeroId, rowId }) {
                 // Decision
                 if (bestHealCol >= 0) {
                     aimLineBus.clearArrow();
-                    await doHealColumn(bestHealCol, playerNum);
+                    await doHealColumn(bestHealCol, playerNum, playerHeroId);
                     showToast('Baptiste AI: Healed damaged column');
                     setTimeout(() => clearToast(), 2000);
                 } else {
@@ -146,7 +154,11 @@ export function onEnter({ playerHeroId, rowId }) {
             if (choiceIndex === 0) {
                 console.log(`Baptiste chose damage option`);
                 showToast('Baptiste: Pick an enemy column (click any enemy card)');
-                const target = await selectCardTarget({ isDamage: true });
+                const target = await selectCardTarget({
+                    isDamage: true,
+                    previewShape: 'column',
+                    fromCardId: playerHeroId,
+                });
                 if (!target || !target.cardId) {
                     clearToast(); aimLineBus.clearArrow();
                     return;
@@ -180,7 +192,11 @@ export function onEnter({ playerHeroId, rowId }) {
                 console.log(`Baptiste doDamageColumn finished`);
             } else {
                 showToast('Baptiste: Pick a friendly column (click any ally card)');
-                const target = await selectCardTarget();
+                const target = await selectCardTarget({
+                    isHeal: true,
+                    previewShape: 'column',
+                    fromCardId: playerHeroId,
+                });
                 if (!target || !target.cardId) {
                     clearToast(); aimLineBus.clearArrow();
                     return;
@@ -207,7 +223,7 @@ export function onEnter({ playerHeroId, rowId }) {
                     setTimeout(() => clearToast(), 1500);
                     return;
                 }
-                await doHealColumn(liIndex, playerNum);
+                await doHealColumn(liIndex, playerNum, playerHeroId);
             }
         } catch (e) {
             console.error('Baptiste onEnter error:', e);

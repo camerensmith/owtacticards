@@ -3,15 +3,22 @@ import { showMessage as showToast, clearMessage as clearToast } from '../engine/
 import { dealDamage } from '../engine/damageBus';
 import { playAudioByKey } from '../../assets/imageImports';
 import effectsBus, { Effects } from '../engine/effectsBus';
+import { spreadDamageEvenly } from '../../game/abilityRules';
+import { deadeyeHoverPreview } from '../../game/targetPreview';
+import { FLASHBANG, PALETTE } from '../../presentation/pixi/fxConfig';
 
-export function onEnter({ playerHeroId, rowId }) {
+const FLASH_YELLOW = PALETTE.amber;
+
+export async function onEnter({ playerHeroId, rowId }) {
     const playerNum = parseInt(playerHeroId[0]);
-    
+
     try {
         playAudioByKey('mccree-enter');
     } catch {}
-    
-    handleFlashbang(playerHeroId, rowId, playerNum);
+
+    // Returned, not dropped: the caller awaits onEnter, and letting it resolve
+    // early ends the AI's turn while the ability is still resolving.
+    return handleFlashbang(playerHeroId, rowId, playerNum);
 }
 
 async function handleFlashbang(playerHeroId, rowId, playerNum) {
@@ -52,7 +59,13 @@ async function handleFlashbang(playerHeroId, rowId, playerNum) {
         
         const targetPlayerNum = parseInt(targetRow.rowId[0]);
         const isEnemyRow = targetPlayerNum !== playerNum;
-        
+
+        if (isEnemyRow) {
+            // Flashbang snaps into the row and pops yellow.
+            try { effectsBus.publish(Effects.grenade(playerHeroId, targetRow.rowId, FLASH_YELLOW, FLASHBANG)); } catch {}
+            try { playAudioByKey('mccree-ability1'); } catch {}
+        }
+
         if (!isEnemyRow) {
             showToast('McCree: Flashbang can only target enemy rows');
             setTimeout(() => clearToast(), 1500);
@@ -80,11 +93,6 @@ async function handleFlashbang(playerHeroId, rowId, playerNum) {
             return;
         }
         
-        // Play ability sound
-        try {
-            playAudioByKey('mccree-ability1');
-        } catch {}
-        
         // Remove synergy points (minimum 0)
         const currentSynergy = targetRowData.synergy || 0;
         const synergyToRemove = Math.min(enemyCount, currentSynergy);
@@ -110,6 +118,23 @@ async function handleFlashbang(playerHeroId, rowId, playerNum) {
         showToast('McCree: Flashbang failed');
         setTimeout(() => clearToast(), 1500);
     }
+}
+
+function applyDeadEye(livingEnemies, rowId, playerHeroId) {
+    const amounts = spreadDamageEvenly(9, livingEnemies.length);
+    try {
+        playAudioByKey('mccree-ultimate-firing');
+    } catch {}
+    livingEnemies.forEach((cardId, index) => {
+        const damage = amounts[index];
+        if (damage > 0) {
+            // Deadeye is a pistol, not a laser: one shot per name on the list.
+            try { effectsBus.publish(Effects.bullet(playerHeroId, cardId, 1)); } catch {}
+            dealDamage(cardId, rowId, damage, false, playerHeroId, false, { skipProjectileFx: true });
+            effectsBus.publish(Effects.showDamage(cardId, damage));
+        }
+    });
+    return amounts;
 }
 
 export async function onUltimate({ playerHeroId, rowId, cost }) {
@@ -148,34 +173,39 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
             }
             
             console.log(`McCree AI: Selected row ${bestRow} with ${maxLivingEnemies} living enemies`);
-            
-            // Deal damage to all living enemies in the selected row
+
             const targetRow = window.__ow_getRow?.(bestRow);
-            let targetsHit = 0;
-            
-            if (targetRow && targetRow.cardIds) {
-                for (const cardId of targetRow.cardIds) {
-                    const card = window.__ow_getCard?.(cardId);
-                    if (card && card.health > 0) {
-                        // Deadeye deals 2 damage per target
-                        dealDamage(cardId, bestRow, 2, false, playerHeroId);
-                        effectsBus.publish(Effects.showDamage(cardId, 2));
-                        targetsHit++;
-                    }
-                }
+            const livingEnemies = (targetRow?.cardIds || []).filter((cardId) => {
+                const card = window.__ow_getCard?.(cardId);
+                return card && card.health > 0;
+            });
+            if (livingEnemies.length === 0) {
+                showToast('McCree AI: No living enemies');
+                setTimeout(() => clearToast(), 1500);
+                return false;
             }
-            
-            showToast(`McCree AI: Dead Eye hit ${targetsHit} enemies in ${bestRow}`);
+            applyDeadEye(livingEnemies, bestRow, playerHeroId);
+
+            showToast(`McCree AI: Dead Eye hit ${livingEnemies.length} enemies in ${bestRow}`);
             setTimeout(() => clearToast(), 2000);
-            return;
+            return true;
         }
 
         showToast('McCree: Dead Eye - Select an enemy row');
 
-        const targetRow = await selectRowTarget();
+        const targetRow = await selectRowTarget({
+            isDamage: true,
+            fromCardId: playerHeroId,
+            preview: (hover, ctx) => deadeyeHoverPreview(hover, {
+                playerNum,
+                fromCardId: playerHeroId,
+                getRow: ctx.getRow,
+                getCard: ctx.getCard,
+            }),
+        });
         if (!targetRow) {
             clearToast();
-            return;
+            return false;
         }
         
         const targetPlayerNum = parseInt(targetRow.rowId[0]);
@@ -184,7 +214,7 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
         if (!isEnemyRow) {
             showToast('McCree: Dead Eye can only target enemy rows');
             setTimeout(() => clearToast(), 1500);
-            return;
+            return false;
         }
         
         // Get living enemies in the target row
@@ -192,7 +222,7 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
         if (!targetRowData) {
             showToast('McCree: Target row not found');
             setTimeout(() => clearToast(), 1500);
-            return;
+            return false;
         }
         
         const livingEnemies = targetRowData.cardIds.filter(cardId => {
@@ -203,41 +233,19 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
         if (livingEnemies.length === 0) {
             showToast('McCree: No living enemies in target row');
             setTimeout(() => clearToast(), 1500);
-            return;
+            return false;
         }
         
-        // Calculate damage distribution
-        const totalDamage = 9;
-        const enemyCount = livingEnemies.length;
-        const baseDamage = Math.floor(totalDamage / enemyCount);
-        const remainder = totalDamage % enemyCount;
-        
-        // Distribute damage evenly
-        const damageDistribution = livingEnemies.map((cardId, index) => {
-            const damage = baseDamage + (index < remainder ? 1 : 0);
-            return { cardId, damage };
-        });
-        
-        // Play firing sound
-        try {
-            playAudioByKey('mccree-ultimate-firing');
-        } catch {}
-        
-        // Apply damage to each enemy
-        damageDistribution.forEach(({ cardId, damage }) => {
-            if (damage > 0) {
-                dealDamage(cardId, targetRow.rowId, damage, false, playerHeroId);
-            }
-        });
-        
-        const damageBreakdown = damageDistribution.map(({ damage }) => damage).join('-');
-        showToast(`McCree: Dead Eye! Dealt ${damageBreakdown} damage to ${enemyCount} enemies`);
+        const amounts = applyDeadEye(livingEnemies, targetRow.rowId, playerHeroId);
+        const damageBreakdown = amounts.join('-');
+        showToast(`McCree: Dead Eye! Dealt ${damageBreakdown} damage to ${livingEnemies.length} enemies`);
         setTimeout(() => clearToast(), 2000);
         
     } catch (error) {
         console.error('McCree Dead Eye error:', error);
         showToast('McCree: Dead Eye failed');
         setTimeout(() => clearToast(), 1500);
+        return false;
     }
 }
 

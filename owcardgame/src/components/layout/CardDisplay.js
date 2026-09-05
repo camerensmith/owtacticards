@@ -17,13 +17,18 @@ export default function CardDisplay(props) {
             ? 'vertical'
             : 'horizontal'
     );
-    if (!props.direction) {
-        window.addEventListener('resize', () => {
-            const windowWidth = window.innerWidth;
-            if (windowWidth > 1300) setRowDirection('vertical');
-            else setRowDirection('horizontal');
-        });
-    }
+    // One listener for the life of the component. This used to be registered
+    // during render, so every one of the many re-renders a match causes left
+    // another listener attached — by mid-game a single resize ran hundreds of
+    // them, and none were ever released.
+    const fixedDirection = props.direction;
+    useEffect(() => {
+        if (fixedDirection) return undefined;
+        const onResize = () =>
+            setRowDirection(window.innerWidth > 1300 ? 'vertical' : 'horizontal');
+        window.addEventListener('resize', onResize);
+        return () => window.removeEventListener('resize', onResize);
+    }, [fixedDirection]);
 
     // Variables
     const { rowId, playerNum, listClass, droppableId } = props;
@@ -35,11 +40,6 @@ export default function CardDisplay(props) {
         setOverflown(isOverflown(document.getElementById(`${rowId}-list`)));
     }, [setOverflown, rowId, cards]);
 
-    // Debug droppable registration
-    useEffect(() => {
-        console.log('CardDisplay mounted with droppableId:', droppableId, 'rowId:', rowId);
-    }, [droppableId, rowId]);
-
     // Add error boundary for droppable areas
     if (!droppableId) {
         console.error('CardDisplay: droppableId is required');
@@ -48,7 +48,11 @@ export default function CardDisplay(props) {
 
     return (
         <div id={`${rowId}-carddisplay`} className={`carddisplay-container`}>
-            <Droppable droppableId={droppableId} direction={rowDirection}>
+            <Droppable
+                droppableId={droppableId}
+                direction={rowDirection}
+                isDropDisabled={!!props.faceDown}
+            >
                 {(provided, snapshot) => {
                     if (!provided) {
                         console.error('CardDisplay: Droppable provided is null for', droppableId);
@@ -75,6 +79,7 @@ export default function CardDisplay(props) {
                                             playerNum={playerNum}
                                             rowId={props.rowId}
                                             index={index}
+                                            faceDown={props.faceDown}
                                         />
                                     );
                                 })}

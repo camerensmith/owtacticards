@@ -4,9 +4,10 @@ import { showMessage as showToast, clearMessage as clearToast } from '../engine/
 import { playAudioByKey } from '../../assets/imageImports';
 import { dealDamage } from '../engine/damageBus';
 import { withAIContext } from '../engine/aiContextHelper';
+import effectsBus, { Effects } from '../engine/effectsBus';
 
 // onEnter: Crossfade - Choose between movement or token placement
-export function onEnter({ playerHeroId, rowId }) {
+export async function onEnter({ playerHeroId, rowId }) {
     const playerNum = parseInt(playerHeroId[0]);
     
     // Play enter sound
@@ -29,10 +30,10 @@ export function onEnter({ playerHeroId, rowId }) {
             }));
             if (wounded) {
                 try { playAudioByKey('lucio-ability2'); } catch {}
-                handleTokenAbility(playerHeroId, rowId, playerNum);
+                await handleTokenAbility(playerHeroId, rowId, playerNum);
             } else {
                 try { playAudioByKey('lucio-ability1'); } catch {}
-                handleShuffleAbility(playerHeroId, rowId, playerNum);
+                await handleShuffleAbility(playerHeroId, rowId, playerNum);
             }
         } catch {}
         return;
@@ -198,6 +199,9 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
         // Get all heroes in Lúcio's current row
         const currentRow = window.__ow_getRow?.(rowId);
         if (!currentRow) return;
+
+        // The barrier ripples up and back down the row it protects.
+        try { effectsBus.publish(Effects.soundBarrier(rowId)); } catch {}
         
         // Give 2 shields to all heroes in the row (excluding turrets)
         for (const cardId of currentRow.cardIds) {
@@ -266,14 +270,9 @@ export function lucioTokenHealing(rowId) {
                 // Update health
                 window.__ow_setCardHealth?.(cardId, newHealth);
                 
-                // Show healing effect
-                if (window.effectsBus) {
-                    window.effectsBus.publish({
-                        type: 'overlay:heal',
-                        cardId: cardId,
-                        amount: 1
-                    });
-                }
+                // Show healing effect. This used to go through `window.effectsBus`,
+                // which is never assigned — the publish silently did nothing.
+                try { effectsBus.publish(Effects.showHeal(cardId, 1)); } catch {}
             }
         }
         
@@ -323,14 +322,11 @@ export function lucioTokenShuffle(rowId) {
         
         console.log(`Lúcio shuffle: Shuffled ${shuffledCardIds.length} cards in row ${rowId}`);
         
-        // Show shuffle effect
-        if (window.effectsBus) {
-            window.effectsBus.publish({
-                type: 'fx:shuffle',
-                rowId: rowId,
-                cardIds: shuffledCardIds
-            });
-        }
+        // Show the shuffle on each card that moved. This used to go through
+        // `window.effectsBus`, which is never assigned, so nothing was drawn.
+        shuffledCardIds.forEach((cardId) => {
+            try { effectsBus.publish(Effects.shuffle(cardId)); } catch {}
+        });
         
     } catch (error) {
         console.error('Lúcio token shuffle error:', error);
