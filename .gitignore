@@ -1,6 +1,7 @@
 ﻿# Node
 owcardgame/node_modules/
 owcardgame/build/
+owcardgame/dist/
 owcardgame/.pnp.cjs
 owcardgame/.pnp.loader.mjs
 owcardgame/.cache/

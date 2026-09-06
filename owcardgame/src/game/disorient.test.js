@@ -72,6 +72,15 @@ test('disoriented living card contributes 0 power', () => {
     expect(cardPowerContribution(reaper, 'f')).toBe(2);
 });
 
+test('supercharged heroes contribute +1 power', () => {
+    expect(cardPowerContribution({
+        id: 'orisa',
+        health: 5,
+        power: { f: 1, m: 2, b: 3 },
+        effects: [{ id: 'orisa-supercharged' }],
+    }, 'm')).toBe(3);
+});
+
 test('enemy ability moving a living illusion pops', () => {
     const getCard = (id) => (id === '1mirage'
         ? { id: 'mirage', health: 3 }

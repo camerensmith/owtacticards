@@ -1,4 +1,5 @@
 import { isStructureCard } from './abilityRules';
+import { superchargerPowerBonus } from './orisaRules';
 
 export function isMirage(card) {
     if (!card) return false;
@@ -60,7 +61,7 @@ export function advanceDisorient(effect, { playerTurn } = {}) {
 export function cardPowerContribution(card, rowPosition) {
     if (!card || (card.health || 0) <= 0) return 0;
     if (isDisoriented(card)) return 0;
-    return card.power?.[rowPosition] || 0;
+    return (card.power?.[rowPosition] || 0) + superchargerPowerBonus(card);
 }
 
 export function shouldPopMirageOnMove({ cardId, sourceCardId, getCard } = {}) {

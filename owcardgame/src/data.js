@@ -592,7 +592,7 @@ const data = {
                 m: 2,
                 b: 1,
             },
-            ultimate: 'Supercharger (3): Place Supercharger token on Orisa\'s row - +1 Synergy per Hero in this row.',
+            ultimate: 'Supercharger (3): Place Supercharger token on Orisa\'s row — +1 Power to each Hero in this row (including Orisa). Heroes that enter the row also gain +1 Power.',
             isImplemented: true,
         },
 

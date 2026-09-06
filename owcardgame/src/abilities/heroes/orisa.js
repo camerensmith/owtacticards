@@ -1,6 +1,15 @@
 import { dealDamage } from '../engine/damageBus';
 import { showMessage as showToast, clearMessage as clearToast } from '../engine/targetingBus';
 import { playAudioByKey } from '../../assets/imageImports';
+import {
+    SUPERCHARGER_ROW_ID,
+    SUPERCHARGER_BUFF_ID,
+    createSuperchargerBuff,
+    isSupercharged,
+    rowHasSupercharger,
+    livingHeroIdsForSupercharger,
+    shouldApplySuperchargerOnEnter,
+} from '../../game/orisaRules';
 
 // Protective Barrier - onEnter
 export async function onEnter({ playerHeroId, rowId }) {
@@ -26,6 +35,55 @@ export async function onEnter({ playerHeroId, rowId }) {
     }
 }
 
+function grantSuperchargerBuff(cardId) {
+    const card = window.__ow_getCard?.(cardId);
+    if (!card || !(card.health > 0) || card.id === 'turret') return;
+    if (isSupercharged(card)) return;
+    window.__ow_appendCardEffect?.(cardId, createSuperchargerBuff());
+}
+
+function stripSuperchargerBuff(cardId) {
+    if (!isSupercharged(window.__ow_getCard?.(cardId))) return;
+    window.__ow_removeCardEffect?.(cardId, SUPERCHARGER_BUFF_ID);
+}
+
+/** Charge every living hero currently on the row. */
+export function syncSuperchargerBuffs(rowId) {
+    const row = window.__ow_getRow?.(rowId);
+    if (!rowHasSupercharger(row)) {
+        clearSuperchargerBuffsOnRow(rowId);
+        return;
+    }
+    const living = new Set(livingHeroIdsForSupercharger(row, (id) => window.__ow_getCard?.(id)));
+    for (const cardId of row.cardIds || []) {
+        if (living.has(cardId)) grantSuperchargerBuff(cardId);
+        else stripSuperchargerBuff(cardId);
+    }
+}
+
+export function clearSuperchargerBuffsOnRow(rowId) {
+    const row = window.__ow_getRow?.(rowId);
+    for (const cardId of row?.cardIds || []) {
+        stripSuperchargerBuff(cardId);
+    }
+}
+
+/** Hero entered a Supercharged row — grant the +1 power mark. */
+export function applySuperchargerEnter(cardId, rowId) {
+    if (!shouldApplySuperchargerOnEnter({
+        cardId,
+        rowId,
+        getRow: (id) => window.__ow_getRow?.(id),
+    })) return;
+    grantSuperchargerBuff(cardId);
+}
+
+/** Hero left a board row — drop the mark if they had it. */
+export function applySuperchargerLeave(cardId, rowId) {
+    if (!cardId || !rowId || rowId[0] === 'p') return;
+    stripSuperchargerBuff(cardId);
+}
+
 // Supercharger - Ultimate
 export async function onUltimate({ playerHeroId, rowId, cost }) {
     const playerNum = parseInt(playerHeroId[0]);
@@ -35,10 +93,10 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
     // AI gating: only use if 3+ living heroes in Orisa's current row
     if (window.__ow_aiTriggering || window.__ow_isAITurn) {
         const currentRow = window.__ow_getRow?.(rowId);
-        const livingHeroes = (currentRow?.cardIds || []).filter(cid => {
-            const c = window.__ow_getCard?.(cid);
-            return c && c.health > 0 && c.id !== 'turret';
-        }).length;
+        const livingHeroes = livingHeroIdsForSupercharger(
+            currentRow,
+            (id) => window.__ow_getCard?.(id),
+        ).length;
         if (livingHeroes < 3) {
             showToast('Orisa AI: Skipping Supercharger (need 3+ heroes in row)');
             setTimeout(() => clearToast(), 1500);
@@ -48,61 +106,27 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
     
     // Place Supercharger token on Orisa's current row
     const superchargerEffect = {
-        id: 'orisa-supercharger',
-        type: 'synergyBoost',
-        value: 1, // +1 per hero
+        id: SUPERCHARGER_ROW_ID,
+        type: 'powerBoost',
+        value: 1, // +1 power per hero
         source: 'orisa',
-        sourceCardId: playerHeroId, // CRITICAL: Mark as tethered to Orisa
-        hero: 'orisa', // This will look for 'orisa-icon' in heroIconImages
-        tooltip: 'Supercharger: +1 Synergy per Hero in this row'
+        sourceCardId: playerHeroId,
+        hero: 'orisa',
+        on: 'turnstart',
+        tooltip: 'Supercharger: +1 Power to each Hero in this row'
     };
     
     if (window.__ow_appendRowEffect) {
         window.__ow_appendRowEffect(rowId, 'allyEffects', superchargerEffect);
-        showToast('Orisa: Supercharger deployed!');
+        syncSuperchargerBuffs(rowId);
+        showToast('Orisa: Supercharger deployed — +1 Power per hero!');
         setTimeout(() => clearToast(), 2000);
     }
 }
 
-// Update Supercharger synergy based on living heroes in row
+/** @deprecated name kept for TurnEffectsRunner — syncs power buffs */
 export function updateSuperchargerSynergy(rowId) {
-    const row = window.__ow_getRow?.(rowId);
-    if (!row) return;
-    
-    // Count living heroes in the row (including Nemesis, MEKA, BOB, but not turret)
-    const livingHeroes = row.cardIds.filter(cardId => {
-        const card = window.__ow_getCard?.(cardId);
-        if (!card || card.health <= 0) return false;
-        // Exclude turret
-        if (card.id === 'turret') return false;
-        return true;
-    }).length;
-    
-    // Calculate base synergy from cards
-    let baseSynergy = 0;
-    for (const cardId of row.cardIds) {
-        const card = window.__ow_getCard?.(cardId);
-        if (card && card.health > 0) {
-            // Get synergy based on row position
-            const rowPosition = rowId[1]; // 'f', 'm', or 'b'
-            const synergyKey = `front_synergy`;
-            const middleKey = `middle_synergy`;
-            const backKey = `back_synergy`;
-            
-            // This is a simplified approach - in a real implementation,
-            // we'd need to get the hero data and calculate based on position
-            // For now, we'll add 1 per living hero as the Supercharger boost
-        }
-    }
-    
-    // Apply Supercharger boost: +1 synergy per living hero
-    const superchargerBoost = livingHeroes;
-    
-    // Update the row's synergy (this would need to be implemented in the synergy system)
-    if (window.__ow_updateSynergy) {
-        // This is a placeholder - the actual synergy calculation would need to be more complex
-        console.log(`Orisa Supercharger: Adding ${superchargerBoost} synergy to row ${rowId} (${livingHeroes} living heroes)`);
-    }
+    syncSuperchargerBuffs(rowId);
 }
 
 // Move Protective Barrier when Orisa moves rows
@@ -132,9 +156,10 @@ export function onDeath({ playerHeroId, rowId }) {
     if (window.__ow_removeRowEffect) {
         // Find all rows and remove Orisa effects
         const allRows = ['1f', '1m', '1b', '2f', '2m', '2b'];
-        allRows.forEach(rowId => {
-            window.__ow_removeRowEffect(rowId, 'allyEffects', 'orisa-barrier');
-            window.__ow_removeRowEffect(rowId, 'allyEffects', 'orisa-supercharger');
+        allRows.forEach(rid => {
+            clearSuperchargerBuffsOnRow(rid);
+            window.__ow_removeRowEffect(rid, 'allyEffects', 'orisa-barrier');
+            window.__ow_removeRowEffect(rid, 'allyEffects', SUPERCHARGER_ROW_ID);
         });
     }
 }
@@ -144,5 +169,9 @@ export default {
     onUltimate,
     onDeath,
     onMove,
-    updateSuperchargerSynergy
+    updateSuperchargerSynergy,
+    syncSuperchargerBuffs,
+    applySuperchargerEnter,
+    applySuperchargerLeave,
+    clearSuperchargerBuffsOnRow,
 };

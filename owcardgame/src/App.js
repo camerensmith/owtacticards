@@ -64,6 +64,7 @@ import { playCardIntent } from './presentation/intents';
 import { DragDropContext } from 'react-beautiful-dnd';
 import { openingDealBeats, pickHeroFromRole, matchResultAnnouncerKey, nextRoundFirstPlayer, shouldDrawOnTurnStart } from './game/openingDeal';
 import { runOpeningDealBeats } from './game/runOpeningDeal';
+import { shouldBlockPreDealActions } from './game/matchStartGate';
 import { handCardIdsToDiscard } from './game/roundCleanup';
 import { shiftDrawQueue } from './game/drawQueue';
 import { playClip, warmGameEventAudio } from './abilities/engine/soundController';
@@ -416,10 +417,16 @@ export function reducer(gameState, action) {
             newFinishRowCardIds.splice(finishIndex, 0, targetCardId);
 
             // Check for Bastion token damage when moving to any row (not hand)
+            if (startRowId[0] !== 'p' && startRowId !== finishRowId) {
+                setTimeout(() => {
+                    abilitiesIndex.orisa?.applySuperchargerLeave?.(targetCardId, startRowId);
+                }, 0);
+            }
             if (finishRowId[0] !== 'p') {
                 setTimeout(() => {
                     abilitiesIndex.bastion?.applyTokenEnter?.(targetCardId, finishRowId);
                     abilitiesIndex.sylvain?.applyTripwireEnter?.(targetCardId, finishRowId);
+                    abilitiesIndex.orisa?.applySuperchargerEnter?.(targetCardId, finishRowId);
                 }, 0);
             }
 
@@ -438,7 +445,8 @@ export function reducer(gameState, action) {
             // Check if Orisa is moving and handle her effects
             const heroId = targetCardId.slice(1);
             if (heroId === 'orisa' && startRowId !== finishRowId && startRowId[0] !== 'p') {
-                // Remove Supercharger token from the old row
+                // Supercharger stays on the row she cast it — when she leaves, clear it.
+                abilitiesIndex.orisa?.clearSuperchargerBuffsOnRow?.(startRowId);
                 if (window.__ow_removeRowEffect) {
                     window.__ow_removeRowEffect(startRowId, 'allyEffects', 'orisa-supercharger');
                 }
@@ -2118,6 +2126,14 @@ export default function App() {
         window.__ow_practiceMode = isPractice(mode);
         setBattlefieldMap(pickBattlefieldMap());
         setShowMapTitle(true);
+        // Lock before the title finishes — otherwise an AI-first seat can take a
+        // full turn (and force a human turn-2 draw) with no shuffle yet.
+        openingDealRef.current = true;
+        theaterLockedRef.current = true;
+        setTheaterLocked(true);
+        matchStartedRef.current = false;
+        window.__ow_lastAITrigger = null;
+        window.__ow_lastDraw = null;
         setTurnState({
             turnCount: 1,
             playerTurn: isPractice(mode) ? 1 : getRandInt(1, 3),
@@ -2136,7 +2152,13 @@ export default function App() {
         warmGameEventAudio();
         preloadHeroCardImages();
         // Practice starts empty; you add exactly the cards you want to test.
-        if (!isPractice(matchMode)) initializeGame({ includeInitiating: true, round: 1 });
+        if (!isPractice(matchMode)) {
+            initializeGame({ includeInitiating: true, round: 1 });
+        } else {
+            openingDealRef.current = false;
+            theaterLockedRef.current = false;
+            setTheaterLocked(false);
+        }
     };
 
     const handleMapTitleComplete = () => {
@@ -2315,7 +2337,11 @@ export default function App() {
 
         if (screen !== SCREENS.MATCH) return;
         if (isPractice(matchMode)) return; // sandbox: the human plays both sides
-        if (openingDealRef.current) return;
+        if (shouldBlockPreDealActions({
+            openingDeal: openingDealRef.current,
+            theaterLocked: theaterLockedRef.current,
+            showMapTitle,
+        })) return;
 
         if (currentPlayer === 2 && !turnState.player2Passed && !isAIThinking) {
             // Prevent multiple AI triggers within the same Player 2 turn
@@ -2327,7 +2353,7 @@ export default function App() {
                 }, 100);
             }
         }
-    }, [screen, matchMode, turnState.turnCount, turnState.playerTurn, turnState.player2Passed, isAIThinking]);
+    }, [screen, matchMode, turnState.turnCount, turnState.playerTurn, turnState.player2Passed, isAIThinking, showMapTitle]);
 
     // Note: AI turn detection is now handled in the main useEffect above
 
