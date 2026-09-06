@@ -18,6 +18,8 @@ export function onEnter({ playerHeroId, rowId }) {
         tooltip: 'Spike Guard: When directly targeted, attacker takes 1 fixed damage',
         visual: 'hazard-icon'
     });
+
+    try { effectsBus.publish(Effects.spikeBurst(playerHeroId)); } catch {}
 }
 
 // Downpour (3): Deal 1 damage to all enemies ignoring shields

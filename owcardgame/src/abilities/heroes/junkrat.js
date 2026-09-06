@@ -50,6 +50,9 @@ subscribeToDamage(trackDamageSource);
 
 // onDeath: Total Mayhem - deal 2 damage to killer, then 1 damage to adjacent enemies
 export function onDeath({ playerHeroId, rowId }) {
+    // Card-centered Total Mayhem blast while the dying card still has an anchor.
+    try { effectsBus.publish(Effects.shockwave(playerHeroId)); } catch {}
+
     try {
         const dying = window.__ow_getCard?.(playerHeroId);
         if (isDisoriented(dying)) {

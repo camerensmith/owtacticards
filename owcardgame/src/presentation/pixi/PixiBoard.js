@@ -49,6 +49,7 @@ import { createHackFx } from './hackFx';
 import { createCatnapFx } from './catnapFx';
 import { createVegaFx } from './vegaFx';
 import { createMantisFx } from './mantisFx';
+import { createSpikeBurstFx } from './spikeBurstFx';
 
 /** Transparent fly/preview overlay. Not a second board. HTML PlayerHalf owns cards. */
 const PixiBoard = forwardRef(function PixiBoard(_props, ref) {
@@ -102,6 +103,7 @@ const PixiBoard = forwardRef(function PixiBoard(_props, ref) {
     const catnapRef = useRef(null);
     const vegaRef = useRef(null);
     const mantisRef = useRef(null);
+    const spikeBurstRef = useRef(null);
     const appRef = useRef(null);
     const [failed, setFailed] = useState(false);
 
@@ -189,6 +191,7 @@ const PixiBoard = forwardRef(function PixiBoard(_props, ref) {
                 catnapRef.current = createCatnapFx(app);
                 vegaRef.current = createVegaFx(app);
                 mantisRef.current = createMantisFx(app);
+                spikeBurstRef.current = createSpikeBurstFx(app);
                 appRef.current = app;
             } catch (err) {
                 console.error('Pixi overlay failed to load', err);
@@ -208,6 +211,8 @@ const PixiBoard = forwardRef(function PixiBoard(_props, ref) {
             vegaRef.current = null;
             try { mantisRef.current?.destroy(); } catch {}
             mantisRef.current = null;
+            try { spikeBurstRef.current?.destroy(); } catch {}
+            spikeBurstRef.current = null;
             try { lifeweaverRef.current?.destroy(); } catch {}
             lifeweaverRef.current = null;
             try { mercyRef.current?.destroy(); } catch {}

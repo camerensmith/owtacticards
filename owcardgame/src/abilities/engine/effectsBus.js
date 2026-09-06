@@ -161,6 +161,7 @@ export const Effects = {
     }),
     nanoBoost: (rowId) => ({ type: 'fx:nanoBoost', payload: { rowId } }),
     shockwave: (cardId) => ({ type: 'fx:shockwave', payload: { cardId } }),
+    spikeBurst: (cardId) => ({ type: 'fx:spikeBurst', payload: { cardId } }),
     bioticField: (rowId) => ({ type: 'fx:bioticField', payload: { rowId } }),
     crosshair: (cardId, on = true) => ({ type: 'fx:crosshair', payload: { cardId, on } }),
     crosshairClear: () => ({ type: 'fx:crosshairClear', payload: {} }),

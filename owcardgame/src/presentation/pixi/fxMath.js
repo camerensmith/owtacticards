@@ -10,6 +10,8 @@ import {
     PUSH,
     CRYSTAL,
     CRYSTAL_TOTAL_MS,
+    SPIKE_BURST,
+    SPIKE_BURST_TOTAL_MS,
     RIPTIRE,
     RIPTIRE_TOTAL_MS,
     BARRIER,
@@ -109,6 +111,8 @@ export {
     PUSH,
     CRYSTAL,
     CRYSTAL_TOTAL_MS,
+    SPIKE_BURST,
+    SPIKE_BURST_TOTAL_MS,
     RIPTIRE,
     RIPTIRE_TOTAL_MS,
     BARRIER,
@@ -619,6 +623,87 @@ export function crystalSample(elapsedMs, index, area = {}, cfg = CRYSTAL) {
         tilt: (shardSeed(index, 2) - 0.5) * 0.5,
         rot: (shardSeed(index, 4) - 0.5) * 0.6 + t * spin,
         t,
+    };
+}
+
+/* ---------------------------------------------------------------------------
+ * Hazard deploy spike burst. Rock/crystal triangles erupt from the card edge.
+ * ------------------------------------------------------------------------- */
+
+/** Timeline: grow out from the silhouette, brief hold, fade. */
+export function spikeBurstSample(elapsedMs, cfg = SPIKE_BURST) {
+    const ms = Math.max(0, Number(elapsedMs) || 0);
+    const growMs = cfg.growMs || SPIKE_BURST.growMs;
+    const holdMs = cfg.holdMs || SPIKE_BURST.holdMs;
+    const fadeMs = cfg.fadeMs || SPIKE_BURST.fadeMs;
+    const total = growMs + holdMs + fadeMs;
+
+    if (ms >= total) {
+        return { grow: 1, alpha: 0, done: true };
+    }
+    if (ms < growMs) {
+        return { grow: easeOut(clamp01(ms / growMs)), alpha: 1, done: false };
+    }
+    if (ms < growMs + holdMs) {
+        return { grow: 1, alpha: 1, done: false };
+    }
+    const fadeT = clamp01((ms - growMs - holdMs) / Math.max(1, fadeMs));
+    return { grow: 1, alpha: 1 - fadeT, done: false };
+}
+
+/**
+ * Perimeter bases for spikes around a card rect (left/top/width/height).
+ * Each spike has an outward unit normal from the card centre through the edge.
+ */
+export function spikeBurstLayout(rect = {}, count = SPIKE_BURST.count) {
+    const n = Math.max(1, Number(count) || SPIKE_BURST.count);
+    const left = Number(rect.left) || 0;
+    const top = Number(rect.top) || 0;
+    const width = Math.max(1, Number(rect.width) || 1);
+    const height = Math.max(1, Number(rect.height) || 1);
+    const cx = left + width / 2;
+    const cy = top + height / 2;
+    const hw = width / 2;
+    const hh = height / 2;
+    const spikes = [];
+
+    for (let i = 0; i < n; i += 1) {
+        const angle = (i / n) * Math.PI * 2 - Math.PI / 2;
+        const dx = Math.cos(angle);
+        const dy = Math.sin(angle);
+        const tx = Math.abs(dx) < 1e-6 ? Infinity : hw / Math.abs(dx);
+        const ty = Math.abs(dy) < 1e-6 ? Infinity : hh / Math.abs(dy);
+        const tEdge = Math.min(tx, ty);
+        const baseX = cx + dx * tEdge;
+        const baseY = cy + dy * tEdge;
+        spikes.push({
+            baseX,
+            baseY,
+            nx: dx,
+            ny: dy,
+            angle,
+            seed: shardSeed(i, 41),
+        });
+    }
+    return spikes;
+}
+
+/** Triangle vertices for one spike at the current grow fraction. */
+export function spikeBurstTriangle(spike, grow = 1, rect = {}, cfg = SPIKE_BURST) {
+    const shortSide = Math.min(Number(rect.width) || 80, Number(rect.height) || 80);
+    const len = shortSide * (cfg.lengthScale || SPIKE_BURST.lengthScale)
+        * (0.72 + 0.28 * (spike.seed ?? 0.5))
+        * Math.max(0, grow);
+    const wid = shortSide * (cfg.widthScale || SPIKE_BURST.widthScale)
+        * (0.65 + 0.35 * (spike.seed ?? 0.5));
+    const px = -spike.ny;
+    const py = spike.nx;
+    const tipX = spike.baseX + spike.nx * len;
+    const tipY = spike.baseY + spike.ny * len;
+    return {
+        tip: { x: tipX, y: tipY },
+        left: { x: spike.baseX + px * wid * 0.5, y: spike.baseY + py * wid * 0.5 },
+        right: { x: spike.baseX - px * wid * 0.5, y: spike.baseY - py * wid * 0.5 },
     };
 }
 

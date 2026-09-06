@@ -15,6 +15,10 @@ import { assessThreats, getKillPriority, assessAllyProtection, recommendDefensiv
 import { getCardForAi } from '../game/rosterRules';
 import { isDisoriented } from '../game/disorient';
 import { canAutoPlayHandDva, isSuitedUp, shouldKeepSuitedUpLock } from '../game/dvaSuitedUp';
+import {
+    shouldAiUseGenjiDragonBlade,
+    pickGenjiDragonBladeTarget,
+} from '../game/genjiRules';
 import data from '../data';
 
 function aiCard(cardId) {
@@ -174,7 +178,7 @@ class AIGameIntegration {
                     const boardHasSpace = rows.some(n => n < 4);
                     if (handSize > 0 && boardHasSpace) {
                         console.log('AI performed <2 actions; attempting an extra tactical play');
-                        await this.aiController.handleAITurn();
+                        await this.aiController.handleAITurn({ countAsTurn: false });
                         // One more chance to ult after extra play
                         await this.tryUseUltimateThisTurn();
                     }
@@ -498,7 +502,7 @@ class AIGameIntegration {
 
             // === HERO-SPECIFIC ADVANCED TARGETING ===
 
-            // GENJI: Target damaged high-power heroes OR non-ulted threats
+            // GENJI: Dragon Blade — damaged enemies only
             if (heroIdContext === 'genji') {
                 return this.selectGenjiTarget(targets);
             }
@@ -2515,21 +2519,24 @@ class AIGameIntegration {
                 }
             }
 
-            // GENJI Dragonblade: Use when enemies are clustered and weakened
+            // GENJI Dragon Blade: only if a damaged enemy exists (ult does nothing otherwise)
             else if (heroId === 'genji') {
-                const weakenedEnemies = [];
-                ['1f', '1m', '1b'].forEach(rowId => {
+                const enemyCards = [];
+                ['1f', '1m', '1b'].forEach((rowId) => {
                     const rowData = window.__ow_getRow?.(rowId);
-                    rowData?.cardIds?.forEach(cardId => {
+                    rowData?.cardIds?.forEach((cardId) => {
                         const card = aiCard(cardId);
-                        if (card && card.health <= 3) weakenedEnemies.push(card);
+                        if (!card || !(card.health > 0)) return;
+                        const maxHealth = window.__ow_getMaxHealth?.(cardId) ?? card.maxHealth;
+                        enemyCards.push({ ...card, maxHealth });
                     });
                 });
-
-                if (weakenedEnemies.length >= 2 || enemyDenseRow.count >= 3) {
-                    shouldFire = true;
-                    console.log(`Genji Dragonblade: ${weakenedEnemies.length} weakened enemies, ${enemyDenseRow.count} in dense row`);
-                }
+                shouldFire = shouldAiUseGenjiDragonBlade(enemyCards);
+                console.log(
+                    shouldFire
+                        ? `Genji Dragonblade: damaged target available among ${enemyCards.length} enemies`
+                        : 'Genji Dragonblade: holding — no damaged enemies'
+                );
             }
 
             // REAPER Death Blossom: Target dense enemy rows
@@ -2871,6 +2878,24 @@ class AIGameIntegration {
                 }
             }
 
+            // Dragon Blade is a hard miss on full-HP targets — never let fallbacks override.
+            if (heroId === 'genji') {
+                const enemyCards = [];
+                ['1f', '1m', '1b'].forEach((rowId) => {
+                    const rowData = window.__ow_getRow?.(rowId);
+                    rowData?.cardIds?.forEach((cardId) => {
+                        const card = aiCard(cardId);
+                        if (!card || !(card.health > 0)) return;
+                        const maxHealth = window.__ow_getMaxHealth?.(cardId) ?? card.maxHealth;
+                        enemyCards.push({ ...card, maxHealth });
+                    });
+                });
+                if (!shouldAiUseGenjiDragonBlade(enemyCards)) {
+                    shouldFire = false;
+                    console.log('Genji Dragonblade: blocked — no damaged enemies (fallback ignored)');
+                }
+            }
+
             if (!shouldFire) {
                 console.log(`❌ Ultimate NOT fired for ${heroId}: insufficient value/setup`);
                 console.log(`   Type: ${chosenIntent.isDamage ? 'Damage' : chosenIntent.isBuff ? 'Buff' : chosenIntent.isHeal ? 'Heal' : 'Unknown'}`);
@@ -2941,30 +2966,20 @@ class AIGameIntegration {
 
     // === HERO-SPECIFIC TARGETING FUNCTIONS ===
 
-    // GENJI: Target damaged high-power heroes OR non-ulted threats
+    // GENJI: Dragon Blade — only damaged enemies are legal
     selectGenjiTarget(targets) {
-        console.log('Genji targeting: Looking for damaged high-power OR non-ulted enemies...');
-
-        const scored = targets.map(t => {
-            const card = aiCard(t.cardId);
-            if (!card) return { target: t, score: 0 };
-
-            const heroId = t.cardId.slice(1);
-            const heroData = data.heroes?.[heroId];
-            const power = heroData?.[`${t.rowId[1]}_power`] || 0;
-            const isDamaged = card.health < card.maxHealth;
-            const hasNotUlted = !card.ultimateUsed;
-
-            let score = power * 10;
-            if (isDamaged) score += 40; // Prefer damaged targets
-            if (hasNotUlted) score += 30; // Prefer non-ulted threats
-
-            console.log(`  ${t.cardId}: power=${power}, damaged=${isDamaged}, noUlt=${hasNotUlted}, score=${score}`);
-            return { target: t, score };
-        });
-
-        scored.sort((a, b) => b.score - a.score);
-        return scored[0]?.target || targets[0];
+        console.log('Genji targeting: Looking for damaged enemies only...');
+        const picked = pickGenjiDragonBladeTarget(
+            targets,
+            (cardId) => aiCard(cardId),
+            (cardId) => window.__ow_getMaxHealth?.(cardId),
+        );
+        if (!picked) {
+            console.log('  No damaged targets — skip Genji pick');
+            return null;
+        }
+        console.log(`  Picked ${picked.cardId}`);
+        return picked;
     }
 
     // SOLDIER 76: Pick off weakened/killable targets

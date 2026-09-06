@@ -86,6 +86,15 @@ describe('Total Mayhem', () => {
         expect(impacts).toEqual(['2reaper', '2ana', '2mercy']);
     });
 
+    test('always plays a death shockwave on Junkrat first', () => {
+        setupBoard();
+
+        onDeath({ playerHeroId: '1junkrat', rowId: '1f' });
+
+        const first = effectsBus.publish.mock.calls[0][0];
+        expect(first).toEqual({ type: 'fx:shockwave', payload: { cardId: '1junkrat' } });
+    });
+
     // Only blows aimed at Junkrat count, or damage he deals on his way out
     // would rewrite who gets blamed for killing him.
     test('damage Junkrat deals to others does not become the killer', () => {

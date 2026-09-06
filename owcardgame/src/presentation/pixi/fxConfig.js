@@ -175,6 +175,21 @@ export const CRYSTAL = {
 
 export const CRYSTAL_TOTAL_MS = CRYSTAL.staggerMs * (CRYSTAL.count - 1) + CRYSTAL.fallMs;
 
+/** Hazard deploy: rock/crystal spikes erupting from the card edges. */
+export const SPIKE_BURST = {
+    count: 10,
+    growMs: 280,
+    holdMs: 90,
+    fadeMs: 220,
+    /** Tip length as a fraction of the card's shorter side. */
+    lengthScale: 0.48,
+    /** Base width as a fraction of the card's shorter side. */
+    widthScale: 0.16,
+};
+
+export const SPIKE_BURST_TOTAL_MS =
+    SPIKE_BURST.growMs + SPIKE_BURST.holdMs + SPIKE_BURST.fadeMs;
+
 export const RIPTIRE = {
     windupMs: 0,
     travelMs: 2250,

@@ -9,6 +9,7 @@ import { selectCardTarget, selectRowTarget } from '../abilities/engine/targeting
 import { isRedeployLocked } from '../game/rules';
 import { showMessage as showToast, clearMessage as clearToast } from '../abilities/engine/targetingBus';
 import { determineWinCondition, determineCardPlayCount, shouldHoldCard, WIN_CONDITIONS } from './strategicAnalysis';
+import { shouldSkipAiControllerTurn } from './aiTurnGate';
 import { determineBestRow } from './positioningIntelligence';
 import { selectBestAction } from './tacticalPlanner';
 import { evaluateBoard } from './boardEvaluator';
@@ -91,19 +92,14 @@ class AIController {
         console.log(`AI Controller initialized: ${this.personality} personality`);
     }
 
-    // Main AI turn handler
-    async handleAITurn() {
+    // Main AI turn handler. countAsTurn=false for nested re-plans in the same seat turn.
+    async handleAITurn({ countAsTurn = true } = {}) {
         if (!this.isActive || !this.gameState) return;
 
-        // Enforce global turn cap: prefer gameState counters if present
         const maxTotalTurns = this.gameState?.maxTurns || 18;
         const currentTurn = this.gameState?.currentTurn || null; // expected 1-based
-        if (typeof currentTurn === 'number' && currentTurn > maxTotalTurns) {
+        if (shouldSkipAiControllerTurn({ currentTurn, maxTurns: maxTotalTurns })) {
             console.log(`Max turns reached (${maxTotalTurns}). Skipping AI turn.`);
-            return;
-        }
-        if (this._aiTurnsTaken >= 9) {
-            console.log('AI has already taken 7 turns. Skipping.');
             return;
         }
 
@@ -166,7 +162,9 @@ class AIController {
         }
 
         console.log(`AI completed ${playsDone} action(s) this turn.`);
-        this._aiTurnsTaken += 1;
+        if (countAsTurn) {
+            this._aiTurnsTaken += 1;
+        }
         
         // Clear cache after actions complete
         this._turnCache = null;
