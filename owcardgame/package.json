@@ -60,13 +60,16 @@
     "productName": "Overwatch Card Game",
     "copyright": "Copyright © CamSmith",
     "directories": {
-      "output": "dist"
+      "output": "dist",
+      "buildResources": "electron/builder-resources"
     },
     "extends": null,
     "files": [
       "build/**/*",
       "electron/**/*",
-      "package.json"
+      "package.json",
+      "!electron/builder-resources/**/*",
+      "!**/node_modules/**/*"
     ],
     "extraMetadata": {
       "main": "electron/main.js"

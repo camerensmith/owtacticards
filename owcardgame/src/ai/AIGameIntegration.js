@@ -14,6 +14,8 @@ import { getAbilityMetadata, abilityMetadata } from './abilityMetadata';
 import { assessThreats, getKillPriority, assessAllyProtection, recommendDefensiveAction } from './threatAssessment';
 import { getCardForAi } from '../game/rosterRules';
 import { isDisoriented } from '../game/disorient';
+import { parseUltimateCost, canDuplicateUltimate } from '../game/abilityRules';
+import { shouldSelfDestruct } from './ultimateDecisions';
 import { canAutoPlayHandDva, isSuitedUp, shouldKeepSuitedUpLock } from '../game/dvaSuitedUp';
 import {
     shouldAiUseGenjiDragonBlade,
@@ -2255,6 +2257,11 @@ class AIGameIntegration {
             console.log(`window.__ow_isUltimateReady exists: ${typeof window.__ow_isUltimateReady === 'function'}`);
 
             const ready = allies.filter(a => {
+                if (a.cardId.slice(1) === 'echo' && !canDuplicateUltimate(window.__ow_getLastUltimateUsed?.()).ok) return false;
+                if (a.cardId.slice(1) === 'dvameka' && !shouldSelfDestruct({
+                    cardId: a.cardId, getRow: window.__ow_getRow, getCard: window.__ow_getCard,
+                    isSlotInvulnerable: window.__ow_isSlotInvulnerable,
+                })) return false;
                 if (isDisoriented(window.__ow_getCard?.(a.cardId))) {
                     console.log(`✗ Ultimate locked (Disoriented) for ${a.cardId}`);
                     return false;
@@ -2679,34 +2686,7 @@ class AIGameIntegration {
                 }
             }
 
-            // D.VA+MEKA Self Destruct: Use when enemies are clustered in opposing row
-            else if (heroId === 'dvameka') {
-                const enemyPlayer = 1; // AI is always player 2
-                const mekaRow = ['2f', '2m', '2b'].find(r => window.__ow_getRow?.(r)?.cardIds?.includes(chosen.cardId));
-                if (mekaRow) {
-                    const opposingRowId = `1${mekaRow[1]}`; // Same row position, enemy side
-                    const opposingRow = window.__ow_getRow?.(opposingRowId);
-                    const enemyCount = opposingRow?.cardIds?.filter(id => {
-                        const card = aiCard(id);
-                        return card && card.health > 0;
-                    }).length || 0;
-                    
-                    if (enemyCount >= 2) {
-                        shouldFire = true;
-                        console.log(`D.Va+MEKA Self Destruct: ${enemyCount} enemies in opposing row - good explosion target`);
-                    } else {
-                        // Also fire if our row has multiple enemies (damage both sides)
-                        const mekaRowCount = (window.__ow_getRow?.(mekaRow)?.cardIds?.filter(id => {
-                            const card = aiCard(id);
-                            return card && card.health > 0;
-                        }).length || 0);
-                        if (mekaRowCount >= 2 || enemyCount >= 1) {
-                            shouldFire = true;
-                            console.log(`D.Va+MEKA Self Destruct: Row has ${mekaRowCount} allies, ${enemyCount} enemies - can trade`);
-                        }
-                    }
-                }
-            }
+            // Self Destruct's board-wide power check is applied after all fallbacks.
 
             // BOB Smash: X damage to one opposite-row enemy (cost 2)
             else if (heroId === 'bob') {
@@ -2876,6 +2856,26 @@ class AIGameIntegration {
                         console.log(`Behind on board (${allyCount} vs ${enemyCount}) - firing ultimate aggressively`);
                     }
                 }
+            }
+
+            // Hard requirements also cover the missing-readiness-helper fallback.
+            if (heroId === 'echo' && !canDuplicateUltimate(window.__ow_getLastUltimateUsed?.()).ok) shouldFire = false;
+            if (heroId === 'dvameka') {
+                shouldFire = shouldSelfDestruct({
+                    cardId: chosen.cardId, getRow: window.__ow_getRow, getCard: window.__ow_getCard,
+                    isSlotInvulnerable: window.__ow_isSlotInvulnerable,
+                });
+            }
+
+            // Barrage spends its own row's remaining synergy on damage. Apply this
+            // after aggressive fallbacks so they cannot trigger a zero-damage ultimate.
+            if (heroId === 'pharah') {
+                const rowSynergy = window.__ow_getRow?.(chosen.rowId)?.synergy || 0;
+                const cost = parseUltimateCost(data.heroes.pharah.ultimate, { heroId, currentSynergy: rowSynergy });
+                const spareSynergy = rowSynergy - cost;
+                // Prefer 2+ damage; with only 1, take the opportunity 25% of the time.
+                shouldFire = enemyDenseRow.count > 0 && spareSynergy >= 1 &&
+                    (spareSynergy >= 2 || this.aiController.rng.next() < 0.25);
             }
 
             // Dragon Blade is a hard miss on full-HP targets — never let fallbacks override.

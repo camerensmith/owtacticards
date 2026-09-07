@@ -2,6 +2,8 @@ import { firstEmptySlot, isRedeployLocked, occupiedCount } from '../../game/rule
 import { playCardIntent } from '../../presentation/intents';
 import { disguiseMirageForAi } from '../../game/rosterRules';
 import GameAdapter from './GameAdapter';
+import { canDuplicateUltimate } from '../../game/abilityRules';
+import { shouldSelfDestruct } from '../ultimateDecisions';
 
 export default class BrowserGameAdapter extends GameAdapter {
     constructor(gameState = null) {
@@ -97,6 +99,12 @@ export default class BrowserGameAdapter extends GameAdapter {
 
     async useUltimate(cardId, target) {
         if (typeof window !== 'undefined' && window.__ow_useUltimate) {
+            const heroId = cardId.slice(1);
+            if (heroId === 'echo' && !canDuplicateUltimate(window.__ow_getLastUltimateUsed?.()).ok) return false;
+            if (heroId === 'dvameka' && !shouldSelfDestruct({
+                cardId, getRow: window.__ow_getRow, getCard: window.__ow_getCard,
+                isSlotInvulnerable: window.__ow_isSlotInvulnerable,
+            })) return false;
             return await window.__ow_useUltimate(cardId, target);
         }
         // Gracefully succeed if no bridge exists yet

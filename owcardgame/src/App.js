@@ -42,6 +42,7 @@ import { popMirage } from './abilities/heroes/mirage';
 import { seekerHitsEntering, chainswordApplies, chainswordCycloId, findBoardRowId, placeCardOnRow } from './game/rosterRules';
 import effectsBus, { Effects } from './abilities/engine/effectsBus';
 import { SCREENS, MATCH_MODE, isPractice } from './game/screens';
+import { applyRoundRecord, applyMatchRecord } from './game/playerProfile';
 import { aiOwnsCurrentDecision, aiOwnsDecision } from './game/aiControl';
 import { preloadHeroCardImages } from './assets/imagePreload';
 import {
@@ -2618,6 +2619,10 @@ export default function App() {
                 alert(`Player ${winningPlayer} wins the round!`);
             }
 
+            if (!isPractice(matchMode) && (winningPlayer === 1 || winningPlayer === 2)) {
+                applyRoundRecord(winningPlayer).catch(() => {});
+            }
+
             // Reset ultimate usage for new round
             dispatch({
                 type: ACTIONS.RESET_ULTIMATE_USAGE
@@ -2651,6 +2656,9 @@ export default function App() {
             const announceMatchResult = (winner) => {
                 const key = matchResultAnnouncerKey(winner);
                 if (key) playClip(key);
+                if (!isPractice(matchMode) && (winner === 1 || winner === 2)) {
+                    applyMatchRecord(winner).catch(() => {});
+                }
             };
             if (player1Wins >= 2 || player2Wins >= 2) {
                 const gameWinner = player1Wins >= 2 ? 1 : 2;

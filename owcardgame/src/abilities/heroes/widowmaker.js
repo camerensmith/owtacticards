@@ -3,6 +3,7 @@ import { selectCardTarget } from '../engine/targeting';
 import { showMessage as showToast, clearMessage as clearToast } from '../engine/targetingBus';
 import { playAudioByKey } from '../../assets/imageImports';
 import effectsBus, { Effects } from '../engine/effectsBus';
+import { rankWidowmakerTargets } from '../../ai/ultimateDecisions';
 
 export async function onEnter({ playerHeroId, rowId }) {
     const playerNum = parseInt(playerHeroId[0]);
@@ -90,7 +91,7 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
     const enemyPlayer = playerNum === 1 ? 2 : 1;
     const opposingRowId = `${enemyPlayer}${widowmakerPosition}`;
     
-    // For AI, automatically select a random enemy in the opposing row
+    // For AI, prioritize unspent ultimates, then higher current HP.
     if (window.__ow_aiTriggering || window.__ow_isAITurn) {
         const opposingRow = window.__ow_getRow?.(opposingRowId);
         if (!opposingRow || !opposingRow.cardIds || opposingRow.cardIds.length === 0) {
@@ -111,12 +112,11 @@ export async function onUltimate({ playerHeroId, rowId, cost }) {
             return;
         }
         
-        // Select random valid target
-        const randomTargetId = validTargets[Math.floor(Math.random() * validTargets.length)];
+        const targetId = rankWidowmakerTargets(validTargets, window.__ow_getCard, window.__ow_hasUsedUltimate)[0];
         
         // Deal 999 damage to defeat the target
-        try { effectsBus.publish(Effects.bloodSpray(randomTargetId)); } catch {}
-        window.__ow_dealDamage?.(randomTargetId, opposingRowId, 999);
+        try { effectsBus.publish(Effects.bloodSpray(targetId)); } catch {}
+        window.__ow_dealDamage?.(targetId, opposingRowId, 999);
         
         try {
             playAudioByKey('widowmaker-ultimate-resolve');

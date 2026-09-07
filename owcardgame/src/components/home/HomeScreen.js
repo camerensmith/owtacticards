@@ -2,6 +2,14 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import data from 'data';
 import { otherImages, heroCardImages } from '../../assets/imageImports';
 import { AI_PERSONALITY } from '../../ai/AIController';
+import {
+    DEFAULT_USERNAME,
+    createDefaultProfile,
+    loadPlayerProfile,
+    savePlayerProfile,
+    resizeImageToDataUrl,
+    subscribePlayerProfile,
+} from '../../game/playerProfile';
 import './HomeScreen.css';
 
 // Kept in step with package.json manually; CRA cannot import outside src/.
@@ -30,10 +38,10 @@ const ROLE_ICONS = {
 
 const ROLE_FILTERS = [
     { value: 'all', label: 'All' },
-    { value: 'offense', label: 'Offense' },
-    { value: 'defense', label: 'Defense' },
-    { value: 'tank', label: 'Tank' },
-    { value: 'support', label: 'Support' },
+    { value: 'offense', label: 'O' },
+    { value: 'defense', label: 'D' },
+    { value: 'tank', label: 'T' },
+    { value: 'support', label: 'S' },
 ];
 
 /** Playable roster: special cards (BOB, MEKA, turrets…) are summoned, never drawn. */
@@ -58,13 +66,37 @@ export default function HomeScreen({
 }) {
     const [activePanel, setActivePanel] = useState('play');
     const [roleFilter, setRoleFilter] = useState('all');
+    const [profile, setProfile] = useState(createDefaultProfile);
+    const [editingName, setEditingName] = useState(false);
+    const [nameDraft, setNameDraft] = useState(DEFAULT_USERNAME);
     const audioRef = useRef(null);
+    const avatarInputRef = useRef(null);
+    const nameInputRef = useRef(null);
 
     const roster = useMemo(getRoster, []);
     const visibleHeroes = useMemo(
         () => (roleFilter === 'all' ? roster : roster.filter((hero) => hero.role === roleFilter)),
         [roster, roleFilter]
     );
+
+    useEffect(() => {
+        let alive = true;
+        const unsub = subscribePlayerProfile((next) => {
+            if (alive) setProfile(next);
+        });
+        loadPlayerProfile().catch(() => {});
+        return () => {
+            alive = false;
+            unsub();
+        };
+    }, []);
+
+    useEffect(() => {
+        if (editingName && nameInputRef.current) {
+            nameInputRef.current.focus();
+            nameInputRef.current.select();
+        }
+    }, [editingName]);
 
     // Menu owns its own theme playback; TitleCard's AudioPlayer takes over in a match.
     useEffect(() => {
@@ -77,6 +109,29 @@ export default function HomeScreen({
             audio.pause();
         }
     }, [playAudio]);
+
+    const commitUsername = () => {
+        setEditingName(false);
+        const nextName = (nameDraft || '').trim().slice(0, 24) || profile.username;
+        if (nextName === profile.username) return;
+        const next = { ...profile, username: nextName };
+        setProfile(next);
+        savePlayerProfile(next).catch(() => {});
+    };
+
+    const onAvatarFile = async (event) => {
+        const file = event.target.files?.[0];
+        event.target.value = '';
+        if (!file) return;
+        try {
+            const avatarDataUrl = await resizeImageToDataUrl(file);
+            const next = { ...profile, avatarDataUrl };
+            setProfile(next);
+            await savePlayerProfile(next);
+        } catch {
+            // Ignore bad files
+        }
+    };
 
     return (
         <div className='home-screen'>
@@ -112,10 +167,72 @@ export default function HomeScreen({
             <div className='hs-body'>
                 <nav className='hs-rail'>
                     <div className='hs-rail-header'>
-                        <div className='hs-avatar'>
-                            <i className='fas fa-shield-alt' />
-                        </div>
-                        <h2 className='hs-rail-title'>Operative Hub</h2>
+                        <button
+                            type='button'
+                            className='hs-avatar'
+                            onClick={() => avatarInputRef.current?.click()}
+                            title='Change avatar'
+                            aria-label='Change avatar'
+                        >
+                            {profile.avatarDataUrl ? (
+                                <img src={profile.avatarDataUrl} alt='' />
+                            ) : (
+                                <i className='fas fa-shield-alt' />
+                            )}
+                        </button>
+                        <input
+                            ref={avatarInputRef}
+                            type='file'
+                            accept='image/*'
+                            className='hs-avatar-input'
+                            onChange={onAvatarFile}
+                            tabIndex={-1}
+                        />
+
+                        {editingName ? (
+                            <input
+                                ref={nameInputRef}
+                                className='hs-rail-title-input'
+                                value={nameDraft}
+                                maxLength={24}
+                                aria-label='Username'
+                                onChange={(e) => setNameDraft(e.target.value)}
+                                onBlur={commitUsername}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        commitUsername();
+                                    } else if (e.key === 'Escape') {
+                                        setEditingName(false);
+                                        setNameDraft(profile.username);
+                                    }
+                                }}
+                            />
+                        ) : (
+                            <h2 className='hs-rail-title'>
+                                <button
+                                    type='button'
+                                    className='hs-rail-title-btn'
+                                    onClick={() => {
+                                        setNameDraft(profile.username);
+                                        setEditingName(true);
+                                    }}
+                                    title='Edit username'
+                                >
+                                    {profile.username}
+                                </button>
+                            </h2>
+                        )}
+
+                        <p className='hs-rail-record' aria-label='Match record'>
+                            <span className='hs-record-label'>Match</span>
+                            <span className='hs-record-wl'>
+                                {profile.matchWins}–{profile.matchLosses}
+                            </span>
+                        </p>
+                        <p className='hs-rail-record-sub' aria-label='Round record'>
+                            Rounds {profile.roundWins}–{profile.roundLosses}
+                        </p>
                         <p className='hs-rail-sub'>v{APP_VERSION} — Ready for combat</p>
                     </div>
 
@@ -220,7 +337,7 @@ function PlayPanel({ onStartMatch, matchModes, aiPersonality, onPersonalityChang
         <>
             <div className='hs-panel-head'>
                 <h2>Deploy</h2>
-                <p>You command Player 1. Player 2 is run by the AI — set its profile before you drop in.</p>
+                <p>Good luck!</p>
             </div>
 
             <div className='hs-play'>
